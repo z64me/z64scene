@@ -121,6 +121,7 @@ void RoomHeaderFree(struct RoomHeader *header)
 {
 	sb_free(header->instances);
 	sb_free(header->objects);
+	sb_free(header->displayLists);
 }
 
 void RoomFree(struct Room *room)
@@ -330,6 +331,32 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 					sb_push(result->objects
 						, u16r(arr + 2 * i)
 					);
+				break;
+			}
+			
+			case 0x0A: { // mesh header
+				uint8_t *d = data8 + (u32r(walk + 4) & 0x00ffffff);
+				
+				if (d[0] == 2)
+				{
+					int num = d[1];
+					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
+					
+					for (int i = 0; i < num; ++i)
+					{
+						uint8_t *bin = arr + 16 * i;
+						struct RoomMeshSimple tmp = {
+							.opa = u32r(bin + 8)
+							, .xlu = u32r(bin + 12)
+						};
+						
+						sb_push(result->displayLists, tmp);
+					}
+				}
+				else
+				{
+					fprintf(stderr, "unsupported mesh header type %d\n", d[0]);
+				}
 				break;
 			}
 			

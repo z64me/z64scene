@@ -9,6 +9,8 @@
 
 #include "misc.h"
 
+extern void WindowMainLoop(struct Scene *scene);
+
 int main(void)
 {
 	struct Scene *scene = SceneFromFilename("bin/scene.zscene");
@@ -22,6 +24,8 @@ int main(void)
 		
 		SceneAddRoom(scene, RoomFromFilename(tmp));
 	}
+	
+	WindowMainLoop(scene);
 	
 	// cleanup
 	SceneFree(scene);

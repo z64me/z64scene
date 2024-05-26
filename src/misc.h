@@ -38,11 +38,18 @@ struct Instance
 	uint16_t  params;
 };
 
+struct RoomMeshSimple
+{
+	uint32_t opa;
+	uint32_t xlu;
+};
+
 struct RoomHeader
 {
 	struct Room *room;
 	sb_array(struct Instance, instances);
 	sb_array(uint16_t, objects);
+	sb_array(struct RoomMeshSimple, displayLists);
 	uint32_t addr;
 };
 
