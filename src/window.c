@@ -11,6 +11,7 @@
 extern void GuiInit(GLFWwindow *window);
 extern void GuiCleanup(void);
 extern void GuiDraw(GLFWwindow *window);
+extern int GuiHasFocus(void);
 
 // write bigendian bytes
 #define WBE16(DST, V) { ((uint8_t*)DST)[0] = (V) >> 8; ((uint8_t*)DST)[1] = (V) & 0xff; }
@@ -590,6 +591,7 @@ void DoLights(ZeldaLight *light)
 void WindowMainLoop(struct Scene *scene)
 {
 	GLFWwindow* window;
+	bool shouldIgnoreInput = false;
 	
 	// glfw: initialize and configure
 	// ------------------------------
@@ -655,11 +657,15 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// mvp matrix
 		float model[16];
-		float view[16];
+		static float view[16];
 		float p[16];
 		
 		identity(model);
-		camera_flythrough(view);
+		
+		// ignore 3d camera controls if gui has focus
+		if (shouldIgnoreInput == false)
+			camera_flythrough(view);
+		
 		projection(p, gWindowWidth, gWindowHeight, 10, 12800);
 		
 		n64_update_tick();
@@ -759,6 +765,7 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// draw the ui
 		GuiDraw(window);
+		shouldIgnoreInput = GuiHasFocus();
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------

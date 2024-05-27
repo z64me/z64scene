@@ -64,3 +64,10 @@ extern "C" void GuiDraw(GLFWwindow *window)
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
+extern "C" int GuiHasFocus(void)
+{
+	return ImGui::GetIO().WantCaptureMouse
+		|| ImGui::GetIO().WantCaptureKeyboard
+	;
+}
+
