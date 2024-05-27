@@ -8,6 +8,9 @@
 #include "misc.h"
 #include <n64.h>
 
+// write bigendian bytes
+#define WBE16(DST, V) { ((uint8_t*)DST)[0] = (V) >> 8; ((uint8_t*)DST)[1] = (V) & 0xff; }
+
 #define FLYTHROUGH_CAMERA_IMPLEMENTATION
 #include "flythrough_camera.h"
 
@@ -284,6 +287,55 @@ void mtx_to_zmtx(Matrix* src, ZeldaMatrix* dest) {
 	m2[15] = temp & 0xFFFF;
 }
 
+static inline void mat44_to_matn64(unsigned char *dest, float src[16])
+{
+#define    FTOFIX32(x)    (long)((x) * (float)0x00010000)
+	int32_t t;
+	unsigned char *intpart = dest;
+	unsigned char *fracpart = dest + 0x20;
+	for (int i=0; i < 4; ++i)
+	{
+		for (int k=0; k < 4; ++k)
+		{
+			t = FTOFIX32(src[4*i+k]);
+			short ip = (t >> 16) & 0xFFFF;
+			intpart[0]  = (ip >> 8) & 255;
+			intpart[1]  = (ip >> 0) & 255;
+			fracpart[0] = (t >>  8) & 255;
+			fracpart[1] = (t >>  0) & 255;
+			intpart  += 2;
+			fracpart += 2;
+		}
+	}
+}
+
+typedef float MtxF_t[4][4];
+typedef union {
+	MtxF_t mf;
+	struct {
+		float xx, yx, zx, wx,
+		    xy, yy, zy, wy,
+		    xz, yz, zz, wz,
+		    xw, yw, zw, ww;
+	};
+} MtxF;
+
+void Matrix_Transpose(MtxF* mf) {
+	float temp;
+	
+	temp = mf->yx;
+	mf->yx = mf->xy;
+	mf->xy = temp;
+	
+	temp = mf->zx;
+	mf->zx = mf->xz;
+	mf->xz = temp;
+	
+	temp = mf->zy;
+	mf->zy = mf->yz;
+	mf->yz = temp;
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	GLFWwindow* window;
@@ -372,6 +424,43 @@ void WindowMainLoop(struct Scene *scene)
 		*/
 		
 		mtx_to_zmtx((Matrix*)model, &zmtx);
+		
+		// generate billboard matrices
+		{
+			MtxF inverse_mv;
+			uint8_t billboards[0x80];
+			uint8_t *sphere = billboards;
+			uint8_t *cylinder = billboards + 0x40;
+			
+			// sphere = inverse of view mtx w/ some parts reverted to identity
+			memcpy(&inverse_mv, view, sizeof(view));
+			inverse_mv.mf[0][3] = inverse_mv.mf[1][3] = inverse_mv.mf[2][3]
+				= inverse_mv.mf[3][0] = inverse_mv.mf[3][1] = inverse_mv.mf[3][2]
+				= 0.0f;
+			Matrix_Transpose(&inverse_mv);
+			
+			// convert to n64 matrix format
+			mat44_to_matn64(billboards, (void*)&inverse_mv);
+			
+			// cylinder billboard = sphere w/ up vector reverted to identity
+			{
+				memcpy(cylinder, sphere, 0x40);
+				
+				// integer parts
+				WBE16(&cylinder[0x08], 0); // x
+				WBE16(&cylinder[0x0a], 1); // y
+				WBE16(&cylinder[0x0c], 0); // z
+				
+				// fractional parts
+				WBE16(&cylinder[0x28], 0); // x
+				WBE16(&cylinder[0x2a], 0); // y
+				WBE16(&cylinder[0x2c], 0); // z
+			}
+			
+			// billboard matrices live in segment 0x01
+			gSPSegment(POLY_OPA_DISP++, 0x1, billboards);
+			gSPSegment(POLY_XLU_DISP++, 0x1, billboards);
+		}
 		
 		sb_foreach(scene->rooms, {
 			void *sceneSegment = scene->file->data;
