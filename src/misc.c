@@ -353,6 +353,22 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						sb_push(result->displayLists, tmp);
 					}
 				}
+				else if (d[0] == 0)
+				{
+					int num = d[1];
+					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
+					
+					for (int i = 0; i < num; ++i)
+					{
+						uint8_t *bin = arr + 8 * i;
+						struct RoomMeshSimple tmp = {
+							.opa = u32r(bin + 0)
+							, .xlu = u32r(bin + 4)
+						};
+						
+						sb_push(result->displayLists, tmp);
+					}
+				}
 				else
 				{
 					fprintf(stderr, "unsupported mesh header type %d\n", d[0]);
