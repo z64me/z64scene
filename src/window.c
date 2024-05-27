@@ -386,7 +386,8 @@ void WindowMainLoop(struct Scene *scene)
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		static float bgcolor[3] = { 0.5, 0.5, 0.5 };
+		ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
+		float bgcolor[3] = { UNFOLD_RGB_EXT(light->fog, / 255.0f) };
 		// input
 		// -----
 		processInput(window);
@@ -409,19 +410,17 @@ void WindowMainLoop(struct Scene *scene)
 		n64_buffer_init();
 		
 		n64_culling(false);
-		//n64_fog(light->fog_near, 1000, unfold_rgb(light->fog));
+		n64_fog(light->fog_near, 1000, UNFOLD_RGB(light->fog));
 		n64_mtx_model(model);
 		n64_mtx_view(view);
 		n64_mtx_projection(p);
 		
 		ZeldaMatrix zmtx;
 		
-		n64_light_set_ambient(255, 255, 255);
-		/*
-		n64_light_bind_dir(unfold_vec3(light->diffuse_a_dir), unfold_rgb(light->diffuse_a));
-		n64_light_bind_dir(unfold_vec3(light->diffuse_b_dir), unfold_rgb(light->diffuse_b));
-		n64_light_set_ambient(unfold_rgb(light->ambient));
-		*/
+		//n64_light_set_ambient(255, 255, 255); // for easy testing
+		n64_light_bind_dir(UNFOLD_VEC3(light->diffuse_a_dir), UNFOLD_RGB(light->diffuse_a));
+		n64_light_bind_dir(UNFOLD_VEC3(light->diffuse_b_dir), UNFOLD_RGB(light->diffuse_b));
+		n64_light_set_ambient(UNFOLD_RGB(light->ambient));
 		
 		mtx_to_zmtx((Matrix*)model, &zmtx);
 		

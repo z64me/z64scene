@@ -254,6 +254,11 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				result->numRooms = walk[1];
 				break;
 			
+			case 0x0F: // light list
+				result->refLights = (void*)(data8 + (u32r(walk + 4) & 0x00ffffff));
+				result->numRefLights = walk[1];
+				break;
+			
 			case 0x18: { // alternate headers
 				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
 				break;
