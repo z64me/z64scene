@@ -9,18 +9,20 @@
 
 #include "misc.h"
 
+#define SCENE_PREFIX "termina_"
+
 extern void WindowMainLoop(struct Scene *scene);
 
 int main(void)
 {
-	struct Scene *scene = SceneFromFilename("bin/scene.zscene");
+	struct Scene *scene = SceneFromFilename("bin/" SCENE_PREFIX "scene.zscene");
 	struct Object *object = ObjectFromFilename("bin/object.zobj");
 	
 	for (int i = 0; i < scene->headers[0].numRooms; ++i)
 	{
 		char tmp[64];
 		
-		snprintf(tmp, sizeof(tmp), "bin/room_%d.zroom", i);
+		snprintf(tmp, sizeof(tmp), "bin/" SCENE_PREFIX "room_%d.zroom", i);
 		
 		SceneAddRoom(scene, RoomFromFilename(tmp));
 	}
