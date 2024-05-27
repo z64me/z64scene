@@ -401,7 +401,7 @@ void WindowMainLoop(struct Scene *scene)
 			//	gSPDisplayList(POLY_OPA_DISP++, 0x03004860);
 		});
 		
-		n64_buffer_flush();
+		n64_buffer_flush(true);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------

@@ -179,6 +179,8 @@
 
 #define sb_foreach(V, CODE) for (int i = 0; i < sb_count(V); ++i) { typeof(V[0]) *each = &V[i]; CODE }
 
+#define sb_foreach_backwards(V, CODE) for (int i = sb_count(V); i > 0; --i) { typeof(V[0]) *each = &V[i - 1]; CODE }
+
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
 #define sb_push   stb_sb_push
