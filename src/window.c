@@ -8,6 +8,10 @@
 #include "misc.h"
 #include <n64.h>
 
+extern void GuiInit(GLFWwindow *window);
+extern void GuiCleanup(void);
+extern void GuiDraw(GLFWwindow *window);
+
 // write bigendian bytes
 #define WBE16(DST, V) { ((uint8_t*)DST)[0] = (V) >> 8; ((uint8_t*)DST)[1] = (V) & 0xff; }
 
@@ -629,6 +633,8 @@ void WindowMainLoop(struct Scene *scene)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
+	GuiInit(window);
+	
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -750,6 +756,9 @@ void WindowMainLoop(struct Scene *scene)
 		});
 		
 		n64_buffer_flush(true);
+		
+		// draw the ui
+		GuiDraw(window);
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
