@@ -336,6 +336,253 @@ void Matrix_Transpose(MtxF* mf) {
 	mf->yz = temp;
 }
 
+
+#if 1 /* region: day/night */
+
+#define LERP(x, y, scale) (((y) - (x)) * (scale) + (x))
+#define LERP32(x, y, scale) ((int32_t)(((y) - (x)) * (scale)) + (x))
+#define LERP16(x, y, scale) ((int16_t)(((y) - (x)) * (scale)) + (x))
+#define ARRAY_COUNT(X) (sizeof(X) / sizeof((X)[0]))
+#define CLOCK_TIME(hr, min) ((int32_t)(((hr) * 60 + (min)) * (float)0x10000 / (24 * 60) + 0.5f))
+
+typedef struct {
+	/* 0x00 */ uint16_t startTime;
+	/* 0x02 */ uint16_t endTime;
+	/* 0x04 */ uint8_t lightSetting;
+	/* 0x05 */ uint8_t nextLightSetting;
+} TimeBasedLightEntry; // size = 0x6
+
+TimeBasedLightEntry sTimeBasedLightConfigs[][7] = {
+	{
+		{ CLOCK_TIME(0, 0), CLOCK_TIME(4, 0) + 1, 3, 3 },
+		{ CLOCK_TIME(4, 0) + 1, CLOCK_TIME(6, 0), 3, 0 },
+		{ CLOCK_TIME(6, 0), CLOCK_TIME(8, 0) + 1, 0, 1 },
+		{ CLOCK_TIME(8, 0) + 1, CLOCK_TIME(16, 0), 1, 1 },
+		{ CLOCK_TIME(16, 0), CLOCK_TIME(17, 0) + 1, 1, 2 },
+		{ CLOCK_TIME(17, 0) + 1, CLOCK_TIME(19, 0) + 1, 2, 3 },
+		{ CLOCK_TIME(19, 0) + 1, CLOCK_TIME(24, 0) - 1, 3, 3 },
+	},
+	{
+		{ CLOCK_TIME(0, 0), CLOCK_TIME(4, 0) + 1, 7, 7 },
+		{ CLOCK_TIME(4, 0) + 1, CLOCK_TIME(6, 0), 7, 4 },
+		{ CLOCK_TIME(6, 0), CLOCK_TIME(8, 0) + 1, 4, 5 },
+		{ CLOCK_TIME(8, 0) + 1, CLOCK_TIME(16, 0), 5, 5 },
+		{ CLOCK_TIME(16, 0), CLOCK_TIME(17, 0) + 1, 5, 6 },
+		{ CLOCK_TIME(17, 0) + 1, CLOCK_TIME(19, 0) + 1, 6, 7 },
+		{ CLOCK_TIME(19, 0) + 1, CLOCK_TIME(24, 0) - 1, 7, 7 },
+	},
+	{
+		{ CLOCK_TIME(0, 0), CLOCK_TIME(4, 0) + 1, 11, 11 },
+		{ CLOCK_TIME(4, 0) + 1, CLOCK_TIME(6, 0), 11, 8 },
+		{ CLOCK_TIME(6, 0), CLOCK_TIME(8, 0) + 1, 8, 9 },
+		{ CLOCK_TIME(8, 0) + 1, CLOCK_TIME(16, 0), 9, 9 },
+		{ CLOCK_TIME(16, 0), CLOCK_TIME(17, 0) + 1, 9, 10 },
+		{ CLOCK_TIME(17, 0) + 1, CLOCK_TIME(19, 0) + 1, 10, 11 },
+		{ CLOCK_TIME(19, 0) + 1, CLOCK_TIME(24, 0) - 1, 11, 11 },
+	},
+	{
+		{ CLOCK_TIME(0, 0), CLOCK_TIME(4, 0) + 1, 15, 15 },
+		{ CLOCK_TIME(4, 0) + 1, CLOCK_TIME(6, 0), 15, 12 },
+		{ CLOCK_TIME(6, 0), CLOCK_TIME(8, 0) + 1, 12, 13 },
+		{ CLOCK_TIME(8, 0) + 1, CLOCK_TIME(16, 0), 13, 13 },
+		{ CLOCK_TIME(16, 0), CLOCK_TIME(17, 0) + 1, 13, 14 },
+		{ CLOCK_TIME(17, 0) + 1, CLOCK_TIME(19, 0) + 1, 14, 15 },
+		{ CLOCK_TIME(19, 0) + 1, CLOCK_TIME(24, 0) - 1, 15, 15 },
+	},
+	{
+		{ CLOCK_TIME(0, 0), CLOCK_TIME(4, 0) + 1, 23, 23 },
+		{ CLOCK_TIME(4, 0) + 1, CLOCK_TIME(6, 0), 23, 20 },
+		{ CLOCK_TIME(6, 0), CLOCK_TIME(8, 0) + 1, 20, 21 },
+		{ CLOCK_TIME(8, 0) + 1, CLOCK_TIME(16, 0), 21, 21 },
+		{ CLOCK_TIME(16, 0), CLOCK_TIME(17, 0) + 1, 21, 22 },
+		{ CLOCK_TIME(17, 0) + 1, CLOCK_TIME(19, 0) + 1, 22, 23 },
+		{ CLOCK_TIME(19, 0) + 1, CLOCK_TIME(24, 0) - 1, 23, 23 },
+	},
+};
+
+static float Environment_LerpWeight(uint16_t max, uint16_t min, uint16_t val) {
+	float diff = max - min;
+	float ret;
+	
+	if (diff != 0.0f) {
+		ret = 1.0f - (max - val) / diff;
+		
+		if (!(ret >= 1.0f)) {
+			return ret;
+		}
+	}
+	
+	return 1.0f;
+}
+
+// borrows from Environment_Update()
+static EnvLightSettings GetEnvironment(EnvLightSettings *lights)
+{
+	// testing
+	// 0x8001 is noon
+	static uint16_t skyboxTime = 0x8001; // gSaveContext.skyboxTime
+	static uint16_t dayTime = 0x8001; // gSaveContext.dayTime
+	const int speed = 100;
+	skyboxTime += speed;
+	dayTime += speed;
+	
+	int envLightConfig = 0; // envCtx->lightConfig
+	int envChangeLightNextConfig = 1; // envCtx->changeLightNextConfig
+	TimeBasedLightEntry *configs = sTimeBasedLightConfigs[envLightConfig];
+	EnvLightSettings *lightSettingsList = lights; // play->envCtx.lightSettingsList;
+	EnvLightSettings dst; // envCtx->lightSettings;
+	
+	for (int i = 0; i < ARRAY_COUNT(*sTimeBasedLightConfigs); i++)
+	{
+		TimeBasedLightEntry config = configs[i];
+		
+		if (!((skyboxTime >= config.startTime)
+				&& ((skyboxTime < config.endTime) || config.endTime == 0xFFFF)
+		))
+			continue;
+		
+		TimeBasedLightEntry changeToConfig = sTimeBasedLightConfigs[envChangeLightNextConfig][i];
+		EnvLightSettings lightSetting = lightSettingsList[config.lightSetting];
+		EnvLightSettings nextLightSetting = lightSettingsList[config.nextLightSetting];
+		EnvLightSettings changeToNextLightSetting = lightSettingsList[changeToConfig.nextLightSetting];
+		EnvLightSettings changeToLightSetting = lightSettingsList[changeToConfig.lightSetting];
+		
+		uint8_t blend8[2];
+		int16_t blend16[2];
+		
+		float weight = Environment_LerpWeight(config.endTime, config.startTime, skyboxTime);
+		float storms = 0;
+		
+		//sSandstormColorIndex = config.lightSetting & 3;
+		//sNextSandstormColorIndex = config.nextLightSetting & 3;
+		//sSandstormLerpScale = weight;
+		
+		// used for song of storms
+		/*
+		if (envCtx->changeLightEnabled) {
+			storms = ((float)envCtx->changeDuration - envCtx->changeLightTimer) / envCtx->changeDuration;
+			envCtx->changeLightTimer--;
+			
+			if (envCtx->changeLightTimer <= 0) {
+				envCtx->changeLightEnabled = false;
+				envLightConfig = envCtx->changeLightNextConfig;
+			}
+		}
+		*/
+		
+		for (int j = 0; j < 3; j++)
+		{
+			// blend ambient color
+			blend8[0] = LERP(lightSetting.ambientColor[j], nextLightSetting.ambientColor[j], weight);
+			blend8[1] = LERP(changeToLightSetting.ambientColor[j], changeToNextLightSetting.ambientColor[j], weight);
+			dst.ambientColor[j] = LERP(blend8[0], blend8[1], storms);
+		}
+		
+		// set light1 direction for the sun
+		dst.light1Dir[0] = -(Math_SinS(dayTime - CLOCK_TIME(12, 0)) * 120.0f);
+		dst.light1Dir[1] = Math_CosS(dayTime - CLOCK_TIME(12, 0)) * 120.0f;
+		dst.light1Dir[2] = Math_CosS(dayTime - CLOCK_TIME(12, 0)) * 20.0f;
+		
+		// set light2 direction for the moon
+		dst.light2Dir[0] = -dst.light1Dir[0];
+		dst.light2Dir[1] = -dst.light1Dir[1];
+		dst.light2Dir[2] = -dst.light1Dir[2];
+		
+		for (int j = 0; j < 3; j++)
+		{
+			// blend light1Color
+			blend8[0] = LERP(lightSetting.light1Color[j], nextLightSetting.light1Color[j], weight);
+			blend8[1] = LERP(changeToLightSetting.light1Color[j], changeToNextLightSetting.light1Color[j], weight);
+			dst.light1Color[j] = LERP(blend8[0], blend8[1], storms);
+			
+			// blend light2Color
+			blend8[0] = LERP(lightSetting.light2Color[j], nextLightSetting.light2Color[j], weight);
+			blend8[1] = LERP(changeToLightSetting.light2Color[j], changeToNextLightSetting.light2Color[j], weight);
+			dst.light2Color[j] = LERP(blend8[0], blend8[1], storms);
+		}
+		
+		// blend fogColor
+		for (int j = 0; j < 3; j++)
+		{
+			blend8[0] = LERP(lightSetting.fogColor[j], nextLightSetting.fogColor[j], weight);
+			blend8[1] = LERP(changeToLightSetting.fogColor[j], changeToNextLightSetting.fogColor[j], weight);
+			dst.fogColor[j] = LERP(blend8[0], blend8[1], storms);
+		}
+		
+		blend16[0] = LERP16((lightSetting.fogNear & 0x3FF), (nextLightSetting.fogNear & 0x3FF), weight);
+		blend16[1] = LERP16(changeToLightSetting.fogNear & 0x3FF, changeToNextLightSetting.fogNear & 0x3FF, weight);
+		
+		dst.fogNear = LERP16(blend16[0], blend16[1], storms);
+		
+		blend16[0] = LERP16(lightSetting.fogFar, nextLightSetting.fogFar, weight);
+		blend16[1] = LERP16(changeToLightSetting.fogFar, changeToNextLightSetting.fogFar, weight);
+		
+		dst.fogFar = LERP16(blend16[0], blend16[1], storms);
+		
+		/*
+		if (changeToConfig.nextLightSetting >= envCtx->numLightSettings)
+		{
+			// "The color palette setting seems to be wrong!"
+			osSyncPrintf(VT_COL(RED, WHITE) "\nカラーパレットの設定がおかしいようです！" VT_RST);
+			
+			// "Palette setting = [] Last palette number = []"
+			osSyncPrintf(VT_COL(RED, WHITE) "\n設定パレット＝[%d] 最後パレット番号＝[%d]\n" VT_RST,
+						changeToConfig.nextLightSetting,
+						envCtx->numLightSettings - 1);
+		}
+		*/
+		
+		break;
+	}
+	
+	return dst;
+}
+
+#endif // day/night
+
+// test implementation for sun movement
+void DoLights(ZeldaLight *light)
+{
+	ZeldaVecS8 dirA = { UNFOLD_VEC3(light->diffuse_a_dir) };
+	ZeldaVecS8 dirB = { UNFOLD_VEC3(light->diffuse_b_dir) };
+	static int16_t dayTime = 0;
+	dayTime += 100;
+	
+	//if (currentRoom && currentRoom->inDoorLights == false && lightCtx->curEnvId < 4)
+	{
+		switch (-1/*lightCtx->curEnvId*/) {
+			case 0: {
+				dayTime = 0x6000; // 06.00
+				break;
+			}
+			case 1: {
+				dayTime = 0x8001; // 12.00
+				break;
+			}
+			case 2: {
+				dayTime = 0xb556; // 17.00
+				break;
+			}
+			case 3: {
+				dayTime = 0xFFFF; // 24.00
+				break;
+			}
+		}
+		
+		dirA = (ZeldaVecS8) {
+			(Math_SinS(dayTime) - 0x8000) * 120.0f,
+			(Math_CosS(dayTime) - 0x8000) * 120.0f,
+			(Math_CosS(dayTime) - 0x8000) * 20.0f
+		};
+		
+		Vec3_Substract(dirB, (ZeldaVecS8) { 0 }, dirA);
+	}
+	
+	n64_light_bind_dir(UNFOLD_VEC3(dirA), UNFOLD_RGB(light->diffuse_a));
+	n64_light_bind_dir(UNFOLD_VEC3(dirB), UNFOLD_RGB(light->diffuse_b));
+	n64_light_set_ambient(UNFOLD_RGB(light->ambient));
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	GLFWwindow* window;
@@ -386,8 +633,11 @@ void WindowMainLoop(struct Scene *scene)
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
-		float bgcolor[3] = { UNFOLD_RGB_EXT(light->fog, / 255.0f) };
+		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
+		EnvLightSettings settings = GetEnvironment((void*)scene->headers[0].refLights);
+		ZeldaLight *result = (void*)&settings;
+		
+		float bgcolor[3] = { UNFOLD_RGB_EXT(result->fog, / 255.0f) };
 		// input
 		// -----
 		processInput(window);
@@ -410,17 +660,27 @@ void WindowMainLoop(struct Scene *scene)
 		n64_buffer_init();
 		
 		n64_culling(false);
-		n64_fog(light->fog_near, 1000, UNFOLD_RGB(light->fog));
 		n64_mtx_model(model);
 		n64_mtx_view(view);
 		n64_mtx_projection(p);
 		
 		ZeldaMatrix zmtx;
 		
+		// new
+		n64_fog(result->fog_near, 1000, UNFOLD_RGB(result->fog));
+		n64_light_bind_dir(UNFOLD_VEC3(result->diffuse_a_dir), UNFOLD_RGB(result->diffuse_a));
+		n64_light_bind_dir(UNFOLD_VEC3(result->diffuse_b_dir), UNFOLD_RGB(result->diffuse_b));
+		n64_light_set_ambient(UNFOLD_RGB(result->ambient));
+		
+		// old
+		//n64_fog(light->fog_near, 1000, UNFOLD_RGB(light->fog));
+		//DoLights(light);
 		//n64_light_set_ambient(255, 255, 255); // for easy testing
+		/*
 		n64_light_bind_dir(UNFOLD_VEC3(light->diffuse_a_dir), UNFOLD_RGB(light->diffuse_a));
 		n64_light_bind_dir(UNFOLD_VEC3(light->diffuse_b_dir), UNFOLD_RGB(light->diffuse_b));
 		n64_light_set_ambient(UNFOLD_RGB(light->ambient));
+		*/
 		
 		mtx_to_zmtx((Matrix*)model, &zmtx);
 		

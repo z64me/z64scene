@@ -16,6 +16,30 @@
 #define UNFOLD_VEC3(v)  (v).x, (v).y, (v).z
 
 #define UNFOLD_RGB_EXT(v, action)   (v).r action, (v).g action, (v).b action
+
+#define Vec3_Substract(dest, a, b) \
+	dest.x = a.x - b.x; \
+	dest.y = a.y - b.y; \
+	dest.z = a.z - b.z
+
+#define SQ(x)        ((x) * (x))
+#define Math_SinS(x) sinf(BinToRad((int16_t)(x)))
+#define Math_CosS(x) cosf(BinToRad((int16_t)(x)))
+#define Math_SinF(x) sinf(DegToRad(x))
+#define Math_CosF(x) cosf(DegToRad(x))
+#define Math_SinR(x) sinf(x)
+#define Math_CosR(x) cosf(x)
+
+// trigonometry macros
+#define DegToBin(degreesf) (int16_t)(degreesf * 182.04167f + .5f)
+#define RadToBin(radf)     (int16_t)(radf * (32768.0f / M_PI))
+#define RadToDeg(radf)     (radf * (180.0f / M_PI))
+#define DegToRad(degf)     (degf * (M_PI / 180.0f))
+#define BinFlip(angle)     ((int16_t)(angle - 0x7FFF))
+#define BinSub(a, b)       ((int16_t)(a - b))
+#define BinToDeg(binang)   ((float)binang * (360.0001525f / 65535.0f))
+#define BinToRad(binang)   (((float)binang / 32768.0f) * M_PI)
+
 #endif /* macros */
 
 #if 1 /* region: types */
@@ -47,6 +71,18 @@ typedef struct N64_ATTR_BIG_ENDIAN ZeldaLight {
 	uint16_t fog_near;
 	uint16_t fog_far;
 } ZeldaLight;
+
+// another way to interface with a ZeldaLight
+typedef struct N64_ATTR_BIG_ENDIAN {
+	/* 0x00 */ uint8_t ambientColor[3];
+	/* 0x03 */ int8_t light1Dir[3];
+	/* 0x06 */ uint8_t light1Color[3];
+	/* 0x09 */ int8_t light2Dir[3];
+	/* 0x0C */ uint8_t light2Color[3];
+	/* 0x0F */ uint8_t fogColor[3];
+	/* 0x12 */ int16_t fogNear;
+	/* 0x14 */ int16_t fogFar;
+} EnvLightSettings; // size = 0x16
 
 struct File
 {
