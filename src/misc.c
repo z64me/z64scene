@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+#include <inttypes.h>
 #include <bigendian.h>
 
 #if 1 /* region: private function declarations */
@@ -42,7 +43,7 @@ void *Calloc(size_t howMany, size_t sizeEach)
 	void *result = calloc(howMany, sizeEach);
 	
 	if (!result)
-		Die("memory error on Calloc(%zu, %zu)\n", howMany, sizeEach);
+		Die("memory error on Calloc(%"PRIuPTR", %"PRIuPTR")\n", howMany, sizeEach);
 	
 	return result;
 }
