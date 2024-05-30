@@ -24,6 +24,18 @@ struct GuiSettings
 {
 	bool showSidebar = true;
 	bool showImGuiDemoWindow = false;
+	
+	// combo boxes can be volatile as sizes change
+	// when loading different scenes for editing
+	struct
+	{
+		int instanceCurrent;
+	} combos;
+	
+	void Reset(void)
+	{
+		memset(&combos, 0, sizeof(combos));
+	}
 };
 
 struct LinkedStringFunc
@@ -235,7 +247,6 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			RoomHeader *header = &gScene->rooms[0].headers[0];
 			Instance *instances = header->instances;
 			Instance *inst;
-			static int current = 0;
 			
 			if (sb_count(instances) == 0)
 			{
@@ -247,7 +258,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			ImGui::SeparatorText("Instance List");
 			ImGui::Combo(
 				"##Instance##InstanceCombo"
-				, &current
+				, &gGuiSettings.combos.instanceCurrent
 				, [](void* data, int n) {
 					static char test[64];
 					Instance *inst = &((Instance*)data)[n];
@@ -257,8 +268,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				, instances
 				, sb_count(instances)
 			);
-			IMGUI_COMBO_HOVER(current, sb_count(instances));
-			inst = &instances[current];
+			IMGUI_COMBO_HOVER(gGuiSettings.combos.instanceCurrent, sb_count(instances));
+			inst = &instances[gGuiSettings.combos.instanceCurrent];
 			ImGui::Button("Add##InstanceCombo"); ImGui::SameLine();
 			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
 			ImGui::Button("Delete##InstanceCombo");
@@ -442,6 +453,14 @@ static void DrawMenuBar(void)
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
 				fprintf(stderr, "wow!\n");
+				
+				Scene *newScene = WindowOpenFile();
+				
+				if (newScene && newScene != gScene)
+				{
+					gGuiSettings.Reset();
+					gScene = newScene;
+				}
 			}
 			if (ImGui::MenuItem("Save", "Ctrl+S"))
 			{

@@ -9,6 +9,10 @@
 #include <n64.h>
 #include <n64types.h>
 
+#define NOC_FILE_DIALOG_IMPLEMENTATION
+#include "noc_file_dialog.h"
+
+// C++ functions
 extern void GuiInit(GLFWwindow *window);
 extern void GuiCleanup(void);
 extern void GuiDraw(GLFWwindow *window, struct Scene *scene);
@@ -227,6 +231,8 @@ static float *identity(float dst[16])
 	return m;
 }
 
+#undef near // win32 includes break near and far
+#undef far
 static float *projection(float dst[16], float winw, float winh, float near, float far)
 {
 	float *m = dst;
@@ -463,6 +469,16 @@ static float Environment_LerpWeight(uint16_t max, uint16_t min, uint16_t val) {
 // borrows from Environment_Update()
 static EnvLightSettings GetEnvironment(EnvLightSettings *lights)
 {
+	// quick gray background if no scene loaded
+	if (!lights)
+	{
+		EnvLightSettings tmp;
+		
+		memset(&tmp, 0x80, sizeof(tmp));
+		
+		return tmp;
+	}
+		
 	// testing
 	// 0x8001 is noon
 	static uint16_t skyboxTime = 0x8001; // gSaveContext.skyboxTime
@@ -628,10 +644,37 @@ void DoLights(ZeldaLight *light)
 	n64_light_set_ambient(UNFOLD_RGB(light->ambient));
 }
 
+static struct Scene **gSceneP;
+struct Scene *WindowOpenFile(void)
+{
+	const char *fn;
+	
+	assert(gSceneP);
+	
+	fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "zscene\0*.zscene\0", NULL, NULL);
+	
+	if (!fn)
+		return *gSceneP;
+	
+	fprintf(stderr, "%s\n", fn);
+	struct Scene *scene = SceneFromFilenamePredictRooms(fn);
+	
+	// cleanup
+	if (*gSceneP)
+		SceneFree(*gSceneP);
+	n64_clear_cache();
+	
+	// view new scene
+	*gSceneP = scene;
+	
+	return scene;
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	GLFWwindow* window;
 	bool shouldIgnoreInput = false;
+	gSceneP = &scene;
 	
 	// glfw: initialize and configure
 	// ------------------------------
@@ -682,7 +725,7 @@ void WindowMainLoop(struct Scene *scene)
 	while (!glfwWindowShouldClose(window))
 	{
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
-		EnvLightSettings settings = GetEnvironment((void*)scene->headers[0].lights);
+		EnvLightSettings settings = GetEnvironment(scene ? (void*)scene->headers[0].lights : 0);
 		ZeldaLight *result = (void*)&settings;
 		
 		float bgcolor[3] = { UNFOLD_RGB_EXT(result->fog, / 255.0f) };
@@ -694,6 +737,10 @@ void WindowMainLoop(struct Scene *scene)
 		// ------
 		glClearColor(bgcolor[0], bgcolor[1], bgcolor[2], 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
+		// skipping this way is fine for now
+		if (!scene)
+			goto L_skipSceneRender;
 		
 		// mvp matrix
 		float model[16];
@@ -844,6 +891,7 @@ void WindowMainLoop(struct Scene *scene)
 			});
 		});
 		
+	L_skipSceneRender:
 		// draw the ui
 		GuiDraw(window, scene);
 		shouldIgnoreInput = GuiHasFocus();
@@ -855,5 +903,9 @@ void WindowMainLoop(struct Scene *scene)
 	}
 	
 	glfwTerminate();
+	
+	// cleanup
+	if (scene)
+		SceneFree(scene);
 }
 

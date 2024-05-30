@@ -48,6 +48,15 @@ void *Calloc(size_t howMany, size_t sizeEach)
 	return result;
 }
 
+char *StrdupPad(const char *str, int padding)
+{
+	char *result = Calloc(1, strlen(str) + padding + 1);
+	
+	strcpy(result, str);
+	
+	return result;
+}
+
 char *Strdup(const char *str)
 {
 	char *result = Calloc(1, strlen(str) + 1);
@@ -55,6 +64,18 @@ char *Strdup(const char *str)
 	strcpy(result, str);
 	
 	return result;
+}
+
+bool FileExists(const char *filename)
+{
+	FILE *fp = fopen(filename, "rb");
+	
+	if (!fp)
+		return false;
+	
+	fclose(fp);
+	
+	return true;
 }
 
 struct File *FileFromFilename(const char *filename)
@@ -84,6 +105,51 @@ struct Scene *SceneFromFilename(const char *filename)
 	result->file = FileFromFilename(filename);
 	
 	return private_SceneParseAfterLoad(result);
+}
+
+struct Scene *SceneFromFilenamePredictRooms(const char *filename)
+{
+	struct Scene *scene = SceneFromFilename(filename);
+	char *roomNameBuf = StrdupPad(filename, 100);
+	char *lastSlash = MAX(strrchr(roomNameBuf, '\\'), strrchr(roomNameBuf, '/'));
+	if (!lastSlash)
+		lastSlash = roomNameBuf;
+	else
+		lastSlash += 1;
+	lastSlash = MAX(lastSlash, strstr(lastSlash, "_scene"));
+	if (*lastSlash == '_')
+		lastSlash += 1;
+	
+	for (int i = 0; i < scene->headers[0].numRooms; ++i)
+	{
+		const char *variations[] = {
+			"room_%d.zmap",
+			"room_%02d.zmap",
+			"room_%d.zroom",
+			"room_%02d.zroom"
+		};
+		bool found = false;
+		
+		for (int k = 0; k < sizeof(variations) / sizeof(*variations); ++k)
+		{
+			sprintf(lastSlash, variations[k], i);
+			
+			fprintf(stderr, "%s\n", roomNameBuf);
+			
+			if (FileExists(roomNameBuf))
+			{
+				SceneAddRoom(scene, RoomFromFilename(roomNameBuf));
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found)
+			Die("could not find room_%d", i);
+	}
+	
+	free(roomNameBuf);
+	return scene;
 }
 
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)

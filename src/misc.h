@@ -13,6 +13,7 @@ extern "C" {
 
 #include "stretchy_buffer.h"
 #include <stdint.h>
+#include <stdbool.h>
 
 #if 1 /* region: macros */
 #define UNFOLD_RGB(v)   (v).r, (v).g, (v).b
@@ -22,6 +23,8 @@ extern "C" {
 #define UNFOLD_RGB_EXT(v, action)   (v).r action, (v).g action, (v).b action
 
 #define UNFOLD_ARRAY_3(TYPE, ADDR) ((TYPE*)ADDR)[0], ((TYPE*)ADDR)[1], ((TYPE*)ADDR)[2]
+
+#define MAX(A, B) (((A) > (B)) ? (A) : (B))
 
 #define Vec3_Substract(dest, a, b) \
 	dest.x = a.x - b.x; \
@@ -160,8 +163,10 @@ struct Scene
 
 #if 1 /* region: function prototypes */
 
+bool FileExists(const char *filename);
 struct File *FileFromFilename(const char *filename);
 struct Scene *SceneFromFilename(const char *filename);
+struct Scene *SceneFromFilenamePredictRooms(const char *filename);
 struct Room *RoomFromFilename(const char *filename);
 struct Object *ObjectFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
@@ -174,6 +179,9 @@ void FileFree(struct File *file);
 void SceneFree(struct Scene *scene);
 void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
+char *StrdupPad(const char *str, int padding);
+
+struct Scene *WindowOpenFile(void);
 
 #endif /* function prototypes */
 
