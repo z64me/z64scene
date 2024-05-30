@@ -5,6 +5,7 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include <functional>
+#include "misc.h"
 
 #if 1 // region: private types
 
@@ -24,6 +25,7 @@ struct LinkedStringFunc
 #if 1 // region: private storage
 
 static GuiSettings gGuiSettings;
+static Scene *gScene;
 
 #endif
 
@@ -153,6 +155,13 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		"Scene Env"
 		, [](){
 			ImGui::TextWrapped("TODO: 'Scene Env' tab");
+			
+			// test sb macro
+			char test[16];
+			sprintf(test, "%d light settings", sb_count(gScene->headers[0].lights));
+			ImGui::TextWrapped(test);
+			sprintf(test, "%p", &gScene->test);
+			ImGui::TextWrapped(test);
 		}
 	},
 	new LinkedStringFunc{
@@ -348,9 +357,12 @@ extern "C" void GuiCleanup(void)
 	ImGui::DestroyContext();
 }
 
-extern "C" void GuiDraw(GLFWwindow *window)
+extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene)
 {
 	static bool show_demo_window = true;
+	
+	// saves us the trouble of passing this variable around
+	gScene = scene;
 	
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();

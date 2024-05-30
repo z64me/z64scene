@@ -138,6 +138,7 @@ void RoomFree(struct Room *room)
 void SceneHeaderFree(struct SceneHeader *header)
 {
 	sb_free(header->spawns);
+	sb_free(header->lights);
 }
 
 void SceneFree(struct Scene *scene)
@@ -213,6 +214,23 @@ static struct Instance private_InstanceParse(const void *data)
 	};
 }
 
+static struct ZeldaLight private_ZeldaLightParse(const void *data)
+{
+	// TODO make u16r and friends accept const, just cast here for now
+	/*const*/ uint8_t *data8 = (uint8_t*)data;
+	
+	return (struct ZeldaLight) {
+		.ambient            = { UNFOLD_ARRAY_3(uint8_t, data8 +  0) }
+		, .diffuse_a_dir    = { UNFOLD_ARRAY_3( int8_t, data8 +  3) }
+		, .diffuse_a        = { UNFOLD_ARRAY_3(uint8_t, data8 +  6) }
+		, .diffuse_b_dir    = { UNFOLD_ARRAY_3( int8_t, data8 +  9) }
+		, .diffuse_b        = { UNFOLD_ARRAY_3(uint8_t, data8 + 12) }
+		, .fog              = { UNFOLD_ARRAY_3(uint8_t, data8 + 15) }
+		, .fog_near         = u16r(data8 + 18)
+		, .fog_far          = u16r(data8 + 20)
+	};
+}
+
 static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 {
 	struct SceneHeader *result = Calloc(1, sizeof(*result));
@@ -256,8 +274,12 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x0F: // light list
-				result->refLights = (void*)(data8 + (u32r(walk + 4) & 0x00ffffff));
-				result->numRefLights = walk[1];
+				uint8_t *arr = data8 + (u32r(walk + 4) & 0x00ffffff);
+				
+				for (int i = 0; i < walk[1]; ++i)
+					sb_push(result->lights
+						, private_ZeldaLightParse(arr + 0x16 * i)
+					);
 				break;
 			
 			case 0x18: { // alternate headers

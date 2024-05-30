@@ -27,6 +27,8 @@ int main(void)
 		SceneAddRoom(scene, RoomFromFilename(tmp));
 	}
 	
+	fprintf(stderr, "%p\n", &scene->test);
+	
 	WindowMainLoop(scene);
 	
 	// cleanup

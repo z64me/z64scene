@@ -11,7 +11,7 @@
 
 extern void GuiInit(GLFWwindow *window);
 extern void GuiCleanup(void);
-extern void GuiDraw(GLFWwindow *window);
+extern void GuiDraw(GLFWwindow *window, struct Scene *scene);
 extern int GuiHasFocus(void);
 
 // a slanted triangular prism that points in one direction
@@ -682,7 +682,7 @@ void WindowMainLoop(struct Scene *scene)
 	while (!glfwWindowShouldClose(window))
 	{
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
-		EnvLightSettings settings = GetEnvironment((void*)scene->headers[0].refLights);
+		EnvLightSettings settings = GetEnvironment((void*)scene->headers[0].lights);
 		ZeldaLight *result = (void*)&settings;
 		
 		float bgcolor[3] = { UNFOLD_RGB_EXT(result->fog, / 255.0f) };
@@ -830,7 +830,7 @@ void WindowMainLoop(struct Scene *scene)
 		n64_draw_dlist(&meshPrismArrow[0x100]);
 		
 		// draw the ui
-		GuiDraw(window);
+		GuiDraw(window, scene);
 		shouldIgnoreInput = GuiHasFocus();
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

@@ -7,6 +7,10 @@
 #ifndef Z64SCENE_MISC_H_INCLUDED
 #define Z64SCENE_MISC_H_INCLUDED
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "stretchy_buffer.h"
 #include <stdint.h>
 
@@ -16,6 +20,8 @@
 #define UNFOLD_VEC3(v)  (v).x, (v).y, (v).z
 
 #define UNFOLD_RGB_EXT(v, action)   (v).r action, (v).g action, (v).b action
+
+#define UNFOLD_ARRAY_3(TYPE, ADDR) ((TYPE*)ADDR)[0], ((TYPE*)ADDR)[1], ((TYPE*)ADDR)[2]
 
 #define Vec3_Substract(dest, a, b) \
 	dest.x = a.x - b.x; \
@@ -50,18 +56,15 @@ struct Object;
 struct SceneHeader;
 struct Scene;
 
-#define N64_ATTR_PACKED __attribute__ ((__packed__, gcc_struct))
-#define N64_ATTR_BIG_ENDIAN __attribute__((scalar_storage_order("big-endian")))
-
-typedef struct N64_ATTR_PACKED ZeldaRGB {
+typedef struct ZeldaRGB {
 	uint8_t r, g, b;
 } ZeldaRGB;
 
-typedef struct N64_ATTR_PACKED ZeldaVecS8 {
+typedef struct ZeldaVecS8 {
 	int8_t x, y, z;
 } ZeldaVecS8;
 
-typedef struct N64_ATTR_BIG_ENDIAN ZeldaLight {
+typedef struct ZeldaLight {
 	ZeldaRGB ambient;
 	ZeldaVecS8 diffuse_a_dir;
 	ZeldaRGB diffuse_a;
@@ -73,7 +76,7 @@ typedef struct N64_ATTR_BIG_ENDIAN ZeldaLight {
 } ZeldaLight;
 
 // another way to interface with a ZeldaLight
-typedef struct N64_ATTR_BIG_ENDIAN {
+typedef struct {
 	/* 0x00 */ uint8_t ambientColor[3];
 	/* 0x03 */ int8_t light1Dir[3];
 	/* 0x06 */ uint8_t light1Color[3];
@@ -141,8 +144,7 @@ struct SceneHeader
 {
 	struct Scene *scene;
 	sb_array(struct SpawnPoint, spawns);
-	ZeldaLight *refLights;
-	int numRefLights;
+	sb_array(ZeldaLight, lights);
 	uint32_t addr;
 	int numRooms;
 };
@@ -152,6 +154,7 @@ struct Scene
 	struct File *file;
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
+	int test;
 };
 #endif /* types */
 
@@ -173,6 +176,10 @@ void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
 
 #endif /* function prototypes */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* Z64SCENE_MISC_H_INCLUDED */
 
