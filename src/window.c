@@ -865,6 +865,9 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
+		static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
+		static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
+		n64_draw_dlist(gfxEnableXray);
 		sb_foreach(scene->rooms, {
 			struct RoomHeader *header = &each->headers[0];
 			sb_foreach(header->instances, {
@@ -890,6 +893,7 @@ void WindowMainLoop(struct Scene *scene)
 				n64_draw_dlist(&meshPrismArrow[0x100]);
 			});
 		});
+		n64_draw_dlist(gfxDisableXray);
 		
 	L_skipSceneRender:
 		// draw the ui
