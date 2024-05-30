@@ -816,18 +816,33 @@ void WindowMainLoop(struct Scene *scene)
 		
 		n64_buffer_flush(true);
 		
-		// draw arrow using immediate mode method
-		identity(model);
-		{ // test loc/rot/scale
-			static float test = 0;
-			test += 0.01f;
-			mtx_translate_rot((void*)model, &(N64Vector3){test * 100, 0}, &(N64Vector3){0, 90, 0});
-			for (int i = 0; i < 12; ++i) model[i] *= 0.025f; // scale non-positioning components
-		}
-		n64_mtx_model(model);
-		n64_segment_set(0x06, meshPrismArrow);
+		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
-		n64_draw_dlist(&meshPrismArrow[0x100]);
+		sb_foreach(scene->rooms, {
+			struct RoomHeader *header = &each->headers[0];
+			sb_foreach(header->instances, {
+				identity(model);
+				{
+					mtx_translate_rot(
+						(void*)model
+						, &(N64Vector3){ each->x, each->y, each->z }
+						, &(N64Vector3){
+							BinToRad(each->xrot)
+							, BinToRad(each->yrot) - DegToRad(90) // correct model rotation
+							, BinToRad(each->zrot)
+						}
+					);
+					
+					// scale non-positioning components
+					for (int i = 0; i < 12; ++i)
+						model[i] *= 0.025f;
+				}
+				
+				n64_mtx_model(model);
+				n64_segment_set(0x06, meshPrismArrow);
+				n64_draw_dlist(&meshPrismArrow[0x100]);
+			});
+		});
 		
 		// draw the ui
 		GuiDraw(window, scene);

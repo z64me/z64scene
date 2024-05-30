@@ -7,11 +7,23 @@
 #include <functional>
 #include "misc.h"
 
+#if 1 // region: helper macros
+
+#define CLAMP(VALUE, MIN, MAX) (((VALUE) < (MIN)) ? (MIN) : ((VALUE) > (MAX)) ? (MAX) : (VALUE))
+
+// allows using mousewheel while hovering the last-drawn combo box to quickly change its value
+#define IMGUI_COMBO_HOVER(CURRENT, HOWMANY) \
+	if (ImGui::IsItemHovered() && ImGui::GetIO().MouseWheel) \
+		CURRENT = CLAMP((CURRENT) - ImGui::GetIO().MouseWheel, 0, (HOWMANY) - 1);
+
+#endif
+
 #if 1 // region: private types
 
 struct GuiSettings
 {
 	bool showSidebar = true;
+	bool showImGuiDemoWindow = false;
 };
 
 struct LinkedStringFunc
@@ -138,6 +150,35 @@ static void MultiLineTabBar(const char *uniqueName, char const *arr[], const int
 	);
 }
 
+static void PickIntValue(const char *uniqueName, int *v, int min = INT_MIN, int max = INT_MAX)
+{
+	ImGuiIO &io = ImGui::GetIO();
+	bool isSingleClick = false;
+	
+	// want single-click to behave as double-click so users click to edit
+	if (io.MouseClickedCount[0] == 1)
+	{
+		io.MouseClickedCount[0] = 2;
+		isSingleClick = true;
+	}
+	
+	ImGui::DragInt(uniqueName, v, 0.00001f, 0, 0xffff, "0x%04x", ImGuiSliderFlags_None);
+	
+	if (isSingleClick)
+		io.MouseClickedCount[0] = 1;
+	
+	*v = CLAMP(*v, min, max);
+}
+
+static void PickHexValueU16(const char *uniqueName, uint16_t *v, uint16_t min = 0, uint16_t max = 0xffff)
+{
+	int tmp = *v;
+	
+	PickIntValue(uniqueName, &tmp, min, max);
+	
+	*v = tmp;
+}
+
 static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"General"
@@ -191,7 +232,113 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"Instances"
 		, [](){
-			ImGui::TextWrapped("TODO: 'Instances' tab");
+			RoomHeader *header = &gScene->rooms[0].headers[0];
+			Instance *instances = header->instances;
+			Instance *inst;
+			static int current = 0;
+			
+			if (sb_count(instances) == 0)
+			{
+				ImGui::TextWrapped("No instances. Add an instance to get started.");
+				
+				return;
+			}
+			
+			ImGui::SeparatorText("Instance List");
+			ImGui::Combo(
+				"##Instance##InstanceCombo"
+				, &current
+				, [](void* data, int n) {
+					static char test[64];
+					Instance *inst = &((Instance*)data)[n];
+					sprintf(test, "%d: 0x%04x", n, inst->id);
+					return (const char*)test;
+				}
+				, instances
+				, sb_count(instances)
+			);
+			IMGUI_COMBO_HOVER(current, sb_count(instances));
+			inst = &instances[current];
+			ImGui::Button("Add##InstanceCombo"); ImGui::SameLine();
+			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
+			ImGui::Button("Delete##InstanceCombo");
+			
+			ImGui::SeparatorText("Data");
+			
+			// id w/ search
+			PickHexValueU16("ID##Instance", &inst->id);
+			ImGui::SameLine();
+			if (ImGui::Button("Search##Instance"))
+				ImGui::OpenPopup("InstanceTypeSearch");
+			if (ImGui::BeginPopup("InstanceTypeSearch"))
+			{
+				static ImGuiTextFilter filter;
+				filter.Draw();
+				
+				const char* names[] = {
+					"Stalfos"
+					, "Stalchild"
+					, "Stalhorse"
+					, "Stalhound"
+					, "Lizalfos"
+					, "Moblin"
+					, "Deku Baba"
+					, "Deku Scrub"
+					, "Deku Tree"
+					, "Mad Scrub"
+				};
+				
+				for (int i = 0; i < IM_ARRAYSIZE(names); i++)
+					if (filter.PassFilter(names[i]))
+						if (ImGui::Selectable(names[i]))
+							inst->id = i;
+				ImGui::EndPopup();
+			}
+			
+			// params
+			PickHexValueU16("Params##Instance", &inst->params);
+			
+			ImGui::SeparatorText("Position");
+			int xpos = inst->x;
+			int ypos = inst->y;
+			int zpos = inst->z;
+			ImGui::InputInt("X##InstancePos", &xpos);
+			ImGui::InputInt("Y##InstancePos", &ypos);
+			ImGui::InputInt("Z##InstancePos", &zpos);
+			inst->x = xpos;
+			inst->y = ypos;
+			inst->z = zpos;
+			
+			ImGui::SeparatorText("Rotation");
+			int xrot = inst->xrot;
+			int yrot = inst->yrot;
+			int zrot = inst->zrot;
+			ImGui::InputInt("X##InstanceRot", &xrot);
+			ImGui::InputInt("Y##InstanceRot", &yrot);
+			ImGui::InputInt("Z##InstanceRot", &zrot);
+			inst->xrot = xrot;
+			inst->yrot = yrot;
+			inst->zrot = zrot;
+			
+			ImGui::SeparatorText("Options");
+			static int item_current_idx = 0; // Here we store our selection data as an index.
+			const char* items[] = { "TODO", "source", "from", "config" };
+			if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				for (int n = 0; n < 10; n++)
+				{
+					const bool is_selected = (item_current_idx == n);
+					if (ImGui::Selectable(items[n % IM_ARRAYSIZE(items)], is_selected))
+						item_current_idx = n;
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndListBox();
+			}
+			// TODO different value input types for different options
+			static int todoOptions; ImGui::InputInt("Value##InstanceOptions", &todoOptions);
 		}
 	},
 	new LinkedStringFunc{
@@ -311,6 +458,9 @@ static void DrawMenuBar(void)
 		if (ImGui::BeginMenu("View"))
 		{
 			if (ImGui::MenuItem("Sidebar", NULL, &gGuiSettings.showSidebar));
+			#ifndef NDEBUG
+			ImGui::MenuItem("ImGui Demo Window", NULL, &gGuiSettings.showImGuiDemoWindow);
+			#endif
 			
 			ImGui::EndMenu();
 		}
@@ -359,8 +509,6 @@ extern "C" void GuiCleanup(void)
 
 extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene)
 {
-	static bool show_demo_window = true;
-	
 	// saves us the trouble of passing this variable around
 	gScene = scene;
 	
@@ -375,8 +523,8 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene)
 		DrawSidebar();
 	
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-	if (show_demo_window)
-		ImGui::ShowDemoWindow(&show_demo_window);
+	if (gGuiSettings.showImGuiDemoWindow)
+		ImGui::ShowDemoWindow(&gGuiSettings.showImGuiDemoWindow);
 	
 	// Rendering
 	ImGui::Render();
