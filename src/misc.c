@@ -199,8 +199,7 @@ void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 
 static struct Instance private_InstanceParse(const void *data)
 {
-	// TODO make u16r and friends accept const, just cast here for now
-	/*const*/ uint8_t *data8 = (uint8_t*)data;
+	const uint8_t *data8 = data;
 	
 	return (struct Instance) {
 		.id = u16r(data8 + 0)
@@ -216,8 +215,7 @@ static struct Instance private_InstanceParse(const void *data)
 
 static struct ZeldaLight private_ZeldaLightParse(const void *data)
 {
-	// TODO make u16r and friends accept const, just cast here for now
-	/*const*/ uint8_t *data8 = (uint8_t*)data;
+	const uint8_t *data8 = data;
 	
 	return (struct ZeldaLight) {
 		.ambient            = { UNFOLD_ARRAY_3(uint8_t, data8 +  0) }
