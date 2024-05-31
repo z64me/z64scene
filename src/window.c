@@ -9,6 +9,7 @@
 #include "extmath.h"
 #include "gizmo.h"
 #include "gui.h"
+#include "window.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -66,6 +67,8 @@ void processInput(GLFWwindow *window);
 // settings
 #define WINDOW_INITIAL_WIDTH   800
 #define WINDOW_INITIAL_HEIGHT  600
+#define WINDOW_INITIAL_FOVY    60.0f
+#define PROJ_NEAR              10
 
 struct Input
 {
@@ -109,9 +112,13 @@ static struct State
 	Matrix projMtx;
 	int winWidth;
 	int winHeight;
+	struct CameraFly cameraFly;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
 	, .winHeight = WINDOW_INITIAL_HEIGHT
+	, .cameraFly = {
+		.fovy = WINDOW_INITIAL_FOVY
+	}
 };
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -230,6 +237,15 @@ static inline void *camera_flythrough(Matrix *m)
 		, 0
 	);
 	
+	//fprintf(stderr, "%f %f %f\n", UNFOLD_ARRAY_3(float, look));
+	memcpy(&gState.cameraFly.eye, pos, sizeof(pos));
+	//memcpy(&gState.cameraFly.lookAt, look, sizeof(look));
+	gState.cameraFly.lookAt = (Vec3f) {
+		pos[0] + look[0] * PROJ_NEAR,
+		pos[1] + look[1] * PROJ_NEAR,
+		pos[2] + look[2] * PROJ_NEAR
+	};
+	
 	oldcursor = cursor;
 	
 	return m;
@@ -251,7 +267,7 @@ static float *identity(float dst[16])
 
 #undef near // win32 includes break near and far
 #undef far
-static float *projection(Matrix *dst, float winw, float winh, float near, float far)
+static float *projection(Matrix *dst, float winw, float winh, float near, float far, float fovy)
 {
 	float *m = (void*)dst;
 	float aspect;
@@ -260,7 +276,7 @@ static float *projection(Matrix *dst, float winw, float winh, float near, float 
 
 	/* intialize projection matrix */
 	aspect = winw / winh;
-	f      = 1.0 / tan(60.0f * (3.14159265359f / 180.0f) * 0.5f);
+	f      = 1.0 / tan(fovy * (3.14159265359f / 180.0f) * 0.5f);
 	iNF    = 1.0 / (near - far);
 
 	m[0]=f/aspect; m[4]=0.0f; m[ 8]= 0.0f;           m[12]=0.0f;
@@ -815,7 +831,7 @@ void WindowMainLoop(struct Scene *scene)
 			result->ambient = (ZeldaRGB) { -1, -1, -1 };
 		}
 		
-		projection(&gState.projMtx, gState.winWidth, gState.winHeight, 10, result->fog_far/*12800*/);
+		projection(&gState.projMtx, gState.winWidth, gState.winHeight, PROJ_NEAR, result->fog_far/*12800*/, gState.cameraFly.fovy);
 		
 		n64_update_tick();
 		n64_buffer_init();
@@ -973,7 +989,7 @@ void WindowMainLoop(struct Scene *scene)
 		}
 		
 		// gizmo
-		GizmoDraw(gizmo);
+		GizmoDraw(gizmo, &gState.cameraFly);
 		
 	L_skipSceneRender:
 		// draw the ui

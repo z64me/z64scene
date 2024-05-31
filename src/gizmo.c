@@ -7,6 +7,7 @@
 #include "extmath.h"
 #include "n64.h"
 #include "misc.h"
+#include "window.h"
 
 // assets
 INCBIN(GfxGizmo, "embed/gfxGizmo.bin");
@@ -32,7 +33,7 @@ void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z)
 }
 
 // TODO still very WIP
-void GizmoDraw(struct Gizmo *gizmo)
+void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 {
 	#if 0
 	Vec3f mxo[3] = {
@@ -55,6 +56,18 @@ void GizmoDraw(struct Gizmo *gizmo)
 	
 	// scale
 	float s = 0.25;
+	
+	// want gizmo to remain the same size regardless of camera distance
+	if (true)
+	{
+		Vec3f p = Vec3f_ProjectAlong(gizmo->pos, camera->eye, camera->lookAt);
+		f32 dist = Vec3f_DistXYZ(p, camera->eye);
+		
+		//if (camera->isOrthographic)
+		//	s = camera->dist / 2850.0f;
+		//else
+			s = dist / 2000.0f * tanf(DegToRad(camera->fovy) / 2.0f);
+	}
 	
 	// construct model
 	gfxDisp = gfxHead;
@@ -84,7 +97,7 @@ void GizmoDraw(struct Gizmo *gizmo)
 			//Matrix_MultVec3f(&sOffsetMul[1], &gizmo->cyl[i].end);
 			
 			//Vec3f dir = Vec3f_LineSegDir(gizmo->cyl[i].start, gizmo->cyl[i].end);
-			//Vec3f frn = Vec3f_LineSegDir(view->currentCamera->eye, view->currentCamera->at);
+			//Vec3f frn = Vec3f_LineSegDir(camera->eye, camera->at);
 			//f32 dot = invertf(fabsf(powf(Vec3f_Dot(dir, frn), 3)));
 			//u8 alpha = gizmo->focus.axis[i] ? 0xFF : 0xFF * dot;
 			u8 alpha = 255;
@@ -94,7 +107,7 @@ void GizmoDraw(struct Gizmo *gizmo)
 			//if (gizmo->focus.axis[i])
 			//	gXPSetHighlightColor(gfxDisp++, 0xFF, 0xFF, 0xFF, 0x40, DODGE);
 			
-			//gizmo->cyl[i].r = Vec3f_DistXYZ(gizmo->pos, view->currentCamera->eye) * 0.02f;
+			//gizmo->cyl[i].r = Vec3f_DistXYZ(gizmo->pos, camera->eye) * 0.02f;
 			
 			gSPMatrix(gfxDisp++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
 			gSPDisplayList(gfxDisp++, 0x06000810); // gGizmo_DlGizmo
