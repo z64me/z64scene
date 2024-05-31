@@ -69,10 +69,10 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
 // settings
-unsigned int gWindowWidth = 800;
-unsigned int gWindowHeight = 600;
+#define WINDOW_INITIAL_WIDTH   800
+#define WINDOW_INITIAL_HEIGHT  600
 
-struct
+struct Input
 {
 	struct
 	{
@@ -90,6 +90,11 @@ struct
 			int left;
 			int right;
 		} button;
+		struct
+		{
+			bool left;
+			bool right;
+		} clicked;
 	} mouse;
 	struct
 	{
@@ -101,6 +106,18 @@ struct
 	} key;
 	float delta_time_sec;
 } gInput = {0};
+
+static struct State
+{
+	struct Input *input;
+	Matrix viewMtx;
+	Matrix projMtx;
+	int winWidth;
+	int winHeight;
+} gState = {
+	.winWidth = WINDOW_INITIAL_WIDTH
+	, .winHeight = WINDOW_INITIAL_HEIGHT
+};
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -125,8 +142,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	// make sure the viewport matches the new window dimensions; note that width and 
 	// height will be significantly larger than specified on retina displays.
 	glViewport(0, 0, width, height);
-	gWindowWidth = width;
-	gWindowHeight = height;
+	gState.winWidth = width;
+	gState.winHeight = height;
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -167,15 +184,19 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 	{
 		case GLFW_MOUSE_BUTTON_RIGHT:
 			gInput.mouse.button.right = pressed;
+			if (action == GLFW_RELEASE) // TODO make it timed
+				gInput.mouse.clicked.right = true;
 			break;
 		
 		case GLFW_MOUSE_BUTTON_LEFT:
 			gInput.mouse.button.left = pressed;
+			if (action == GLFW_RELEASE) // TODO make it timed
+				gInput.mouse.clicked.left = true;
 			break;
 	}
 }
 
-static inline void *camera_flythrough(float m[16])
+static inline void *camera_flythrough(Matrix *m)
 {
 	/* camera magic */
 	static float pos[3] = { 0.0f, 0.0f, 0.0f };
@@ -199,7 +220,7 @@ static inline void *camera_flythrough(float m[16])
 	float speed = 1000;
 	
 	flythrough_camera_update(
-		pos, look, up, m
+		pos, look, up, (void*)m
 		, gInput.delta_time_sec
 		, speed * (gInput.key.lshift ? 2.0f : 1.0f)
 		, 0.5f * activated
@@ -235,9 +256,9 @@ static float *identity(float dst[16])
 
 #undef near // win32 includes break near and far
 #undef far
-static float *projection(float dst[16], float winw, float winh, float near, float far)
+static float *projection(Matrix *dst, float winw, float winh, float near, float far)
 {
-	float *m = dst;
+	float *m = (void*)dst;
 	float aspect;
 	float f;
 	float iNF;
@@ -615,8 +636,29 @@ struct Scene *WindowOpenFile(void)
 	return scene;
 }
 
+RayLine View_GetCursorRayLine(struct State *state)
+{
+	assert(state);
+	
+	int w = state->winWidth;
+	int h = state->winHeight;
+	Matrix *viewMtx = &state->viewMtx;
+	Matrix *projMtx = &state->projMtx;
+	Vec2f point = { state->input->mouse.pos.x, state->input->mouse.pos.y };
+	
+	Vec3f projA = Vec3f_New(point.x, point.y, 0.0f);
+	Vec3f projB = Vec3f_New(point.x, point.y, 1.0f);
+	Vec3f rayA, rayB;
+	
+	Matrix_Unproject(viewMtx, projMtx, &projA, &rayA, w, h);
+	Matrix_Unproject(viewMtx, projMtx, &projB, &rayB, w, h);
+	
+	return RayLine_New(rayA, rayB);
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
+	gState.input = &gInput;
 	struct Gizmo *gizmo = GizmoNew();
 	GLFWwindow* window;
 	bool shouldIgnoreInput = false;
@@ -635,7 +677,7 @@ void WindowMainLoop(struct Scene *scene)
 	
 	// glfw window creation
 	// --------------------
-	window = glfwCreateWindow(gWindowWidth, gWindowHeight, "z64viewer", NULL, NULL);
+	window = glfwCreateWindow(WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT, "z64viewer", NULL, NULL);
 	if (window == NULL)
 	{
 		Die("Failed to create GLFW window");
@@ -693,24 +735,73 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// mvp matrix
 		float model[16];
-		static float view[16];
-		float p[16];
 		
 		identity(model);
 		
 		// ignore 3d camera controls if gui has focus
-		if (shouldIgnoreInput == false)
-			camera_flythrough(view);
+		if (shouldIgnoreInput == false && scene)
+		{
+			camera_flythrough(&gState.viewMtx);
+			
+			// consume left-click
+			if (gInput.mouse.clicked.left)
+			{
+				gInput.mouse.clicked.left = false;
+				
+				// click an instance to select it
+				{
+					RayLine ray = View_GetCursorRayLine(&gState);
+					
+					sb_foreach(scene->rooms, {
+						struct RoomHeader *header = &each->headers[0];
+						sb_foreach(header->instances, {
+							if (Col3D_LineVsSphere(
+								&ray
+								, &(Sphere){
+									.pos = (Vec3f){ each->x, each->y, each->z }
+									, .r = 20
+								}
+								, 0
+							)) {
+								// TODO construct a list of collisions and choose the nearest instance
+								// TODO if multiple instances overlap, each click should cycle through them
+								// TODO update gui instances tab
+								GizmoSetPosition(gizmo, each->x, each->y, each->z);
+							}
+						});
+					});
+				}
+				/*
+				for (var_t i = 0; i < room->actorList.num; i++) {
+					Actor* actor = Arli_At(&room->actorList, i);
+					
+					veccpy(&actor->sph.pos, &actor->pos);
+					actor->sph.pos.y += 10.0f;
+					actor->sph.r = 20;
+					
+					if (Col3D_LineVsSphere(&ray, &actor->sph, &p)) {
+						if (actor->state & ACTOR_SELECTED) {
+							selHit = actor;
+							
+							continue;
+						}
+						
+						selectedActor = actor;
+					}
+				}
+				*/
+			}
+		}
 		
-		projection(p, gWindowWidth, gWindowHeight, 10, 12800);
+		projection(&gState.projMtx, gState.winWidth, gState.winHeight, 10, 12800);
 		
 		n64_update_tick();
 		n64_buffer_init();
 		
 		n64_culling(false);
 		n64_mtx_model(model);
-		n64_mtx_view(view);
-		n64_mtx_projection(p);
+		n64_mtx_view(&gState.viewMtx);
+		n64_mtx_projection(&gState.projMtx);
 		
 		//goto L_onlyGizmo;
 		
@@ -742,7 +833,7 @@ void WindowMainLoop(struct Scene *scene)
 			uint8_t *cylinder = billboards + 0x40;
 			
 			// sphere = inverse of view mtx w/ some parts reverted to identity
-			memcpy(&inverse_mv, view, sizeof(view));
+			memcpy(&inverse_mv, &gState.viewMtx, sizeof(gState.viewMtx));
 			inverse_mv.mf[0][3] = inverse_mv.mf[1][3] = inverse_mv.mf[2][3]
 				= inverse_mv.mf[3][0] = inverse_mv.mf[3][1] = inverse_mv.mf[3][2]
 				= 0.0f;
