@@ -17,6 +17,10 @@ struct Gizmo
 {
 	Vec3f pos;
 	Matrix mtx;
+	struct GizmoAxis {
+		Cylinder cylinder;
+		bool isHovered;
+	} axis[3];
 	bool isInUse;
 };
 
@@ -32,6 +36,37 @@ void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z)
 	gizmo->pos = (Vec3f){x, y, z};
 }
 
+void GizmoUpdate(struct Gizmo *gizmo)
+{
+	if (true/*!gizmo->lock.state*/)
+	{
+		RayLine ray = WindowGetCursorRayLine();
+		
+		for (int i = 0; i < 3; i++)
+		{
+			struct GizmoAxis *axis = &gizmo->axis[i];
+			bool isHovered = Col3D_LineVsCylinder(&ray, &axis->cylinder, 0);
+			
+			axis->isHovered = isHovered;
+			
+			/*
+			if (isHovered)
+			{
+				if (Input_GetCursor(input, CLICK_L)->press)
+				{
+					Gizmo_SetAction(gizmo, GIZMO_ACTION_MOVE);
+					gizmo->initpos = gizmo->pos;
+					gizmo->lock.axis[i] = true;
+					gizmo->initAction = true;
+					gizmo->pressHold = true;
+					break;
+				}
+			}
+			*/
+		}
+	}
+}
+
 // TODO still very WIP
 void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 {
@@ -41,11 +76,11 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 		/* MXO_U */ { gizmo->mtx.xy, gizmo->mtx.yy, gizmo->mtx.zy },
 		/* MXO_F */ { gizmo->mtx.xz, gizmo->mtx.yz, gizmo->mtx.zz },
 	};
+	#endif
 	static Vec3f sOffsetMul[] = {
 		{ 0, 120, 0 },
 		{ 0, 400, 0 },
 	};
-	#endif
 	static GbiGfx *gfxHead = 0;
 	static GbiGfx *gfxDisp;
 	
@@ -74,6 +109,9 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	gSPSegment(gfxDisp++, 0x06, gGfxGizmoData);
 	for (int i = 0; i < 3; i++)
 	{
+		struct GizmoAxis *axis = &gizmo->axis[i];
+		struct Cylinder *cyl = &(axis->cylinder);
+		
 		Vec3f color = Vec3f_MulVal(Vec3fRGBfromHSV(1.0f - (i / 3.0f), 0.75f, 0.62f), 255);
 		
 		// TODO draw axis line
@@ -93,27 +131,28 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 			else if (i == 2)
 				Matrix_RotateX_d(90, MTXMODE_APPLY);
 			
-			//Matrix_MultVec3f(&sOffsetMul[0], &gizmo->cyl[i].start);
-			//Matrix_MultVec3f(&sOffsetMul[1], &gizmo->cyl[i].end);
+			Matrix_MultVec3f(&sOffsetMul[0], &cyl->start);
+			Matrix_MultVec3f(&sOffsetMul[1], &cyl->end);
 			
-			//Vec3f dir = Vec3f_LineSegDir(gizmo->cyl[i].start, gizmo->cyl[i].end);
-			//Vec3f frn = Vec3f_LineSegDir(camera->eye, camera->at);
-			//f32 dot = invertf(fabsf(powf(Vec3f_Dot(dir, frn), 3)));
-			//u8 alpha = gizmo->focus.axis[i] ? 0xFF : 0xFF * dot;
-			u8 alpha = 255;
+			// fancy translucency
+			Vec3f dir = Vec3f_LineSegDir(cyl->start, cyl->end);
+			Vec3f frn = Vec3f_LineSegDir(camera->eye, camera->lookAt);
+			f32 dot = invertf(fabsf(powf(Vec3f_Dot(dir, frn), 3)));
+			u8 alpha = axis->isHovered ? 0xFF : 0xFF * dot;
+			//alpha = 255; // opaque
 			
 			gDPSetEnvColor(gfxDisp++, UNFOLD_VEC3(color), alpha);
 			
-			//if (gizmo->focus.axis[i])
-			//	gXPSetHighlightColor(gfxDisp++, 0xFF, 0xFF, 0xFF, 0x40, DODGE);
+			if (axis->isHovered)
+				gXPSetHighlightColor(gfxDisp++, 0xFF, 0xFF, 0xFF, 0x40, DODGE);
 			
-			//gizmo->cyl[i].r = Vec3f_DistXYZ(gizmo->pos, camera->eye) * 0.02f;
+			cyl->r = Vec3f_DistXYZ(gizmo->pos, camera->eye) * 0.02f;
 			
 			gSPMatrix(gfxDisp++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
 			gSPDisplayList(gfxDisp++, 0x06000810); // gGizmo_DlGizmo
 			
-			//if (gizmo->focus.axis[i])
-			//	gXPClearHighlightColor(gfxDisp++);
+			if (axis->isHovered)
+				gXPClearHighlightColor(gfxDisp++);
 		} Matrix_Pop();
 	}
 	gSPEndDisplayList(gfxDisp++);

@@ -19,5 +19,7 @@ struct CameraFly
 	float fovy;
 };
 
+RayLine WindowGetCursorRayLine(void);
+
 #endif /* Z64SCENE_WINDOW_H_INCLUDED */
 

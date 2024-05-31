@@ -559,30 +559,30 @@ static inline void mat44_to_matn64(unsigned char *dest, float src[16])
 #endif // endregion: matrix
 
 #if 1 // region: collision
-typedef struct {
+typedef struct Triangle {
 	Vec3f v[3];
 	u8    cullBackface;
 	u8    cullFrontface;
 } Triangle;
 
-typedef struct {
+typedef struct TriBuffer {
 	Triangle* head;
 	u32       max;
 	u32       num;
 } TriBuffer;
 
-typedef struct {
+typedef struct RayLine {
 	Vec3f start;
 	Vec3f end;
 	f32   nearest;
 } RayLine;
 
-typedef struct {
+typedef struct Sphere {
 	Vec3f pos;
 	f32   r;
 } Sphere;
 
-typedef struct {
+typedef struct Cylinder {
 	Vec3f start;
 	Vec3f end;
 	f32   r;

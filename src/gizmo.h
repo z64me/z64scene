@@ -10,6 +10,7 @@ struct Gizmo;
 // functions
 struct Gizmo *GizmoNew(void);
 void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z);
+void GizmoUpdate(struct Gizmo *gizmo);
 void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera);
 
 #endif

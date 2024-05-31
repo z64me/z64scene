@@ -674,6 +674,11 @@ RayLine View_GetCursorRayLine(struct State *state)
 	return RayLine_New(rayA, rayB);
 }
 
+RayLine WindowGetCursorRayLine(void)
+{
+	return View_GetCursorRayLine(&gState);
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
@@ -989,6 +994,7 @@ void WindowMainLoop(struct Scene *scene)
 		}
 		
 		// gizmo
+		GizmoUpdate(gizmo);
 		GizmoDraw(gizmo, &gState.cameraFly);
 		
 	L_skipSceneRender:
