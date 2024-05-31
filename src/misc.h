@@ -26,29 +26,6 @@ extern "C" {
 
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
 
-#define Vec3_Substract(dest, a, b) \
-	dest.x = a.x - b.x; \
-	dest.y = a.y - b.y; \
-	dest.z = a.z - b.z
-
-#define SQ(x)        ((x) * (x))
-#define Math_SinS(x) sinf(BinToRad((int16_t)(x)))
-#define Math_CosS(x) cosf(BinToRad((int16_t)(x)))
-#define Math_SinF(x) sinf(DegToRad(x))
-#define Math_CosF(x) cosf(DegToRad(x))
-#define Math_SinR(x) sinf(x)
-#define Math_CosR(x) cosf(x)
-
-// trigonometry macros
-#define DegToBin(degreesf) (int16_t)(degreesf * 182.04167f + .5f)
-#define RadToBin(radf)     (int16_t)(radf * (32768.0f / M_PI))
-#define RadToDeg(radf)     (radf * (180.0f / M_PI))
-#define DegToRad(degf)     (degf * (M_PI / 180.0f))
-#define BinFlip(angle)     ((int16_t)(angle - 0x7FFF))
-#define BinSub(a, b)       ((int16_t)(a - b))
-#define BinToDeg(binang)   ((float)binang * (360.0001525f / 65535.0f))
-#define BinToRad(binang)   (((float)binang / 32768.0f) * M_PI)
-
 #endif /* macros */
 
 #if 1 /* region: types */

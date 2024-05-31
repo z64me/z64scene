@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "misc.h"
+#include "extmath.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -261,13 +262,6 @@ typedef struct N64_ATTR_BIG_ENDIAN ZeldaMatrix {
 	};
 } ZeldaMatrix;
 
-typedef struct Matrix {
-	float xx, yx, zx, wx;
-	float xy, yy, zy, wy;
-	float xz, yz, zz, wz;
-	float xw, yw, zw, ww;
-} Matrix;
-
 void mtx_to_zmtx(Matrix* src, ZeldaMatrix* dest) {
 	int temp;
 	uint16_t* m1 = (void*)(((char*)dest));
@@ -359,34 +353,6 @@ static inline void mat44_to_matn64(unsigned char *dest, float src[16])
 		}
 	}
 }
-
-typedef float MtxF_t[4][4];
-typedef union {
-	MtxF_t mf;
-	struct {
-		float xx, yx, zx, wx,
-		    xy, yy, zy, wy,
-		    xz, yz, zz, wz,
-		    xw, yw, zw, ww;
-	};
-} MtxF;
-
-void Matrix_Transpose(MtxF* mf) {
-	float temp;
-	
-	temp = mf->yx;
-	mf->yx = mf->xy;
-	mf->xy = temp;
-	
-	temp = mf->zx;
-	mf->zx = mf->xz;
-	mf->xz = temp;
-	
-	temp = mf->zy;
-	mf->zy = mf->yz;
-	mf->yz = temp;
-}
-
 
 #if 1 /* region: day/night */
 
@@ -540,9 +506,9 @@ static EnvLightSettings GetEnvironment(EnvLightSettings *lights)
 		}
 		
 		// set light1 direction for the sun
-		dst.light1Dir[0] = -(Math_SinS(dayTime - CLOCK_TIME(12, 0)) * 120.0f);
-		dst.light1Dir[1] = Math_CosS(dayTime - CLOCK_TIME(12, 0)) * 120.0f;
-		dst.light1Dir[2] = Math_CosS(dayTime - CLOCK_TIME(12, 0)) * 20.0f;
+		dst.light1Dir[0] = -(SinS(dayTime - CLOCK_TIME(12, 0)) * 120.0f);
+		dst.light1Dir[1] = CosS(dayTime - CLOCK_TIME(12, 0)) * 120.0f;
+		dst.light1Dir[2] = CosS(dayTime - CLOCK_TIME(12, 0)) * 20.0f;
 		
 		// set light2 direction for the moon
 		dst.light2Dir[0] = -dst.light1Dir[0];
@@ -631,9 +597,9 @@ void DoLights(ZeldaLight *light)
 		}
 		
 		dirA = (ZeldaVecS8) {
-			(Math_SinS(dayTime) - 0x8000) * 120.0f,
-			(Math_CosS(dayTime) - 0x8000) * 120.0f,
-			(Math_CosS(dayTime) - 0x8000) * 20.0f
+			(SinS(dayTime) - 0x8000) * 120.0f,
+			(CosS(dayTime) - 0x8000) * 120.0f,
+			(CosS(dayTime) - 0x8000) * 20.0f
 		};
 		
 		Vec3_Substract(dirB, (ZeldaVecS8) { 0 }, dirA);
@@ -785,7 +751,7 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// generate billboard matrices
 		{
-			MtxF inverse_mv;
+			Matrix inverse_mv;
 			uint8_t billboards[0x80];
 			uint8_t *sphere = billboards;
 			uint8_t *cylinder = billboards + 0x40;
