@@ -5,12 +5,34 @@
 // and other useful math functions
 
 #include "extmath.h"
+#include "n64.h" // n64_graph_alloc
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
 #if 1 // region: vector
+
+Vec3f Vec3fRGBfromHSV(float h, float s, float v) {
+	float r, g, b;
+	
+	int i = floor(h * 6);
+	float f = h * 6 - i;
+	float p = v * (1 - s);
+	float q = v * (1 - f * s);
+	float t = v * (1 - (1 - f) * s);
+	
+	switch (i % 6) {
+		case 0: r = v, g = t, b = p; break;
+		case 1: r = q, g = v, b = p; break;
+		case 2: r = p, g = v, b = t; break;
+		case 3: r = p, g = q, b = v; break;
+		case 4: r = t, g = p, b = v; break;
+		case 5: r = v, g = p, b = q; break;
+	}
+	
+	return (Vec3f){r, g, b};
+}
 
 s16 Atan2S(f32 x, f32 y) {
 	return RadToBin(atan2f(y, x));
@@ -1885,6 +1907,8 @@ void Matrix_MtxToMtxF(MtxN64* src, Matrix* dest) {
 }
 
 MtxN64* Matrix_MtxFToMtx(Matrix* src, MtxN64* dest) {
+	mat44_to_matn64((void*)dest, (void*)src);
+	return dest;
 	s32 temp;
 	u16* m1 = (void*)((u8*)dest);
 	u16* m2 = (void*)((u8*)dest + 0x20);
@@ -1961,7 +1985,7 @@ MtxN64* Matrix_ToMtx(MtxN64* dest) {
 }
 
 MtxN64* Matrix_NewMtxN64() {
-	return Matrix_ToMtx(calloc(1, sizeof(MtxN64))); // previously x_alloc
+	return Matrix_ToMtx(n64_graph_alloc(sizeof(MtxN64))); // previously x_alloc
 }
 
 void Matrix_MtxFMtxFMult(Matrix* mfA, Matrix* mfB, Matrix* dest) {

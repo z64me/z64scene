@@ -437,6 +437,7 @@ Vec4s Vec4s_Reflect(Vec4s vec, Vec4s normal);
 
 Vec3f Vec3f_ClosestPointOnRay(Vec3f rayStart, Vec3f rayEnd, Vec3f lineStart, Vec3f lineEnd);
 Vec3f Vec3f_ProjectAlong(Vec3f point, Vec3f lineA, Vec3f lineB);
+Vec3f Vec3fRGBfromHSV(float h, float s, float v);
 
 #endif // endregion: vector
 
@@ -532,6 +533,29 @@ static inline void Matrix_RotateY_d(f32 y, MtxMode mode) {
 static inline void Matrix_RotateZ_d(f32 z, MtxMode mode) {
 	Matrix_RotateZ(DegToRad(z), mode);
 }
+
+static inline void mat44_to_matn64(unsigned char *dest, float src[16])
+{
+#define    FTOFIX32(x)    (long)((x) * (float)0x00010000)
+	int32_t t;
+	unsigned char *intpart = dest;
+	unsigned char *fracpart = dest + 0x20;
+	for (int i=0; i < 4; ++i)
+	{
+		for (int k=0; k < 4; ++k)
+		{
+			t = FTOFIX32(src[4*i+k]);
+			short ip = (t >> 16) & 0xFFFF;
+			intpart[0]  = (ip >> 8) & 255;
+			intpart[1]  = (ip >> 0) & 255;
+			fracpart[0] = (t >>  8) & 255;
+			fracpart[1] = (t >>  0) & 255;
+			intpart  += 2;
+			fracpart += 2;
+		}
+	}
+}
+
 #endif // endregion: matrix
 
 #if 1 // region: collision

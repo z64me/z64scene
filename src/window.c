@@ -7,6 +7,7 @@
 
 #include "misc.h"
 #include "extmath.h"
+#include "gizmo.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -332,28 +333,6 @@ void mtx_to_zmtx(Matrix* src, ZeldaMatrix* dest) {
 	m2[15] = temp & 0xFFFF;
 }
 
-static inline void mat44_to_matn64(unsigned char *dest, float src[16])
-{
-#define    FTOFIX32(x)    (long)((x) * (float)0x00010000)
-	int32_t t;
-	unsigned char *intpart = dest;
-	unsigned char *fracpart = dest + 0x20;
-	for (int i=0; i < 4; ++i)
-	{
-		for (int k=0; k < 4; ++k)
-		{
-			t = FTOFIX32(src[4*i+k]);
-			short ip = (t >> 16) & 0xFFFF;
-			intpart[0]  = (ip >> 8) & 255;
-			intpart[1]  = (ip >> 0) & 255;
-			fracpart[0] = (t >>  8) & 255;
-			fracpart[1] = (t >>  0) & 255;
-			intpart  += 2;
-			fracpart += 2;
-		}
-	}
-}
-
 #if 1 /* region: day/night */
 
 #define LERP(x, y, scale) (((y) - (x)) * (scale) + (x))
@@ -638,6 +617,7 @@ struct Scene *WindowOpenFile(void)
 
 void WindowMainLoop(struct Scene *scene)
 {
+	struct Gizmo *gizmo = GizmoNew();
 	GLFWwindow* window;
 	bool shouldIgnoreInput = false;
 	gSceneP = &scene;
@@ -685,11 +665,14 @@ void WindowMainLoop(struct Scene *scene)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	
 	GuiInit(window);
+	Matrix_Init();
 	
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
+		//fprintf(stderr, "-- loop ----\n");
+		
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
 		EnvLightSettings settings = GetEnvironment(scene ? (void*)scene->headers[0].lights : 0);
 		ZeldaLight *result = (void*)&settings;
@@ -728,6 +711,8 @@ void WindowMainLoop(struct Scene *scene)
 		n64_mtx_model(model);
 		n64_mtx_view(view);
 		n64_mtx_projection(p);
+		
+		//goto L_onlyGizmo;
 		
 		ZeldaMatrix zmtx;
 		
@@ -794,13 +779,13 @@ void WindowMainLoop(struct Scene *scene)
 			gSPSegment(POLY_OPA_DISP++, 2, sceneSegment);
 			gSPSegment(POLY_OPA_DISP++, 3, roomSegment);
 			gDPSetEnvColor(POLY_OPA_DISP++, 0x80, 0x80, 0x80, 0x80);
-			gSPMatrix(POLY_OPA_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
+			//gSPMatrix(POLY_OPA_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
 			
 			gSPDisplayList(POLY_XLU_DISP++, n64_material_setup_dl[0x19]);
 			gSPSegment(POLY_XLU_DISP++, 2, sceneSegment);
 			gSPSegment(POLY_XLU_DISP++, 3, roomSegment);
 			gDPSetEnvColor(POLY_XLU_DISP++, 0x80, 0x80, 0x80, 0x80);
-			gSPMatrix(POLY_XLU_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
+			//gSPMatrix(POLY_XLU_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
 			sb_foreach(dls, {
@@ -861,6 +846,22 @@ void WindowMainLoop(struct Scene *scene)
 		});
 		n64_draw_dlist(gfxDisableXray);
 		
+		// test
+		if (false)
+		{
+			//{ Matrix model; Matrix_Push(); Matrix_Translate(0, 0, 0, MTXMODE_NEW); Matrix_Get(&model); Matrix_Pop(); n64_mtx_model(&model); }
+			Matrix model;
+			//identity((void*)&model);
+			Matrix_Push(); Matrix_Translate(0, 0, 0, MTXMODE_NEW); Matrix_Get(&model); Matrix_Pop();
+			n64_mtx_model(&model);
+			n64_draw_dlist(matBlank);
+			n64_segment_set(0x06, meshPrismArrow);
+			n64_draw_dlist(&meshPrismArrow[0x100]);
+		}
+		
+		// gizmo
+		GizmoDraw(gizmo);
+		
 	L_skipSceneRender:
 		// draw the ui
 		GuiDraw(window, scene);
@@ -877,5 +878,7 @@ void WindowMainLoop(struct Scene *scene)
 	// cleanup
 	if (scene)
 		SceneFree(scene);
+	if (gizmo)
+		free(gizmo);
 }
 

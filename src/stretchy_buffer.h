@@ -177,9 +177,9 @@
 
 #define sb_array(TYPE, NAME) TYPE *NAME
 
-#define sb_foreach(V, CODE) for (int i = 0; i < sb_count(V); ++i) { typeof(V[0]) *each = &V[i]; CODE }
+#define sb_foreach(V, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof(V[0]) *each = &V[eachIndex]; CODE }
 
-#define sb_foreach_backwards(V, CODE) for (int i = sb_count(V); i > 0; --i) { typeof(V[0]) *each = &V[i - 1]; CODE }
+#define sb_foreach_backwards(V, CODE) for (int eachIndex = sb_count(V); eachIndex > 0; --eachIndex) { typeof(V[0]) *each = &V[eachIndex - 1]; CODE }
 
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
