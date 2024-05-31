@@ -793,7 +793,7 @@ void WindowMainLoop(struct Scene *scene)
 			}
 		}
 		
-		projection(&gState.projMtx, gState.winWidth, gState.winHeight, 10, 12800);
+		projection(&gState.projMtx, gState.winWidth, gState.winHeight, 10, result->fog_far/*12800*/);
 		
 		n64_update_tick();
 		n64_buffer_init();
