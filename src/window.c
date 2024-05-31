@@ -8,17 +8,12 @@
 #include "misc.h"
 #include "extmath.h"
 #include "gizmo.h"
+#include "gui.h"
 #include <n64.h>
 #include <n64types.h>
 
 #define NOC_FILE_DIALOG_IMPLEMENTATION
 #include "noc_file_dialog.h"
-
-// C++ functions
-extern void GuiInit(GLFWwindow *window);
-extern void GuiCleanup(void);
-extern void GuiDraw(GLFWwindow *window, struct Scene *scene);
-extern int GuiHasFocus(void);
 
 // a slanted triangular prism that points in one direction
 unsigned char meshPrismArrow[] = {
@@ -433,10 +428,10 @@ static float Environment_LerpWeight(uint16_t max, uint16_t min, uint16_t val) {
 }
 
 // borrows from Environment_Update()
-static EnvLightSettings GetEnvironment(EnvLightSettings *lights)
+static EnvLightSettings GetEnvironment(struct Scene *scene, struct GuiInterop *gui)
 {
 	// quick gray background if no scene loaded
-	if (!lights)
+	if (!scene)
 	{
 		EnvLightSettings tmp;
 		
@@ -444,14 +439,21 @@ static EnvLightSettings GetEnvironment(EnvLightSettings *lights)
 		
 		return tmp;
 	}
+	
+	EnvLightSettings *lights = (void*)scene->headers[0].lights;
+	
+	if (gui->env.envPreviewMode == GUI_ENV_PREVIEW_EACH)
+		return lights[gui->env.envPreviewEach];
 		
 	// testing
 	// 0x8001 is noon
 	static uint16_t skyboxTime = 0x8001; // gSaveContext.skyboxTime
 	static uint16_t dayTime = 0x8001; // gSaveContext.dayTime
-	const int speed = 100;
-	skyboxTime += speed;
-	dayTime += speed;
+	//const int speed = 100;
+	//skyboxTime += speed;
+	//dayTime += speed;
+	skyboxTime = gui->env.envPreviewTime;
+	dayTime = skyboxTime;
 	
 	int envLightConfig = 0; // envCtx->lightConfig
 	int envChangeLightNextConfig = 1; // envCtx->changeLightNextConfig
@@ -663,6 +665,13 @@ void WindowMainLoop(struct Scene *scene)
 	GLFWwindow* window;
 	bool shouldIgnoreInput = false;
 	gSceneP = &scene;
+	struct GuiInterop gui = {
+		.env = {
+			.isFogEnabled = true,
+			.isLightingEnabled = true,
+			.envPreviewMode = GUI_ENV_PREVIEW_EACH
+		}
+	};
 	
 	// glfw: initialize and configure
 	// ------------------------------
@@ -716,7 +725,7 @@ void WindowMainLoop(struct Scene *scene)
 		//fprintf(stderr, "-- loop ----\n");
 		
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
-		EnvLightSettings settings = GetEnvironment(scene ? (void*)scene->headers[0].lights : 0);
+		EnvLightSettings settings = GetEnvironment(scene, &gui);
 		ZeldaLight *result = (void*)&settings;
 		
 		float bgcolor[3] = { UNFOLD_RGB_EXT(result->fog, / 255.0f) };
@@ -791,6 +800,19 @@ void WindowMainLoop(struct Scene *scene)
 				}
 				*/
 			}
+		}
+		
+		// fog toggle
+		if (!gui.env.isFogEnabled)
+		{
+			result->fog_far = 12800;
+			result->fog_near = 1000;
+		}
+		
+		// lighting toggles
+		if (!gui.env.isLightingEnabled)
+		{
+			result->ambient = (ZeldaRGB) { -1, -1, -1 };
 		}
 		
 		projection(&gState.projMtx, gState.winWidth, gState.winHeight, 10, result->fog_far/*12800*/);
@@ -955,7 +977,7 @@ void WindowMainLoop(struct Scene *scene)
 		
 	L_skipSceneRender:
 		// draw the ui
-		GuiDraw(window, scene);
+		GuiDraw(window, scene, &gui);
 		shouldIgnoreInput = GuiHasFocus();
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

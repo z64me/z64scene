@@ -6,15 +6,17 @@
 #include <GLFW/glfw3.h>
 #include <functional>
 #include "misc.h"
+#include "gui.h"
 
 #if 1 // region: helper macros
 
 #define CLAMP(VALUE, MIN, MAX) (((VALUE) < (MIN)) ? (MIN) : ((VALUE) > (MAX)) ? (MAX) : (VALUE))
+#define WRAP(VALUE, MIN, MAX) (((VALUE) < (MIN)) ? (MAX) : ((VALUE) > (MAX)) ? (MIN) : (VALUE))
 
 // allows using mousewheel while hovering the last-drawn combo box to quickly change its value
 #define IMGUI_COMBO_HOVER(CURRENT, HOWMANY) \
 	if (ImGui::IsItemHovered() && ImGui::GetIO().MouseWheel) \
-		CURRENT = CLAMP((CURRENT) - ImGui::GetIO().MouseWheel, 0, (HOWMANY) - 1);
+		CURRENT = WRAP((CURRENT) - ImGui::GetIO().MouseWheel, 0, (HOWMANY) - 1);
 
 #endif
 
@@ -50,6 +52,7 @@ struct LinkedStringFunc
 
 static GuiSettings gGuiSettings;
 static Scene *gScene;
+static GuiInterop *gGui;
 
 #endif
 
@@ -205,7 +208,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
-		"Scene Env"
+		"Environment"
 		, [](){
 			ImGui::TextWrapped("TODO: 'Scene Env' tab");
 			
@@ -215,6 +218,47 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			ImGui::TextWrapped(test);
 			sprintf(test, "%p", &gScene->test);
 			ImGui::TextWrapped(test);
+			
+			
+			ImGui::SeparatorText("Environment Preview");
+			ImGui::Checkbox("Fog##EnvironmentCheckbox", &gGui->env.isFogEnabled);
+			ImGui::Checkbox("Lighting##EnvironmentCheckbox", &gGui->env.isLightingEnabled);
+			const char *envPreviewModeNames[] = {
+				"Each",
+				"Time of Day"
+			};
+			ImGui::Combo(
+				"##Environment##PreviewMode"
+				, &gGui->env.envPreviewMode
+				, envPreviewModeNames
+				, GUI_ENV_PREVIEW_COUNT
+			);
+			IMGUI_COMBO_HOVER(gGui->env.envPreviewMode, GUI_ENV_PREVIEW_COUNT);
+			switch (gGui->env.envPreviewMode)
+			{
+				case GUI_ENV_PREVIEW_EACH: {
+					ImGui::Combo(
+						"Index##EnvironmentEach"
+						, &gGui->env.envPreviewEach
+						, [](void* data, int n) {
+							static char test[64];
+							sprintf(test, "%d", n);
+							return (const char*)test;
+						}
+						, gScene->headers[0].lights
+						, sb_count(gScene->headers[0].lights)
+					);
+					IMGUI_COMBO_HOVER(gGui->env.envPreviewEach, sb_count(gScene->headers[0].lights));
+					break;
+				}
+				
+				case GUI_ENV_PREVIEW_TIME: {
+					int time = gGui->env.envPreviewTime;
+					ImGui::SliderInt("Drag to edit##EnvironmentTime", &time, 0, 0xffff, "0x%04x", ImGuiSliderFlags_AlwaysClamp);
+					gGui->env.envPreviewTime = CLAMP(time, 0, 0xffff);
+					break;
+				}
+			}
 		}
 	},
 	new LinkedStringFunc{
@@ -414,7 +458,8 @@ static void DrawSidebar(void)
 		//ImGui::TextWrapped(gSidebarTabs[which]->name); // test
 		
 		// draw the selected sidebar
-		gSidebarTabs[which]->func();
+		if (gScene)
+			gSidebarTabs[which]->func();
 		
 		// example using MultiLineTabBar(), for illustrative purposes
 		/*
@@ -526,10 +571,11 @@ extern "C" void GuiCleanup(void)
 	ImGui::DestroyContext();
 }
 
-extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene)
+extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop)
 {
 	// saves us the trouble of passing this variable around
 	gScene = scene;
+	gGui = interop;
 	
 	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
