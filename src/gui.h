@@ -9,6 +9,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <GLFW/glfw3.h>
 
 // C specific
 #ifdef __cplusplus
@@ -42,6 +43,7 @@ void GuiInit(GLFWwindow *window);
 void GuiCleanup(void);
 void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop);
 int GuiHasFocus(void);
+void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
 
 #endif
 

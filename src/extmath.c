@@ -34,6 +34,18 @@ Vec3f Vec3fRGBfromHSV(float h, float s, float v) {
 	return (Vec3f){r, g, b};
 }
 
+uint32_t Vec3fRGBto24bit(Vec3f color)
+{
+	color = Vec3f_MulVal(color, 255);
+	uint32_t result = 0;
+	
+	result |= ((uint32_t)color.x) << 16;
+	result |= ((uint32_t)color.y) <<  8;
+	result |= ((uint32_t)color.z) <<  0;
+	
+	return result;
+}
+
 s16 Atan2S(f32 x, f32 y) {
 	return RadToBin(atan2f(y, x));
 }

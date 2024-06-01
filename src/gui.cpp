@@ -38,6 +38,45 @@ struct GuiSettings
 	{
 		memset(&combos, 0, sizeof(combos));
 	}
+	
+private:
+	struct Line
+	{
+		int x1;
+		int y1;
+		int x2;
+		int y2;
+		uint32_t color;
+		float thickness;
+		
+		Line(int x1, int y1, int x2, int y2, uint32_t color, float thickness)
+		{
+			this->x1 = x1;
+			this->y1 = y1;
+			this->x2 = x2;
+			this->y2 = y2;
+			this->color = color;
+			this->thickness = thickness;
+		}
+	};
+	std::vector<Line> lines;
+public:
+	void PushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness)
+	{
+		lines.emplace_back(x1, y1, x2, y2, color, thickness);
+	}
+
+	void FlushLines(void)
+	{
+		for (const Line &line : lines)
+			ImGui::GetForegroundDrawList()->AddLine(
+				ImVec2(line.x1, line.y1),
+				ImVec2(line.x2, line.y2),
+				line.color,
+				line.thickness
+			);
+		lines.clear();
+	}
 };
 
 struct LinkedStringFunc
@@ -582,6 +621,9 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	
+	// lines
+	gGuiSettings.FlushLines();
+	
 	DrawMenuBar();
 	
 	if (gGuiSettings.showSidebar)
@@ -604,5 +646,16 @@ extern "C" int GuiHasFocus(void)
 	return ImGui::GetIO().WantCaptureMouse
 		|| ImGui::GetIO().WantCaptureKeyboard
 	;
+}
+
+extern "C" void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness)
+{
+	// byteswap
+	uint32_t newcolor = 0;
+	newcolor |= ((color >> 0) & 0xff) << 24;
+	newcolor |= ((color >> 8) & 0xff) << 16;
+	newcolor |= ((color >> 16) & 0xff) << 8;
+	newcolor |= ((color >> 24) & 0xff) << 0;
+	gGuiSettings.PushLine(x1, y1, x2, y2, newcolor, thickness);
 }
 

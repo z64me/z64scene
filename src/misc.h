@@ -19,6 +19,7 @@ extern "C" {
 #define UNFOLD_RGB(v)   (v).r, (v).g, (v).b
 #define UNFOLD_RGBA(v)  (v).r, (v).g, (v).b, (v).a
 #define UNFOLD_VEC3(v)  (v).x, (v).y, (v).z
+#define UNFOLD_VEC2(v)  (v).x, (v).y
 
 #define UNFOLD_RGB_EXT(v, action)   (v).r action, (v).g action, (v).b action
 

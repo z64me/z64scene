@@ -20,6 +20,8 @@ struct CameraFly
 };
 
 RayLine WindowGetCursorRayLine(void);
+void WindowClipPointIntoView(Vec3f* a, Vec3f normal);
+Vec2f WindowGetLocalScreenPos(Vec3f point);
 
 #endif /* Z64SCENE_WINDOW_H_INCLUDED */
 

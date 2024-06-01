@@ -8,6 +8,7 @@
 #include "n64.h"
 #include "misc.h"
 #include "window.h"
+#include "gui.h"
 
 // assets
 INCBIN(GfxGizmo, "embed/gfxGizmo.bin");
@@ -38,6 +39,9 @@ void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z)
 
 void GizmoUpdate(struct Gizmo *gizmo)
 {
+	// global gizmo orientation
+	Matrix_Clear(&gizmo->mtx);
+	
 	if (true/*!gizmo->lock.state*/)
 	{
 		RayLine ray = WindowGetCursorRayLine();
@@ -70,13 +74,11 @@ void GizmoUpdate(struct Gizmo *gizmo)
 // TODO still very WIP
 void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 {
-	#if 0
 	Vec3f mxo[3] = {
 		/* MXO_R */ { gizmo->mtx.xx, gizmo->mtx.yx, gizmo->mtx.zx },
 		/* MXO_U */ { gizmo->mtx.xy, gizmo->mtx.yy, gizmo->mtx.zy },
 		/* MXO_F */ { gizmo->mtx.xz, gizmo->mtx.yz, gizmo->mtx.zz },
 	};
-	#endif
 	static Vec3f sOffsetMul[] = {
 		{ 0, 120, 0 },
 		{ 0, 400, 0 },
@@ -159,4 +161,50 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	
 	// display model
 	n64_draw_dlist(gfxHead);
+	
+	if (true/*gizmo->action && gizmo->activeView == gizmo->curView*/)
+	{
+		if (true/*gizmo->lock.state && gizmo->lock.state != GIZMO_AXIS_ALL_TRUE*/)
+		{
+			for (int i = 0; i < 3; i++)
+			{
+				if (!gizmo->axis[i].isHovered)
+					continue;
+				
+				Vec3f aI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], 1000));
+				Vec3f bI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], -1000));
+				Vec2f aO, bO;
+				
+				WindowClipPointIntoView(&aI, Vec3f_Invert(mxo[i]));
+				WindowClipPointIntoView(&bI, mxo[i]);
+				aO = WindowGetLocalScreenPos(aI);
+				bO = WindowGetLocalScreenPos(bI);
+				
+				// draw long axis lines
+				Vec3f colorVec = Vec3fRGBfromHSV(1.0f - (i / 3.0f), 0.5f, 0.5f);
+				uint32_t color = (Vec3fRGBto24bit(colorVec) << 8) | 255;
+				GuiPushLine(UNFOLD_VEC2(aO), UNFOLD_VEC2(bO), color, 2.0f);
+			}
+		}
+		
+		/*
+		char* txt = x_fmt("%s %.8g along %s",
+				gizmo->action == 1 ? "Move" : "Rotate",
+				gizmo->value,
+				gizmo->lock.x ? "X" : gizmo->lock.y ? "Y" : "Z"
+		);
+		
+		nvgFontSize(vg, SPLIT_TEXT);
+		nvgFontFace(vg, "default");
+		nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+		
+		nvgFontBlur(vg, 1.0f);
+		nvgFillColor(vg, nvgRGBA(0, 0, 0, 255));
+		nvgText(vg, 8, split->rect.h - SPLIT_TEXT_H - SPLIT_ELEM_X_PADDING, txt, NULL);
+		
+		nvgFontBlur(vg, 0.0f);
+		nvgFillColor(vg, Theme_GetColor(THEME_TEXT, 255, 1.0f));
+		nvgText(vg, 8, split->rect.h - SPLIT_TEXT_H - SPLIT_ELEM_X_PADDING, txt, NULL);
+		*/
+	}
 }

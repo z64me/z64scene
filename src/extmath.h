@@ -438,6 +438,7 @@ Vec4s Vec4s_Reflect(Vec4s vec, Vec4s normal);
 Vec3f Vec3f_ClosestPointOnRay(Vec3f rayStart, Vec3f rayEnd, Vec3f lineStart, Vec3f lineEnd);
 Vec3f Vec3f_ProjectAlong(Vec3f point, Vec3f lineA, Vec3f lineB);
 Vec3f Vec3fRGBfromHSV(float h, float s, float v);
+uint32_t Vec3fRGBto24bit(Vec3f color);
 
 #endif // endregion: vector
 

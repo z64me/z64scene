@@ -110,6 +110,7 @@ static struct State
 	struct Input *input;
 	Matrix viewMtx;
 	Matrix projMtx;
+	Matrix projViewMtx;
 	int winWidth;
 	int winHeight;
 	struct CameraFly cameraFly;
@@ -679,6 +680,35 @@ RayLine WindowGetCursorRayLine(void)
 	return View_GetCursorRayLine(&gState);
 }
 
+void WindowClipPointIntoView(Vec3f* a, Vec3f normal)
+{
+	Vec4f test;
+	f32 dot;
+	struct CameraFly *camera = &gState.cameraFly;
+	
+	Matrix_MultVec3fToVec4f_Ext(a, &test, &gState.projViewMtx);
+	
+	if (test.w <= 0.0f)
+	{
+		dot = Vec3f_Dot(normal, Vec3f_LineSegDir(camera->eye, camera->lookAt));
+		*a = Vec3f_Add(*a, Vec3f_MulVal(normal, -test.w / dot + 1.0f));
+	}
+}
+
+Vec2f WindowGetLocalScreenPos(Vec3f point)
+{
+	f32 w = gState.winWidth * 0.5f;
+	f32 h = gState.winHeight * 0.5f;
+	Vec4f pos;
+	
+	Matrix_MultVec3fToVec4f_Ext(&point, &pos, &gState.projViewMtx);
+	
+	return Vec2f_New(
+		w + (pos.x / pos.w) * w,
+		h - (pos.y / pos.w) * h
+	);
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
@@ -837,6 +867,8 @@ void WindowMainLoop(struct Scene *scene)
 		}
 		
 		projection(&gState.projMtx, gState.winWidth, gState.winHeight, PROJ_NEAR, result->fog_far/*12800*/, gState.cameraFly.fovy);
+		
+		Matrix_MtxFMtxFMult(&gState.projMtx, &gState.viewMtx, &gState.projViewMtx);
 		
 		n64_update_tick();
 		n64_buffer_init();
