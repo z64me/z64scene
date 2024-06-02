@@ -72,7 +72,11 @@ void processInput(GLFWwindow *window);
 #define WINDOW_INITIAL_FOVY    60.0f
 #define PROJ_NEAR              10
 
-struct Input gInput = {0};
+struct Input gInput = {
+	.textInput = {
+		.maxChars = sizeof(gInput.textInput.text)
+	}
+};
 
 static struct State
 {
@@ -126,8 +130,8 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+	//if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	//	glfwSetWindowShouldClose(window, true);
 	
 	/* time since last execution */
 	{
@@ -147,6 +151,18 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 	gState.winWidth = width;
 	gState.winHeight = height;
+}
+
+static void char_callback(GLFWwindow *window, unsigned int codepoint)
+{
+	if (gInput.textInput.isEnabled == false)
+		return;
+	
+	StrcatCharLimit(
+		gInput.textInput.text
+		, codepoint
+		, Min(gInput.textInput.maxChars, sizeof(gInput.textInput.text))
+	);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -177,6 +193,20 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_LEFT_CONTROL:
 			gInput.key.lctrl = pressed;
+			break;
+		
+		case GLFW_KEY_ENTER:
+			gInput.key.enter = pressed;
+			break;
+		
+		case GLFW_KEY_ESCAPE:
+			gInput.key.escape = pressed;
+			break;
+		
+		// backspace key in text edit
+		case GLFW_KEY_BACKSPACE:
+			if (pressed && gInput.textInput.isEnabled)
+				gInput.textInput.text[strlen(gInput.textInput.text) - 1] = '\0';
 			break;
 	}
 }
@@ -220,13 +250,13 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 	{
 		case GLFW_MOUSE_BUTTON_RIGHT:
 			gInput.mouse.button.right = pressed;
-			if (action == GLFW_RELEASE) // TODO make it timed
+			if (action == GLFW_RELEASE && gInput.mouseOld.button.right) // TODO make it timed
 				gInput.mouse.clicked.right = true;
 			break;
 		
 		case GLFW_MOUSE_BUTTON_LEFT:
 			gInput.mouse.button.left = pressed;
-			if (action == GLFW_RELEASE) // TODO make it timed
+			if (action == GLFW_RELEASE && gInput.mouseOld.button.left) // TODO make it timed
 				gInput.mouse.clicked.left = true;
 			break;
 	}
@@ -790,6 +820,7 @@ void WindowMainLoop(struct Scene *scene)
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetDropCallback(window, drop_callback);
+	glfwSetCharCallback(window, char_callback);
 	glfwSetKeyCallback(window, key_callback);
 	
 	// glad: load all OpenGL function pointers
@@ -1058,14 +1089,14 @@ void WindowMainLoop(struct Scene *scene)
 		sb_foreach(scene->rooms, {
 			struct RoomHeader *header = &each->headers[0];
 			sb_foreach(header->instances, {
-				each->x = each->pos.x;
-				each->y = each->pos.y;
-				each->z = each->pos.z;
+				each->x = rintf(each->pos.x);
+				each->y = rintf(each->pos.y);
+				each->z = rintf(each->pos.z);
 				identity(model);
 				{
 					mtx_translate_rot(
 						(void*)model
-						, &(N64Vector3){ each->x, each->y, each->z }
+						, &(N64Vector3){ UNFOLD_VEC3(each->pos) }
 						, &(N64Vector3){
 							BinToRad(each->xrot)
 							, BinToRad(each->yrot) - DegToRad(90) // correct model rotation

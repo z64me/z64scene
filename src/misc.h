@@ -162,6 +162,9 @@ void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
 char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
+void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize);
+void StrToLower(char *str);
+void StrRemoveChar(char *charAt);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);

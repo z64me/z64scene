@@ -53,7 +53,15 @@ struct Input
 		int g;
 		int lshift;
 		int lctrl;
+		int enter;
+		int escape;
 	} key, keyOld;
+	struct
+	{
+		char text[512];
+		unsigned int maxChars;
+		bool isEnabled;
+	} textInput;
 	float delta_time_sec;
 };
 

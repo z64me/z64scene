@@ -1,4 +1,5 @@
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -55,6 +56,11 @@ static void GizmoSetState(struct Gizmo *gizmo, enum GizmoState newState)
 	gizmo->state = newState;
 	gizmo->actionPos = gizmo->pos;
 	gizmo->actionCursorPos = (Vec2f) { UnfoldVec2(gInput.mouse.pos) };
+	gizmo->keyboard.isActive = false;
+	gInput.textInput.text[0] = '\0';
+	
+	for (int i = 0; i < 3; ++i)
+		gizmo->axis[i].isLocked = false;
 }
 
 // rayPos is the result of a raycast against the geometry in the game world
@@ -68,6 +74,79 @@ static void GizmoMove(struct Gizmo *gizmo, Vec3f *rayPos)
 	};
 	struct GizmoKeyboard *keyboard = &gizmo->keyboard;
 	struct GizmoAxis *axis = gizmo->axis;
+	
+	// process text input
+	{
+		char *text = gInput.textInput.text;
+		char *ss;
+		const char keyAxis[] = "xyz";
+		int signedness = 1;
+		bool lockAxisChanged = false;
+		bool isLocked = false;
+		
+		StrToLower(text);
+		
+		// press an axis key to constrain movement to that axis
+		for (int i = 0; i < 3; ++i)
+		{
+			if ((ss = strchr(text, keyAxis[i])))
+			{
+				StrRemoveChar(ss);
+				
+				axis[i].isLocked = !axis[i].isLocked;
+				lockAxisChanged = true;
+				
+				// unlock the other axes
+				if (axis[i].isLocked)
+					for (int k = 0; k < 3; ++k)
+						if (k != i)
+							axis[k].isLocked = false;
+			}
+			
+			isLocked |= axis[i].isLocked;
+		}
+		
+		if (lockAxisChanged)
+		{
+			gizmo->pos = gizmo->actionPos;
+		}
+		
+		// clear text if not axis locked
+		if (!isLocked)
+			*text = '\0';
+		
+		// remove non-numeric characters
+		for (ss = text; *ss; ++ss)
+		{
+			if (*ss != '-' && *ss != '.' && !isdigit(*ss))
+			{
+				StrRemoveChar(ss);
+				--ss;
+			}
+		}
+		
+		// negate direction
+		while ((ss = strchr(text, '-')))
+		{
+			signedness *= -1;
+			StrRemoveChar(ss);
+		}
+		
+		gizmo->keyboard.isActive = true;
+		if (sscanf(text, "%f", &gizmo->keyboard.value) != 1)
+			gizmo->keyboard.value = 0;
+		gizmo->keyboard.value *= signedness;
+		
+		// preserve a single negative sign
+		if (signedness < 0)
+		{
+			memmove(text + 1, text, gInput.textInput.maxChars);
+			*text = '-';
+		}
+		
+		//printf("%s\n", text);
+	}
+	
 	bool isAnyAxisLocked = (axis[0].isLocked || axis[1].isLocked || axis[2].isLocked);
 	
 	// entering movement axis and distance using keyboard
@@ -137,11 +216,11 @@ static void GizmoMove(struct Gizmo *gizmo, Vec3f *rayPos)
 	{
 		// respect axis locks when moving
 		if (!isAnyAxisLocked || axis[0].isLocked)
-			gizmo->pos.x = rintf(rayPos->x);
+			gizmo->pos.x = rayPos->x;
 		if (!isAnyAxisLocked || axis[1].isLocked)
-			gizmo->pos.y = rintf(rayPos->y);
+			gizmo->pos.y = rayPos->y;
 		if (!isAnyAxisLocked || axis[2].isLocked)
-			gizmo->pos.z = rintf(rayPos->z);
+			gizmo->pos.z = rayPos->z;
 	}
 	
 	/*
@@ -170,6 +249,14 @@ static void GizmoApplyChildren(struct Gizmo *gizmo)
 {
 	sb_foreach(gizmo->children, {
 		each->startPos = *(each->pos);
+	});
+}
+
+// apply current positions to all children
+static void GizmoResetChildren(struct Gizmo *gizmo)
+{
+	sb_foreach(gizmo->children, {
+		*(each->pos) = each->startPos;
 	});
 }
 
@@ -234,6 +321,18 @@ void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 	if (!sb_count(gizmo->children))
 		return;
 	
+	// cancel gizmo transformations
+	if (gInput.key.escape)
+	{
+		GizmoResetChildren(gizmo);
+		
+		gizmo->pos = gizmo->actionPos;
+		gInput.mouse.button.left = false;
+		gInput.mouseOld.button.left = false;
+		
+		GizmoSetState(gizmo, GIZMO_STATE_IDLE);
+	}
+	
 	if (gizmo->state == GIZMO_STATE_IDLE)
 	{
 		RayLine ray = WindowGetCursorRayLine();
@@ -243,7 +342,13 @@ void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 		
 		// press G key to move, like Blender
 		if (gInput.key.g)
+		{
 			GizmoSetState(gizmo, GIZMO_STATE_MOVE);
+			
+			gInput.textInput.isEnabled = true;
+			gInput.textInput.text[0] = '\0';
+			gInput.textInput.maxChars = 10;
+		}
 		
 		for (int i = 0; i < 3; i++)
 		{
@@ -370,37 +475,36 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	
 	if (gizmo->state == GIZMO_STATE_MOVE)
 	{
-		if (gInput.mouse.button.left)
+		for (int i = 0; i < 3; i++)
 		{
-			for (int i = 0; i < 3; i++)
-			{
-				if (!gizmo->axis[i].isLocked)
-					continue;
-				
-				Vec3f aI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], 1000));
-				Vec3f bI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], -1000));
-				Vec2f aO, bO;
-				
-				WindowClipPointIntoView(&aI, Vec3f_Invert(mxo[i]));
-				WindowClipPointIntoView(&bI, mxo[i]);
-				aO = WindowGetLocalScreenPos(aI);
-				bO = WindowGetLocalScreenPos(bI);
-				
-				// draw long axis lines
-				Vec3f colorVec = Vec3fRGBfromHSV(1.0f - (i / 3.0f), 0.5f, 0.5f);
-				uint32_t color = (Vec3fRGBto24bit(colorVec) << 8) | 255;
-				GuiPushLine(UNFOLD_VEC2(aO), UNFOLD_VEC2(bO), color, 2.0f);
-			}
+			if (!gizmo->axis[i].isLocked)
+				continue;
+			
+			Vec3f aI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], 1000));
+			Vec3f bI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], -1000));
+			Vec2f aO, bO;
+			
+			WindowClipPointIntoView(&aI, Vec3f_Invert(mxo[i]));
+			WindowClipPointIntoView(&bI, mxo[i]);
+			aO = WindowGetLocalScreenPos(aI);
+			bO = WindowGetLocalScreenPos(bI);
+			
+			// draw long axis lines
+			Vec3f colorVec = Vec3fRGBfromHSV(1.0f - (i / 3.0f), 0.5f, 0.5f);
+			uint32_t color = (Vec3fRGBto24bit(colorVec) << 8) | 255;
+			GuiPushLine(UNFOLD_VEC2(aO), UNFOLD_VEC2(bO), color, 2.0f);
 		}
-		else if (gInput.mouseOld.button.left)
+		
+		// pressed return key or released left mouse button
+		if (gInput.key.enter ||
+			(!gInput.mouse.button.left
+				&& gInput.mouseOld.button.left
+			)
+		)
 		{
-			// mouse button has been released
-			gizmo->state = GIZMO_STATE_IDLE;
-			
-			for (int i = 0; i < 3; ++i)
-				gizmo->axis[i].isLocked = false;
-			
 			GizmoApplyChildren(gizmo);
+			
+			GizmoSetState(gizmo, GIZMO_STATE_IDLE);
 		}
 		
 		/*

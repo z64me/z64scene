@@ -7,6 +7,7 @@
 #include "misc.h"
 #include "stretchy_buffer.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +65,35 @@ char *Strdup(const char *str)
 	strcpy(result, str);
 	
 	return result;
+}
+
+void StrToLower(char *str)
+{
+	if (!str)
+		return;
+	
+	for (char *c = str; *c; ++c)
+		*c = tolower(*c);
+}
+
+void StrRemoveChar(char *charAt)
+{
+	if (!charAt)
+		return;
+	
+	for ( ; charAt[0]; ++charAt)
+		charAt[0] = charAt[1];
+}
+
+void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize)
+{
+	unsigned int end = strlen(dst);
+	
+	if (end >= dstByteSize - 2)
+		return;
+	
+	dst[end] = codepoint;
+	dst[end + 1] = '\0';
 }
 
 bool FileExists(const char *filename)
