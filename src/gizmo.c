@@ -359,6 +359,11 @@ void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 			
 			if (isHovered)
 			{
+				// only allow one axis to be hovered at a time
+				for (int k = 0; k < 3; ++k)
+					if (k != i)
+						gizmo->axis[k].isHovered = false;
+				
 				if (gInput.mouse.button.left)
 				{
 					GizmoSetState(gizmo, GIZMO_STATE_MOVE);
