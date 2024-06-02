@@ -160,9 +160,11 @@ void FileFree(struct File *file);
 void SceneFree(struct Scene *scene);
 void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
+char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
 
 struct Scene *WindowOpenFile(void);
+struct Scene *WindowLoadScene(const char *fn);
 
 #endif /* function prototypes */
 

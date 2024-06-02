@@ -178,6 +178,29 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 	gInput.key.lctrl = mods & GLFW_MOD_CONTROL;
 }
 
+static void drop_callback(GLFWwindow* window, int count, const char *files[])
+{
+	if (count != 1)
+		return;
+	
+	const char *filename = files[0];
+	const char *extension = strrchr(filename, '.');
+	
+	if (!extension)
+		return;
+	
+	//fprintf(stderr, "filename = %s, extension = %s\n", filename, extension);
+	
+	char *extensionLower = Strdup(extension + 1);
+	for (char *c = extensionLower; *c; ++c)
+		*c = tolower(*c);
+	
+	if (!strcmp(extensionLower, "zscene"))
+		WindowLoadScene(filename);
+	
+	free(extensionLower);
+}
+
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	gInput.mouse.vel.x = xpos - gInput.mouse.pos.x;
@@ -637,6 +660,7 @@ void DoLights(ZeldaLight *light)
 }
 
 static struct Scene **gSceneP;
+
 struct Scene *WindowOpenFile(void)
 {
 	const char *fn;
@@ -648,6 +672,13 @@ struct Scene *WindowOpenFile(void)
 	if (!fn)
 		return *gSceneP;
 	
+	struct Scene *scene = WindowLoadScene(fn);
+	
+	return scene;
+}
+
+struct Scene *WindowLoadScene(const char *fn)
+{
 	fprintf(stderr, "%s\n", fn);
 	struct Scene *scene = SceneFromFilenamePredictRooms(fn);
 	
@@ -755,6 +786,7 @@ void WindowMainLoop(struct Scene *scene)
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, cursor_position_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetDropCallback(window, drop_callback);
 	glfwSetKeyCallback(window, key_callback);
 	
 	// glad: load all OpenGL function pointers
