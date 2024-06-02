@@ -174,9 +174,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		case GLFW_KEY_G:
 			gInput.key.g = pressed;
 			break;
+		
+		case GLFW_KEY_LEFT_CONTROL:
+			gInput.key.lctrl = pressed;
+			break;
 	}
-	
-	gInput.key.lctrl = mods & GLFW_MOD_CONTROL;
 }
 
 static void drop_callback(GLFWwindow* window, int count, const char *files[])
