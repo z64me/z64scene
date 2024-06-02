@@ -187,6 +187,7 @@
 #define sb_count  stb_sb_count
 #define sb_add    stb_sb_add
 #define sb_last   stb_sb_last
+#define sb_clear  stb_sb_clear
 #endif
 
 #define stb_sb_free(a)         ((a) ? free(stb__sbraw(a)),0 : 0)
@@ -194,6 +195,7 @@
 #define stb_sb_count(a)        ((a) ? stb__sbn(a) : 0)
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
+#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
 
 #define stb__sbraw(a) ((int *) (void *) (a) - 2)
 #define stb__sbm(a)   stb__sbraw(a)[0]

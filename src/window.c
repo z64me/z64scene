@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <math.h>
+#include <float.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -70,40 +71,7 @@ void processInput(GLFWwindow *window);
 #define WINDOW_INITIAL_FOVY    60.0f
 #define PROJ_NEAR              10
 
-struct Input
-{
-	struct
-	{
-		struct
-		{
-			int x;
-			int y;
-		} pos;
-		struct
-		{
-			int dy; /* delta y */
-		} wheel;
-		struct
-		{
-			int left;
-			int right;
-		} button;
-		struct
-		{
-			bool left;
-			bool right;
-		} clicked;
-	} mouse;
-	struct
-	{
-		int w;
-		int a;
-		int s;
-		int d;
-		int lshift;
-	} key;
-	float delta_time_sec;
-} gInput = {0};
+struct Input gInput = {0};
 
 static struct State
 {
@@ -114,6 +82,7 @@ static struct State
 	int winWidth;
 	int winHeight;
 	struct CameraFly cameraFly;
+	bool cameraIgnoreLMB;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
 	, .winHeight = WINDOW_INITIAL_HEIGHT
@@ -121,6 +90,36 @@ static struct State
 		.fovy = WINDOW_INITIAL_FOVY
 	}
 };
+
+struct CameraRay
+{
+	RayLine ray;
+	Vec3f pos;
+	Vec3f dir;
+};
+
+void CameraRayCallback(void *udata, const N64Tri *tri64)
+{
+	struct CameraRay *ud = udata;
+	Triangle tri = {
+		.v = {
+			{ UNFOLD_VEC3(tri64->vtx[0]->pos) }
+			,{ UNFOLD_VEC3(tri64->vtx[1]->pos) }
+			,{ UNFOLD_VEC3(tri64->vtx[2]->pos) }
+		}
+		, .cullBackface = tri64->cullBackface
+		, .cullFrontface = tri64->cullFrontface
+	};
+	
+	Col3D_LineVsTriangle(
+		&ud->ray
+		, &tri
+		, &ud->pos
+		, &ud->dir
+		, tri64->cullBackface
+		, tri64->cullFrontface
+	);
+}
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
@@ -170,11 +169,19 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		case GLFW_KEY_D:
 			gInput.key.d = pressed;
 			break;
+		
+		case GLFW_KEY_G:
+			gInput.key.g = pressed;
+			break;
 	}
+	
+	gInput.key.lctrl = mods & GLFW_MOD_CONTROL;
 }
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
+	gInput.mouse.vel.x = xpos - gInput.mouse.pos.x;
+	gInput.mouse.vel.y = ypos - gInput.mouse.pos.y;
 	gInput.mouse.pos.x = xpos;
 	gInput.mouse.pos.y = ypos;
 }
@@ -219,7 +226,7 @@ static inline void *camera_flythrough(Matrix *m)
 	else
 		gInput.mouse.wheel.dy = 0;
 	
-	int activated = gInput.mouse.button.left;
+	int activated = gState.cameraIgnoreLMB ? 0 : gInput.mouse.button.left;
 	float speed = 1000;
 	
 	flythrough_camera_update(
@@ -655,15 +662,12 @@ struct Scene *WindowOpenFile(void)
 	return scene;
 }
 
-RayLine View_GetCursorRayLine(struct State *state)
+RayLine WindowGetRayLine(Vec2f point)
 {
-	assert(state);
-	
-	int w = state->winWidth;
-	int h = state->winHeight;
-	Matrix *viewMtx = &state->viewMtx;
-	Matrix *projMtx = &state->projMtx;
-	Vec2f point = { state->input->mouse.pos.x, state->input->mouse.pos.y };
+	int w = gState.winWidth;
+	int h = gState.winHeight;
+	Matrix *viewMtx = &gState.viewMtx;
+	Matrix *projMtx = &gState.projMtx;
 	
 	Vec3f projA = Vec3f_New(point.x, point.y, 0.0f);
 	Vec3f projB = Vec3f_New(point.x, point.y, 1.0f);
@@ -677,7 +681,7 @@ RayLine View_GetCursorRayLine(struct State *state)
 
 RayLine WindowGetCursorRayLine(void)
 {
-	return View_GetCursorRayLine(&gState);
+	return WindowGetRayLine((Vec2f){ gState.input->mouse.pos.x, gState.input->mouse.pos.y });
 }
 
 void WindowClipPointIntoView(Vec3f* a, Vec3f normal)
@@ -723,6 +727,7 @@ void WindowMainLoop(struct Scene *scene)
 			.envPreviewMode = GUI_ENV_PREVIEW_EACH
 		}
 	};
+	struct CameraRay worldRayData = { 0 };
 	
 	// glfw: initialize and configure
 	// ------------------------------
@@ -801,16 +806,28 @@ void WindowMainLoop(struct Scene *scene)
 		// ignore 3d camera controls if gui has focus
 		if (shouldIgnoreInput == false && scene)
 		{
+			bool wasControllingCamera = gInput.mouse.isControllingCamera;
+			Matrix viewMtxOld = gState.viewMtx;
+			
 			camera_flythrough(&gState.viewMtx);
+			
+			// assume camera is being turned using the mouse
+			if (gInput.mouseOld.button.left
+				&& memcmp(&gState.viewMtx, &viewMtxOld, sizeof(viewMtxOld))
+			)
+				gInput.mouse.isControllingCamera = true;
 			
 			// consume left-click
 			if (gInput.mouse.clicked.left)
 			{
 				gInput.mouse.clicked.left = false;
+				gInput.mouse.isControllingCamera = false;
 				
 				// click an instance to select it
+				if (!wasControllingCamera && !GizmoHasFocus(gizmo))
 				{
-					RayLine ray = View_GetCursorRayLine(&gState);
+					RayLine ray = WindowGetCursorRayLine();
+					GizmoRemoveChildren(gizmo);
 					
 					sb_foreach(scene->rooms, {
 						struct RoomHeader *header = &each->headers[0];
@@ -827,6 +844,7 @@ void WindowMainLoop(struct Scene *scene)
 								// TODO if multiple instances overlap, each click should cycle through them
 								// TODO update gui instances tab
 								GizmoSetPosition(gizmo, each->x, each->y, each->z);
+								GizmoAddChild(gizmo, &each->pos);
 							}
 						});
 					});
@@ -978,7 +996,24 @@ void WindowMainLoop(struct Scene *scene)
 		gSPDisplayList(POLY_OPA_DISP++, 0x06000100);
 		*/
 		
+		// if mouse has moved or ctrl key state has changed,
+		// perform raycast against all visual geometry
+		if (GizmoHasFocus(gizmo)
+			&& gInput.key.lctrl
+			&& (gInput.mouse.vel.x
+				|| gInput.mouse.vel.y
+				|| gInput.key.lctrl != gInput.keyOld.lctrl
+			)
+		)
+		{
+			worldRayData.ray = WindowGetCursorRayLine();
+			worldRayData.ray.nearest = FLT_MAX;
+			n64_set_tri_callback(&worldRayData, CameraRayCallback);
+		}
+		
 		n64_buffer_flush(true);
+		
+		n64_set_tri_callback(0, 0);
 		
 		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
@@ -988,6 +1023,9 @@ void WindowMainLoop(struct Scene *scene)
 		sb_foreach(scene->rooms, {
 			struct RoomHeader *header = &each->headers[0];
 			sb_foreach(header->instances, {
+				each->x = each->pos.x;
+				each->y = each->pos.y;
+				each->z = each->pos.z;
 				identity(model);
 				{
 					mtx_translate_rot(
@@ -1026,16 +1064,25 @@ void WindowMainLoop(struct Scene *scene)
 		}
 		
 		// gizmo
-		GizmoUpdate(gizmo);
 		GizmoDraw(gizmo, &gState.cameraFly);
 		
 	L_skipSceneRender:
 		// draw the ui
 		GuiDraw(window, scene, &gui);
 		shouldIgnoreInput = GuiHasFocus();
+		GizmoUpdate(gizmo, &worldRayData.pos);
+		shouldIgnoreInput |= GizmoHasFocus(gizmo);
+		gState.cameraIgnoreLMB = GizmoIsHovered(gizmo);
+		
+		// consume left-click if nothing already has
+		gInput.mouse.clicked.left = false;
+		gInput.mouse.clicked.right = false;
+		gInput.mouse.vel.x = gInput.mouse.vel.y = 0;
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
+		memcpy(&gInput.keyOld, &gInput.key, sizeof(gInput.key));
+		memcpy(&gInput.mouseOld, &gInput.mouse, sizeof(gInput.mouse));
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}

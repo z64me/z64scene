@@ -282,8 +282,8 @@ Rect Rect_Scale(Rect r, int x, int y);
 Rect Rect_Vec2x2(Vec2s a, Vec2s b);
 BoundBox BoundBox_New3F(Vec3f point);
 BoundBox BoundBox_New2F(Vec2f point);
-void BoundBox_Adjust3F(BoundBox* this, Vec3f point);
-void BoundBox_Adjust2F(BoundBox* this, Vec2f point);
+void BoundBox_Adjust3F(BoundBox* bbox, Vec3f point);
+void BoundBox_Adjust2F(BoundBox* bbox, Vec2f point);
 
 bool Vec2f_PointInShape(Vec2f p, Vec2f* poly, u32 numPoly);
 
@@ -589,9 +589,9 @@ typedef struct Cylinder {
 	f32   r;
 } Cylinder;
 
-void TriBuffer_Alloc(TriBuffer* this, u32 num);
-void TriBuffer_Realloc(TriBuffer* this);
-void TriBuffer_Free(TriBuffer* this);
+void TriBuffer_Alloc(TriBuffer* tribuf, u32 num);
+void TriBuffer_Realloc(TriBuffer* tribuf);
+void TriBuffer_Free(TriBuffer* tribuf);
 RayLine RayLine_New(Vec3f start, Vec3f end);
 bool Col3D_LineVsTriangle(RayLine* ray, Triangle* tri, Vec3f* outPos, Vec3f* outNor, bool cullBackface, bool cullFrontface);
 bool Col3D_LineVsTriBuffer(RayLine* ray, TriBuffer* triBuf, Vec3f* outPos, Vec3f* outNor);

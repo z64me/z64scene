@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include "stretchy_buffer.h"
+#include "extmath.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -86,6 +87,8 @@ struct Instance
 	int16_t   yrot;
 	int16_t   zrot;
 	uint16_t  params;
+	
+	Vec3f     pos;
 };
 
 struct RoomMeshSimple

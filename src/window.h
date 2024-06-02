@@ -19,6 +19,47 @@ struct CameraFly
 	float fovy;
 };
 
+struct Input
+{
+	struct
+	{
+		struct
+		{
+			int x;
+			int y;
+		} pos, vel;
+		struct
+		{
+			int dy; /* delta y */
+		} wheel;
+		struct
+		{
+			int left;
+			int right;
+		} button;
+		struct
+		{
+			bool left;
+			bool right;
+		} clicked;
+		bool isControllingCamera;
+	} mouse, mouseOld;
+	struct
+	{
+		int w;
+		int a;
+		int s;
+		int d;
+		int g;
+		int lshift;
+		int lctrl;
+	} key, keyOld;
+	float delta_time_sec;
+};
+
+extern struct Input gInput;
+
+RayLine WindowGetRayLine(Vec2f point);
 RayLine WindowGetCursorRayLine(void);
 void WindowClipPointIntoView(Vec3f* a, Vec3f normal);
 Vec2f WindowGetLocalScreenPos(Vec3f point);

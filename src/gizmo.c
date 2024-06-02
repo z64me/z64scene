@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "gizmo.h"
 #include "incbin.h"
@@ -9,21 +10,170 @@
 #include "misc.h"
 #include "window.h"
 #include "gui.h"
+#include "stretchy_buffer.h"
 
 // assets
 INCBIN(GfxGizmo, "embed/gfxGizmo.bin");
+
+enum GizmoState
+{
+	GIZMO_STATE_IDLE, // waiting on user action
+	GIZMO_STATE_MOVE, // is being moved by user
+};
+
+struct GizmoChild
+{
+	Vec3f *pos;
+	Vec3f startPos;
+};
 
 // types
 struct Gizmo
 {
 	Vec3f pos;
+	Vec3f actionPos; // position of gizmo at time of last state change
+	Vec2f actionCursorPos;
 	Matrix mtx;
 	struct GizmoAxis {
 		Cylinder cylinder;
 		bool isHovered;
+		bool isLocked;
 	} axis[3];
+	struct GizmoKeyboard {
+		float value;
+		bool isActive;
+	} keyboard;
 	bool isInUse;
+	enum GizmoState state;
+	sb_array(struct GizmoChild, children);
 };
+
+#if 1 // region: private functions
+
+static void GizmoSetState(struct Gizmo *gizmo, enum GizmoState newState)
+{
+	gizmo->state = newState;
+	gizmo->actionPos = gizmo->pos;
+	gizmo->actionCursorPos = (Vec2f) { UnfoldVec2(gInput.mouse.pos) };
+}
+
+// rayPos is the result of a raycast against the geometry in the game world
+static void GizmoMove(struct Gizmo *gizmo, Vec3f *rayPos)
+{
+	bool ctrlHold = gInput.key.lctrl;
+	Vec3f mxo[3] = {
+		/* Right */ { gizmo->mtx.xx, gizmo->mtx.yx, gizmo->mtx.zx },
+		/* Up    */ { gizmo->mtx.xy, gizmo->mtx.yy, gizmo->mtx.zy },
+		/* Front */ { gizmo->mtx.xz, gizmo->mtx.yz, gizmo->mtx.zz },
+	};
+	struct GizmoKeyboard *keyboard = &gizmo->keyboard;
+	struct GizmoAxis *axis = gizmo->axis;
+	bool isAnyAxisLocked = (axis[0].isLocked || axis[1].isLocked || axis[2].isLocked);
+	
+	// entering movement axis and distance using keyboard
+	if (keyboard->isActive && keyboard->value && isAnyAxisLocked)
+	{
+		gizmo->pos.x = gizmo->actionPos.x + keyboard->value * axis[0].isLocked;
+		gizmo->pos.y = gizmo->actionPos.y + keyboard->value * axis[1].isLocked;
+		gizmo->pos.z = gizmo->actionPos.z + keyboard->value * axis[2].isLocked;
+	}
+	else
+	{
+		Vec2f gizmoScreenSpace = WindowGetLocalScreenPos(gizmo->pos);
+		Vec2f mv = Vec2f_New(UnfoldVec2(gInput.mouse.vel));
+		RayLine curRay = WindowGetRayLine(gizmoScreenSpace);
+		RayLine nextRay = WindowGetRayLine(Vec2f_Add(gizmoScreenSpace, mv));
+		
+		// axis constrained movement
+		if (isAnyAxisLocked)
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				if (gizmo->axis[i].isLocked)
+				{
+					gizmo->pos = Vec3f_ClosestPointOnRay(
+						nextRay.start
+						, nextRay.end
+						, gizmo->pos
+						, Vec3f_Add(gizmo->pos, mxo[i])
+					);
+					break;
+				}
+			}
+			
+			// old method of axis lock; seems to function no
+			// differently from the code i added to the bottom
+			// of this function
+			/*
+			if (ctrlHold && rayPos)
+			{
+				for (int i = 0; i < 3; ++i)
+				{
+					if (!gizmo->axis[i].isLocked)
+						continue;
+					
+					Vec3f off = Vec3f_Project(Vec3f_Sub(*rayPos, gizmo->pos), mxo[i]);
+					
+					gizmo->pos = Vec3f_Add(gizmo->pos, off);
+				}
+			}
+			*/
+		}
+		// unconstrained movement
+		else
+		{
+			Vec3f nextRayN = Vec3f_LineSegDir(nextRay.start, nextRay.end);
+			float nextDist = Vec3f_DistXYZ(nextRay.start, nextRay.end);
+			float curDist = Vec3f_DistXYZ(curRay.start, curRay.end);
+			float pointDist = Vec3f_DistXYZ(curRay.start, gizmo->pos);
+			float distRatio = nextDist / curDist;
+			
+			gizmo->pos = Vec3f_Add(nextRay.start, Vec3f_MulVal(nextRayN, pointDist * distRatio));
+		}
+	}
+	
+	// holding ctrl should snap to the world geometry
+	if (ctrlHold && rayPos)
+	{
+		// respect axis locks when moving
+		if (!isAnyAxisLocked || axis[0].isLocked)
+			gizmo->pos.x = rintf(rayPos->x);
+		if (!isAnyAxisLocked || axis[1].isLocked)
+			gizmo->pos.y = rintf(rayPos->y);
+		if (!isAnyAxisLocked || axis[2].isLocked)
+			gizmo->pos.z = rintf(rayPos->z);
+	}
+	
+	/*
+	fornode(elem, gizmo->elemHead) {
+		Vec3f relPos = Vec3f_Sub(gizmo->pos, gizmo->actionPos);
+		
+		elem->interact = true;
+		elem->pos = Vec3f_Add(*elem->dpos, relPos);
+		
+		for (var_t i  = 0; i < 3; i++)
+			elem->pos.axis[i] = rint(elem->pos.axis[i]);
+	}
+	*/
+}
+
+// update children with gizmo movement
+static void GizmoUpdateChildren(struct Gizmo *gizmo)
+{
+	sb_foreach(gizmo->children, {
+		*(each->pos) = Vec3f_Add(each->startPos, Vec3f_Sub(gizmo->pos, gizmo->actionPos));
+	});
+}
+
+// apply current positions to all children
+static void GizmoApplyChildren(struct Gizmo *gizmo)
+{
+	sb_foreach(gizmo->children, {
+		each->startPos = *(each->pos);
+	});
+}
+
+#endif // endregion
 
 struct Gizmo *GizmoNew(void)
 {
@@ -32,19 +182,68 @@ struct Gizmo *GizmoNew(void)
 	return gizmo;
 }
 
+void GizmoFree(struct Gizmo *gizmo)
+{
+	sb_free(gizmo->children);
+	
+	free(gizmo);
+}
+
+bool GizmoHasFocus(struct Gizmo *gizmo)
+{
+	return gizmo->state != GIZMO_STATE_IDLE;
+}
+
+bool GizmoIsHovered(struct Gizmo *gizmo)
+{
+	for (int i = 0; i < 3; ++i)
+		if (gizmo->axis[i].isHovered)
+			return true;
+	
+	return false;
+}
+
+void GizmoAddChild(struct Gizmo *gizmo, Vec3f *childPos)
+{
+	struct GizmoChild child = {
+		.pos = childPos
+		, .startPos = *childPos
+	};
+	
+	sb_push(gizmo->children, child);
+}
+
+void GizmoRemoveChildren(struct Gizmo *gizmo)
+{
+	sb_clear(gizmo->children);
+}
+
 void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z)
 {
 	gizmo->pos = (Vec3f){x, y, z};
 }
 
-void GizmoUpdate(struct Gizmo *gizmo)
+void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 {
 	// global gizmo orientation
 	Matrix_Clear(&gizmo->mtx);
 	
-	if (true/*!gizmo->lock.state*/)
+	if (gInput.mouse.isControllingCamera)
+		return;
+	
+	if (!sb_count(gizmo->children))
+		return;
+	
+	if (gizmo->state == GIZMO_STATE_IDLE)
 	{
 		RayLine ray = WindowGetCursorRayLine();
+		
+		// idle = no movement
+		gizmo->actionPos = gizmo->pos;
+		
+		// press G key to move, like Blender
+		if (gInput.key.g)
+			GizmoSetState(gizmo, GIZMO_STATE_MOVE);
 		
 		for (int i = 0; i < 3; i++)
 		{
@@ -53,22 +252,26 @@ void GizmoUpdate(struct Gizmo *gizmo)
 			
 			axis->isHovered = isHovered;
 			
-			/*
 			if (isHovered)
 			{
-				if (Input_GetCursor(input, CLICK_L)->press)
+				if (gInput.mouse.button.left)
 				{
-					Gizmo_SetAction(gizmo, GIZMO_ACTION_MOVE);
-					gizmo->initpos = gizmo->pos;
-					gizmo->lock.axis[i] = true;
-					gizmo->initAction = true;
-					gizmo->pressHold = true;
+					GizmoSetState(gizmo, GIZMO_STATE_MOVE);
+					
+					// only lock one axis on click
+					for (int k = 0; k < 3; ++k)
+						gizmo->axis[k].isLocked = false;
+					gizmo->axis[i].isLocked = true;
+					
 					break;
 				}
 			}
-			*/
 		}
 	}
+	else if (gizmo->state == GIZMO_STATE_MOVE)
+		GizmoMove(gizmo, rayPos);
+	
+	GizmoUpdateChildren(gizmo);
 }
 
 // TODO still very WIP
@@ -85,6 +288,9 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	};
 	static GbiGfx *gfxHead = 0;
 	static GbiGfx *gfxDisp;
+	
+	if (!sb_count(gizmo->children))
+		return;
 	
 	if (!gfxHead)
 		gfxHead = malloc(128 * sizeof(*gfxHead));
@@ -116,8 +322,8 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 		
 		Vec3f color = Vec3f_MulVal(Vec3fRGBfromHSV(1.0f - (i / 3.0f), 0.75f, 0.62f), 255);
 		
-		// TODO draw axis line
-		if (gizmo->isInUse)
+		// hide axis lines if the gizmo is being manipulated by the user
+		if (gizmo->state)
 			continue;
 		
 		Matrix_Push(); {
@@ -162,13 +368,13 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	// display model
 	n64_draw_dlist(gfxHead);
 	
-	if (true/*gizmo->action && gizmo->activeView == gizmo->curView*/)
+	if (gizmo->state == GIZMO_STATE_MOVE)
 	{
-		if (true/*gizmo->lock.state && gizmo->lock.state != GIZMO_AXIS_ALL_TRUE*/)
+		if (gInput.mouse.button.left)
 		{
 			for (int i = 0; i < 3; i++)
 			{
-				if (!gizmo->axis[i].isHovered)
+				if (!gizmo->axis[i].isLocked)
 					continue;
 				
 				Vec3f aI = Vec3f_Add(gizmo->pos, Vec3f_MulVal(mxo[i], 1000));
@@ -185,6 +391,16 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 				uint32_t color = (Vec3fRGBto24bit(colorVec) << 8) | 255;
 				GuiPushLine(UNFOLD_VEC2(aO), UNFOLD_VEC2(bO), color, 2.0f);
 			}
+		}
+		else if (gInput.mouseOld.button.left)
+		{
+			// mouse button has been released
+			gizmo->state = GIZMO_STATE_IDLE;
+			
+			for (int i = 0; i < 3; ++i)
+				gizmo->axis[i].isLocked = false;
+			
+			GizmoApplyChildren(gizmo);
 		}
 		
 		/*

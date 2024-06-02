@@ -276,6 +276,11 @@ static struct Instance private_InstanceParse(const void *data)
 		, .yrot = s16r(data8 + 10)
 		, .zrot = s16r(data8 + 12)
 		, .params = u16r(data8 + 14)
+		, .pos = {
+			s16r(data8 + 2)
+			, s16r(data8 + 4)
+			, s16r(data8 + 6)
+		}
 	};
 }
 
