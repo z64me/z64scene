@@ -148,7 +148,7 @@ static void MultiLineTabBarGeneric(
 		{
 			colors[ImGuiCol_TabActive] = oldTab;
 			colors[ImGuiCol_Tab] = oldTab;
-			ImGui::PopStyleVar(ImGuiStyleVar_TabBarBorderSize);
+			ImGui::PopStyleVar();
 		}
 		
 		if (ImGui::BeginTabBar(name, flags))
