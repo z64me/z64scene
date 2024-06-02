@@ -8,6 +8,7 @@
 #include <climits>
 #include "misc.h"
 #include "gui.h"
+#include <toml.hpp>
 #include <nlohmann/json.hpp>
 #include <iostream>
 using json = nlohmann::json;
@@ -100,6 +101,67 @@ static GuiInterop *gGui;
 #endif
 
 #if 1 // region: private functions
+
+// testing toml code
+static void TomlTest(void)
+{
+	std::cout << "TomlTest():" << std::endl;
+	std::string tomlData = R"(
+		Title = "Example"
+		[[Actor]]
+			Name = "Stalfos"
+			Number = 0x0002
+			Object = 0x0032
+			BinaryTest = 0b0011
+			
+			[[Actor.Property]]
+				Mask          = 1
+				Name          = "Set Flag"
+				Target        = "XRot"
+				Dropdown      = [ [ 0xFF, "NULL"] ]
+			[[Actor.Property]]
+				Mask           = 2
+				Name           = "Get Flag"
+				Target         = "XRot"
+				Dropdown       = [ [ 0xFF, "NULL"] ]
+		
+		[[Actor]]
+			Name = "Wolfos"
+			Number = 0x01AF
+			Object = 0x0183
+			BinaryTest = 0b0011
+			
+			[[Actor.Property]]
+				Mask          = 3
+				Name          = "Set Flag"
+				Target        = "XRot"
+				Dropdown      = [ [ 0xFF, "NULL"] ]
+			[[Actor.Property]]
+				Mask           = 0b0100
+				Name           = "Get Flag"
+				Target         = "XRot"
+				Dropdown       = [ [ 0xFF, "NULL"] ]
+	)";
+	std::stringstream test(tomlData);
+	auto data = toml::parse(test);
+	
+	/*
+	std::cout << data["title"] << std::endl;
+	std::cout << data["actor"] << std::endl;
+	std::cout << data["actor"]["name"] << std::endl;
+	std::cout << data["actor"]["binarytest"] << std::endl;
+	*/
+	//std::cout << data["Property"] << std::endl;
+	//std::cout << data << std::endl;
+	
+	auto actors = data["Actor"];
+	if (actors.is_array()) std::cout << "is array" << std::endl;
+	for (auto &actor : actors.as_array())
+	{
+		//std::cout << "cool" << std::endl;
+		std::cout << actor["Name"] << std::endl;
+	}
+}
 
 // testing code from the nlohmann/json readme
 static void JsonTest(void)
@@ -648,6 +710,7 @@ extern "C" void GuiInit(GLFWwindow *window)
 	io.LogFilename = NULL;
 	
 	JsonTest();
+	TomlTest();
 }
 
 extern "C" void GuiCleanup(void)
