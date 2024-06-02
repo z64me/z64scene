@@ -44,9 +44,9 @@ typedef double f64;
 #define BinToRad(binang)   (((float)binang / 32768.0f) * M_PI)
 
 // misc
-#define absmax(a, b)         (abs(a) > abs(b) ? (a) : (b))
-#define absmin(a, b)         (abs(a) <= abs(b) ? (a) : (b))
-#define abs(val)             ((val) < 0 ? -(val) : (val))
+#define absmax(a, b)         (ABS(a) > ABS(b) ? (a) : (b))
+#define absmin(a, b)         (ABS(a) <= ABS(b) ? (a) : (b))
+#define ABS(val)             ((val) < 0 ? -(val) : (val))
 #define clamp(val, min, max) ((val) < (min) ? (min) : (val) > (max) ? (max) : (val))
 #define clamp_min(val, min)  ((val) < (min) ? (min) : (val))
 #define clamp_max(val, max)  ((val) > (max) ? (max) : (val))

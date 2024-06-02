@@ -5,6 +5,7 @@
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h>
 #include <functional>
+#include <climits>
 #include "misc.h"
 #include "gui.h"
 

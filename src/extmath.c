@@ -482,10 +482,10 @@ Rect Rect_FlipVerti(Rect r, Rect p) {
 
 Rect Rect_ExpandX(Rect r, int amount) {
 	if (amount < 0) {
-		r.x -= abs(amount);
-		r.w += abs(amount);
+		r.x -= ABS(amount);
+		r.w += ABS(amount);
 	} else {
-		r.w += abs(amount);
+		r.w += ABS(amount);
 	}
 	
 	return r;
@@ -493,10 +493,10 @@ Rect Rect_ExpandX(Rect r, int amount) {
 
 Rect Rect_ShrinkX(Rect r, int amount) {
 	if (amount < 0) {
-		r.w -= abs(amount);
+		r.w -= ABS(amount);
 	} else {
-		r.x += abs(amount);
-		r.w -= abs(amount);
+		r.x += ABS(amount);
+		r.w -= ABS(amount);
 	}
 	
 	return r;
@@ -506,10 +506,10 @@ Rect Rect_ExpandY(Rect r, int amount) {
 	amount = -amount;
 	
 	if (amount < 0) {
-		r.y -= abs(amount);
-		r.h += abs(amount);
+		r.y -= ABS(amount);
+		r.h += ABS(amount);
 	} else {
-		r.h += abs(amount);
+		r.h += ABS(amount);
 	}
 	
 	return r;
@@ -519,10 +519,10 @@ Rect Rect_ShrinkY(Rect r, int amount) {
 	amount = -amount;
 	
 	if (amount < 0) {
-		r.h -= abs(amount);
+		r.h -= ABS(amount);
 	} else {
-		r.y += abs(amount);
-		r.h -= abs(amount);
+		r.y += ABS(amount);
+		r.h -= ABS(amount);
 	}
 	
 	return r;
