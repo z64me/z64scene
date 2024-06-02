@@ -601,6 +601,11 @@ extern "C" void GuiInit(GLFWwindow *window)
 	ImGui::CreateContext();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
+	
+	// turn off imgui.ini
+	ImGuiIO &io = ImGui::GetIO();
+	io.IniFilename = NULL;
+	io.LogFilename = NULL;
 }
 
 extern "C" void GuiCleanup(void)
