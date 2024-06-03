@@ -34,6 +34,9 @@ static ActorDatabase::Entry::Property ActorDatabasePropertyFromToml(toml::value 
 	
 	auto dropdown = property["Dropdown"];
 	
+	if (!dropdown.is_array())
+		return result;
+	
 	for (auto &each : dropdown.as_array())
 	{
 		result.AddCombo(TOML_INT(each[0]), TOML_CSTRING(each[1]));
@@ -45,6 +48,9 @@ static ActorDatabase::Entry::Property ActorDatabasePropertyFromToml(toml::value 
 static std::vector<ActorDatabase::Entry::Property> ActorDatabasePropertiesFromToml(toml::value properties)
 {
 	std::vector<ActorDatabase::Entry::Property> result;
+	
+	if (!properties.is_array())
+		return result;
 	
 	for (auto &property : properties.as_array())
 	{
@@ -155,7 +161,6 @@ void TomlTest(void)
 				Mask          = 0x03FF
 				Name          = "Distance x10"
 				Target        = "Var"
-				Dropdown = [ [ 0, "TODO blank dropdown" ] ]
 			[[Actor.Property]]
 				Mask          = 0xF0
 				Name          = "Distance Type"
@@ -165,7 +170,11 @@ void TomlTest(void)
 				Mask          = 0xF
 				Name          = "Header Index"
 				Target        = "YRot"
-				Dropdown = [ [ 0, "TODO blank dropdown" ] ]
+		
+		[[Actor]]
+			Name = "Test w/o Properties"
+			Index = 0x0001
+			Object = 0x5678
 	)";
 	std::stringstream test(tomlData);
 	auto data = toml::parse(test);
