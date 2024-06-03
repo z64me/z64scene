@@ -96,6 +96,48 @@ void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize
 	dst[end + 1] = '\0';
 }
 
+#ifdef _WIN32
+#include <windows.h>
+#include <direct.h>
+#elif __linux__
+#include <unistd.h>
+#include <limits.h>
+#endif
+const char *ExePath(const char *path)
+{
+	static char *basePath = 0;
+	static char *appendTo;
+	
+	if (!basePath)
+	{
+	#ifdef _WIN32
+		basePath = malloc(MAX_PATH);
+		GetModuleFileName(NULL, basePath, MAX_PATH);
+	#elif __linux__
+		basePath = malloc(PATH_MAX);
+		ssize_t count = readlink("/proc/self/exe", basePath, PATH_MAX);
+		if (count == -1)
+			Die("readlink() fatal error");
+	#else
+		#error please implement ExePath() for this platform
+	#endif
+		char *slash = strrchr(basePath, '/');
+		char *slash2 = strrchr(basePath, '\\');
+		
+		appendTo = MAX(slash, slash2);
+		if (!appendTo)
+			Die("TODO get current working directory instead");
+		++appendTo;
+		
+		*appendTo = '\0';
+		fprintf(stderr, "ExePath = '%s'\n", basePath);
+	}
+	else
+		strcpy(appendTo, path);
+	
+	return basePath;
+}
+
 bool FileExists(const char *filename)
 {
 	FILE *fp = fopen(filename, "rb");

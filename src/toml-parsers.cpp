@@ -16,6 +16,8 @@
 #define TOML_CSTRING(X) strdup(std::string(X.as_string()).c_str())
 #define TOML_INT(X) X.as_integer()
 
+extern "C" const char *ExePath(const char *path);
+
 // json stuff
 #if 0
 #include <nlohmann/json.hpp>
@@ -66,7 +68,13 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 	
 	entry.name = TOML_CSTRING(tomlActor["Name"]);
 	entry.index = TOML_INT(tomlActor["Index"]);
-	entry.object = TOML_INT(tomlActor["Object"]);
+	
+	auto objects = tomlActor["Objects"];
+	if (objects.is_array())
+		for (auto &each : objects.as_array())
+			entry.objects.emplace_back(TOML_INT(each));
+	else
+		entry.objects.emplace_back(0x0001); // no object dependency
 	entry.properties = ActorDatabasePropertiesFromToml(tomlActor["Property"]);
 	
 	return entry;
@@ -177,7 +185,7 @@ void TomlTest(void)
 			Object = 0x5678
 	)";
 	std::stringstream test(tomlData);
-	auto data = toml::parse(test);
+	auto data = toml::parse(ExePath("toml/game/oot/actors.toml"));
 	
 	/*
 	std::cout << data["title"] << std::endl;
@@ -206,7 +214,7 @@ void TomlTest(void)
 		if (!actor.name)
 			continue;
 		
-		fprintf(stderr, "%s : %04x %04x\n", actor.name, actor.index, actor.object);
+		fprintf(stderr, "%s : %04x %04x\n", actor.name, actor.index, actor.objects[0]);
 		
 		for (auto &prop : actor.properties)
 		{

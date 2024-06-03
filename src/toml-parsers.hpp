@@ -36,7 +36,7 @@ struct ActorDatabase
 		
 		const char             *name;
 		uint16_t                index;
-		uint16_t                object;
+		std::vector<uint16_t>   objects;
 		std::vector<Property>   properties;
 		
 		void AddProperty(Property property)

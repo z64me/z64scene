@@ -38,7 +38,7 @@ endif
 
 .PHONY: all clean
 
-all: $(TARGET)
+all: $(TARGET) copy_toml
 
 # TODO make this less bad
 win32:
@@ -61,6 +61,22 @@ bin/o/$(FOLDER):
 
 bin/o/$(FOLDER)/imgui:
 	mkdir -p bin/o/$(FOLDER)/imgui
+
+# copy toml's from toml/ to bin/toml/
+# Find all .toml files recursively in toml/ directory
+TOML_FILES := $(shell find toml/ -type f -name "*.toml")
+# Generate corresponding targets in bin/toml/ while maintaining directory structure
+BIN_TOML_FILES := $(patsubst toml/%,bin/toml/%,$(TOML_FILES))
+# Copy .toml files to bin/toml/ if they don't already exist
+$(BIN_TOML_FILES): bin/toml/% : toml/%
+	mkdir -p $(dir $@)
+	cp $< $@
+# Create bin/toml/ directory if it doesn't exist
+bin/toml:
+	mkdir -p bin/toml
+.PHONY: copy_toml
+copy_toml: $(BIN_TOML_FILES)
+# end toml copy
 
 # Create necessary subdirectories for object files
 $(OBJ_C): | bin/o/$(FOLDER)

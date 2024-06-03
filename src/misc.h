@@ -165,6 +165,7 @@ char *StrdupPad(const char *str, int padding);
 void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize);
 void StrToLower(char *str);
 void StrRemoveChar(char *charAt);
+const char *ExePath(const char *path);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);

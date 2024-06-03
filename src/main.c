@@ -15,6 +15,8 @@ int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
 	
+	ExePath(argv[0]);
+	
 	if (argc == 2)
 		scene = SceneFromFilenamePredictRooms(argv[1]);
 	
