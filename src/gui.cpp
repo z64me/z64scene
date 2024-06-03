@@ -16,9 +16,13 @@
 #define WRAP(VALUE, MIN, MAX) (((VALUE) < (MIN)) ? (MAX) : ((VALUE) > (MAX)) ? (MIN) : (VALUE))
 
 // allows using mousewheel while hovering the last-drawn combo box to quickly change its value
-#define IMGUI_COMBO_HOVER(CURRENT, HOWMANY) \
+#define IMGUI_COMBO_HOVER_ONCHANGE(CURRENT, HOWMANY, ONCHANGE) \
 	if (ImGui::IsItemHovered() && ImGui::GetIO().MouseWheel) \
-		CURRENT = WRAP((CURRENT) - ImGui::GetIO().MouseWheel, 0, (HOWMANY) - 1);
+	{ \
+		CURRENT = WRAP((CURRENT) - ImGui::GetIO().MouseWheel, 0, (HOWMANY) - 1); \
+		do ONCHANGE while(0); \
+	}
+#define IMGUI_COMBO_HOVER(CURRENT, HOWMANY) IMGUI_COMBO_HOVER_ONCHANGE(CURRENT, HOWMANY, {})
 
 #endif
 
@@ -445,18 +449,34 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					if (combos.size())
 					{
 						const char *previewText = "Custom Value (Above)";
+						int selectedIndex = -1;
+						int i;
+						
+						i = 0;
 						for (auto &combo : combos)
+						{
 							if (combo.value == comboOpt)
+							{
 								previewText = combo.label;
+								selectedIndex = i;
+							}
+							++i;
+						}
 						
 						if (ImGui::BeginCombo("##Instance##InstanceOptions##Dropdown", previewText))
 						{
+							i = 0;
 							for (auto &combo : combos)
+							{
 								if (ImGui::Selectable(combo.label, combo.value == comboOpt))
+								{
 									comboOpt = combo.value;
+									selectedIndex = i;
+								}
+							}
 							ImGui::EndCombo();
 						}
-						IMGUI_COMBO_HOVER(comboOpt, combos.size());
+						IMGUI_COMBO_HOVER_ONCHANGE(selectedIndex, combos.size(), { comboOpt = combos[selectedIndex].value; });
 					}
 					
 					current->Inject(comboOpt, &inst->params, &inst->xrot, &inst->yrot, &inst->zrot);
