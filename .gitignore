@@ -3,3 +3,8 @@ bin/
 *.ini
 *.Identifier
 
+# node stuff
+node_modules/
+package-lock.json
+package.json
+
