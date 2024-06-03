@@ -373,23 +373,16 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				static ImGuiTextFilter filter;
 				filter.Draw();
 				
-				const char* names[] = {
-					"Stalfos"
-					, "Stalchild"
-					, "Stalhorse"
-					, "Stalhound"
-					, "Lizalfos"
-					, "Moblin"
-					, "Deku Baba"
-					, "Deku Scrub"
-					, "Deku Tree"
-					, "Mad Scrub"
-				};
-				
-				for (int i = 0; i < IM_ARRAYSIZE(names); i++)
-					if (filter.PassFilter(names[i]))
-						if (ImGui::Selectable(names[i]))
-							inst->id = i;
+				for (auto &entry : gGuiSettings.actorDatabase.entries)
+				{
+					const char *name = entry.name;
+					
+					if (name
+						&& filter.PassFilter(name)
+						&& ImGui::Selectable(name)
+					)
+						inst->id = entry.index;
+				}
 				ImGui::EndPopup();
 			}
 			
