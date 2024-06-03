@@ -911,6 +911,7 @@ void WindowMainLoop(struct Scene *scene)
 								// TODO update gui instances tab
 								GizmoSetPosition(gizmo, each->x, each->y, each->z);
 								GizmoAddChild(gizmo, &each->pos);
+								GuiCallbackActorGrabbed(each->id);
 							}
 						});
 					});

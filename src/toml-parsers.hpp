@@ -55,6 +55,19 @@ struct ActorDatabase
 		
 		entries[entry.index] = entry;
 	}
+	
+	const char *GetActorName(uint16_t index)
+	{
+		if (index >= entries.size())
+			return "unknown";
+		
+		auto entry = entries[index];
+		
+		if (!entry.name)
+			return "unknown";
+		
+		return entry.name;
+	}
 };
 
 struct ObjectDatabase
@@ -65,3 +78,4 @@ struct ObjectDatabase
 };
 
 void TomlTest(void);
+ActorDatabase TomlLoadActorDatabase(const char *tomlPath);

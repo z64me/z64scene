@@ -80,6 +80,24 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 	return entry;
 }
 
+ActorDatabase TomlLoadActorDatabase(const char *tomlPath)
+{
+	auto data = toml::parse(ExePath(tomlPath));
+	auto tomlActors = data["Actor"].as_array();
+	
+	ActorDatabase actorDatabase;
+	
+	// load actor database
+	for (auto &tomlActor : tomlActors)
+	{
+		auto actor = ActorDatabaseEntryFromToml(tomlActor);
+		
+		actorDatabase.AddEntry(actor);
+	}
+	
+	return actorDatabase;
+}
+
 // testing toml code
 void TomlTest(void)
 {

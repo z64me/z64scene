@@ -29,6 +29,8 @@ struct GuiSettings
 	bool showSidebar = true;
 	bool showImGuiDemoWindow = false;
 	
+	ActorDatabase actorDatabase;
+	
 	// combo boxes can be volatile as sizes change
 	// when loading different scenes for editing
 	struct
@@ -345,9 +347,9 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				"##Instance##InstanceCombo"
 				, &gGuiSettings.combos.instanceCurrent
 				, [](void* data, int n) {
-					static char test[64];
+					static char test[256];
 					Instance *inst = &((Instance*)data)[n];
-					sprintf(test, "%d: 0x%04x", n, inst->id);
+					sprintf(test, "%d: %s 0x%04x", n, gGuiSettings.actorDatabase.GetActorName(inst->id), inst->id);
 					return (const char*)test;
 				}
 				, instances
@@ -609,7 +611,14 @@ extern "C" void GuiInit(GLFWwindow *window)
 	io.LogFilename = NULL;
 	
 	//JsonTest();
-	TomlTest();
+	//TomlTest();
+	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+}
+
+// just testing things for now
+extern "C" void GuiCallbackActorGrabbed(uint16_t index)
+{
+	fprintf(stderr, "selected actor '%s'\n", gGuiSettings.actorDatabase.GetActorName(index));
 }
 
 extern "C" void GuiCleanup(void)
