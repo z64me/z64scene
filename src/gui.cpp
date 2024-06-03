@@ -712,6 +712,16 @@ extern "C" int GuiHasFocus(void)
 	;
 }
 
+extern "C" int GuiHasFocusMouse(void)
+{
+	return ImGui::GetIO().WantCaptureMouse;
+}
+
+extern "C" int GuiHasFocusKeyboard(void)
+{
+	return ImGui::GetIO().WantCaptureKeyboard;
+}
+
 extern "C" void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness)
 {
 	// byteswap

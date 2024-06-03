@@ -1137,7 +1137,8 @@ void WindowMainLoop(struct Scene *scene)
 		// draw the ui
 		GuiDraw(window, scene, &gui);
 		shouldIgnoreInput = GuiHasFocus();
-		GizmoUpdate(gizmo, &worldRayData.pos);
+		if (!GuiHasFocusKeyboard()) // ignore gizmo keyboard shortcuts if gui has keyboard focus
+			GizmoUpdate(gizmo, &worldRayData.pos);
 		shouldIgnoreInput |= GizmoHasFocus(gizmo);
 		gState.cameraIgnoreLMB = GizmoIsHovered(gizmo);
 		
