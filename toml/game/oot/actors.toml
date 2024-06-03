@@ -14,16 +14,16 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Invisible, Can't Control //Used for cutscenes without Link"],
-			[256,"Master Sword Pull and Drop Animation //Overwrites coordinates"],
-			[512,"Spawn: Blue Warp //used when returning from a blue warp"],
-			[768,"Spawn: Immobile"],
-			[1024,"Spawn: Exit via Grotto //Y velocity = 12"],
-			[1280,"Spawn: Warp Song"],
-			[1536,"Spawn: Farore's Wind"],
-			[1792,"Spawn: Thrown Out"],
-			[3328,"Stand"],
-			[3584,"Slow Walk Forward"],
-			[3840,"Retain Previous Velocity //Walk speed set by last exit"]
+			[1,"Master Sword Pull and Drop Animation //Overwrites coordinates"],
+			[2,"Spawn: Blue Warp //used when returning from a blue warp"],
+			[3,"Spawn: Immobile"],
+			[4,"Spawn: Exit via Grotto //Y velocity = 12"],
+			[5,"Spawn: Warp Song"],
+			[6,"Spawn: Farore's Wind"],
+			[7,"Spawn: Thrown Out"],
+			[13,"Stand"],
+			[14,"Slow Walk Forward"],
+			[15,"Retain Previous Velocity //Walk speed set by last exit"]
 		]
 
 [[Actor]]
@@ -112,18 +112,18 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Wooden Door //Loads rooms"],
-			[64,"Double Wooden Doors //Loads rooms"],
-			[128,"Small Key Locked Door"],
-			[192,"Locked Double Wooden Doors //Left door is locked on one side, right door is locked on the other. Loads rooms."],
-			[256,"Double Wooden Two-Way Doors //Loads rooms"],
-			[320,"Double Wooden Two-Way Doors //Loads rooms"],
-			[384,"Double Wooden Two-Way Doors //Loads rooms"],
-			[447,"Wooden door, loads collision behind the door faster //Loads rooms"],
-			[448,"Double Wooden Two-Way Doors //Loads rooms"],
-			[463,"Double Wooden Two-Way Doors, loads collision behind the door faster //Loads rooms"],
-			[512,"Ajar Wooden Door //Door slams shut on approach, then says \"It won't open!\" if you try to interact with it."],
-			[768,"Wooden Two-Way Door with Message //Last two values' text matches that of actor 0185, but in increments of 1 instead"],
-			[1024,"Wooden Two-Way Door //Doesn't load room"]
+			[1,"Double Wooden Doors //Loads rooms"],
+			[2,"Small Key Locked Door"],
+			[3,"Locked Double Wooden Doors //Left door is locked on one side, right door is locked on the other. Loads rooms."],
+			[4,"Double Wooden Two-Way Doors //Loads rooms"],
+			[5,"Double Wooden Two-Way Doors //Loads rooms"],
+			[6,"Double Wooden Two-Way Doors //Loads rooms"],
+			[6,"Wooden door, loads collision behind the door faster //Loads rooms"],
+			[7,"Double Wooden Two-Way Doors //Loads rooms"],
+			[7,"Double Wooden Two-Way Doors, loads collision behind the door faster //Loads rooms"],
+			[8,"Ajar Wooden Door //Door slams shut on approach, then says \"It won't open!\" if you try to interact with it."],
+			[12,"Wooden Two-Way Door with Message //Last two values' text matches that of actor 0185, but in increments of 1 instead"],
+			[16,"Wooden Two-Way Door //Doesn't load room"]
 		]
 
 [[Actor]]
@@ -150,17 +150,17 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Large"],
-			[4096,"Large, Appears, Clear Flag"],
-			[8192,"Boss Key’s Chest"],
-			[12288,"Large, Falling, Switch Flag"],
-			[16384,"Large, Invisible"],
-			[20480,"Small"],
-			[24576,"Small, Invisible"],
-			[28672,"Small, Appears, Clear Flag"],
-			[32768,"Small, Falls, Switch Flag"],
-			[36864,"Large, Appears, Zelda's Lullaby"],
-			[40960,"Large, Appears, Sun's Song Triggered"],
-			[45056,"Large, Appears, Switch Flag"]
+			[1,"Large, Appears, Clear Flag"],
+			[2,"Boss Key’s Chest"],
+			[3,"Large, Falling, Switch Flag"],
+			[4,"Large, Invisible"],
+			[5,"Small"],
+			[6,"Small, Invisible"],
+			[7,"Small, Appears, Clear Flag"],
+			[8,"Small, Falls, Switch Flag"],
+			[9,"Large, Appears, Zelda's Lullaby"],
+			[10,"Large, Appears, Sun's Song Triggered"],
+			[11,"Large, Appears, Switch Flag"]
 		]
 
 [[Actor]]
@@ -229,8 +229,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Web-Covered Hole"],
-			[4096,"Vertical Web Wall"],
-			[8192,"Web-Covered Hole //When burned, web becomes inverse-conical and extends upwards"]
+			[1,"Vertical Web Wall"],
+			[2,"Web-Covered Hole //When burned, web becomes inverse-conical and extends upwards"]
 		]
 
 [[Actor]]
@@ -646,12 +646,12 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Lifting door"],
-			[64,"Front side attached to Room Clear"],
-			[128,"Front side attached to Switch"],
-			[192,"Back side permanently locked"],
-			[320,"Boss door //needs object 00B0"],
-			[448,"Front side attached to Switch, Back to Room Clear"],
-			[704,"Key Locked door"]
+			[1,"Front side attached to Room Clear"],
+			[2,"Front side attached to Switch"],
+			[3,"Back side permanently locked"],
+			[5,"Boss door //needs object 00B0"],
+			[7,"Front side attached to Switch, Back to Room Clear"],
+			[11,"Key Locked door"]
 		]
 
 [[Actor]]
@@ -924,8 +924,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Huge"],
-			[256,"Big"],
-			[512,"Small"]
+			[1,"Big"],
+			[2,"Small"]
 		]
 
 [[Actor]]
@@ -1013,13 +1013,13 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Large, turns off with room clear."],
-			[4096,"Large, plays cutscene, switches off for long time with ticking sound. Turns off permanently with chest flag."],
-			[8192,"Small, switches off for long time silently."],
-			[12288,"Large, plays cutscene, switches off for short time with ticking sound."],
-			[16384,"Disabled, small, switches on for short time."],
-			[20480,"Disabled, large, can be switched on and off."],
-			[24576,"Large, switches off permanently, won't spawn if room is cleared."],
-			[28672,"Nothing"]
+			[1,"Large, plays cutscene, switches off for long time with ticking sound. Turns off permanently with chest flag."],
+			[2,"Small, switches off for long time silently."],
+			[3,"Large, plays cutscene, switches off for short time with ticking sound."],
+			[4,"Disabled, small, switches on for short time."],
+			[5,"Disabled, large, can be switched on and off."],
+			[6,"Large, switches off permanently, won't spawn if room is cleared."],
+			[7,"Nothing"]
 		]
 
 [[Actor]]
@@ -1193,7 +1193,7 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[40960,"Normal"],
+			[640,"Normal"],
 			[0,"Dodongo's Cavern cutscene"]
 		]
 
@@ -1268,9 +1268,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Golden Torch"],
-			[4096,"Timed Torch"],
-			[8192,"Unlit Wooden Torch"],
-			[9216,"Lit Wooden Torch"]
+			[4,"Timed Torch"],
+			[8,"Unlit Wooden Torch"],
+			[9,"Lit Wooden Torch"]
 		]
 
 [[Actor]]
@@ -1294,7 +1294,7 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[255,"Fire 1 shot"]
+			[0,"Fire 1 shot"]
 		]
 
 [[Actor]]
@@ -1341,13 +1341,13 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Floating Square platform, sloped bottom //Used in first room, on center column"],
-			[4096,"Floating Square platform"],
-			[8192,"Floating Square platform, tapered on bottom //Center Room floating block"],
-			[12288,"Dragon Head Statue //Main Room"],
-			[16384,"Dragon Head Statue //Skulltula Room"],
-			[20480,"Dragon Head Statue //before Dark Link"],
-			[24576,"Dragon Head Statue"],
-			[28672,"Moving Square Platform with Hookshot Target"]
+			[1,"Floating Square platform"],
+			[2,"Floating Square platform, tapered on bottom //Center Room floating block"],
+			[3,"Dragon Head Statue //Main Room"],
+			[4,"Dragon Head Statue //Skulltula Room"],
+			[5,"Dragon Head Statue //before Dark Link"],
+			[6,"Dragon Head Statue"],
+			[7,"Moving Square Platform with Hookshot Target"]
 		]
 
 [[Actor]]
@@ -1600,7 +1600,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Stone cube, side struck with sword flashes blue"],
-			[1,"Slightly larger"]
+			[0,"Slightly larger"]
 		]
 
 [[Actor]]
@@ -1639,9 +1639,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"4-Way Attack"],
-			[16,"Line Loop"],
-			[32,"Circle Loop"],
-			[48,"Vertical //Unintended Behavior?"]
+			[1,"Line Loop"],
+			[2,"Circle Loop"],
+			[3,"Vertical //Unintended Behavior?"]
 		]
 
 [[Actor]]
@@ -1785,7 +1785,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Stationary with switch and hardcoded camera cutscene"],
-			[256,"Follows you"]
+			[1,"Follows you"]
 		]
 
 [[Actor]]
@@ -1810,7 +1810,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"? patrolling guard?"],
-			[1280,"Standing guard //Immediately unloads self if the current world time is lower or equal than B888, or if it's currently day"]
+			[5,"Standing guard //Immediately unloads self if the current world time is lower or equal than B888, or if it's currently day"]
 		]
 
 [[Actor]]
@@ -1824,7 +1824,7 @@
 		Name = "Switch Flag"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 255
+		Mask = 15
 		Name = "Action"
 		Target = "Var"
 	[[Actor.Property]]
@@ -1832,12 +1832,12 @@
 		Name = "Unknown"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 0
+		Mask = 240
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
 			[0,"Redead"],
-			[128,"Gibdo"]
+			[8,"Gibdo"]
 		]
 
 [[Actor]]
@@ -1864,9 +1864,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Meg //Purple"],
-			[256,"Joelle //Red"],
-			[512,"Beth //Blue"],
-			[768,"Amy //Green"]
+			[4,"Joelle //Red"],
+			[8,"Beth //Blue"],
+			[12,"Amy //Green"]
 		]
 
 [[Actor]]
@@ -1904,10 +1904,10 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"??? Amy"],
-			[256,"??? Amy"],
-			[512,"Joelle Painting Puzzle"],
-			[768,"Beth Painting Puzzle"],
-			[1024,"??? Amy"]
+			[4,"??? Amy"],
+			[8,"Joelle Painting Puzzle"],
+			[12,"Beth Painting Puzzle"],
+			[16,"??? Amy"]
 		]
 
 [[Actor]]
@@ -1949,8 +1949,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Skullwalltula"],
-			[32768,"Gold Skulltula, Always Spawns"],
-			[40960,"Gold Skulltula, Spawns at night"]
+			[4,"Gold Skulltula, Always Spawns"],
+			[5,"Gold Skulltula, Spawns at night"]
 		]
 
 [[Actor]]
@@ -2022,7 +2022,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Grottos //Scene 62"],
-			[4096,"Small Fairy Fountain //Scene 60"]
+			[4,"Small Fairy Fountain //Scene 60"]
 		]
 
 [[Actor]]
@@ -2150,8 +2150,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Leever //Use object 0017, they spawn on sand (#Quicksand)"],
-			[2560,"Red Tektite //Use object 0016"],
-			[4096,"Stalchildren //Use object 0184, Must stand on dirt to appear?"]
+			[10,"Red Tektite //Use object 0016"],
+			[16,"Stalchildren //Use object 0184, Must stand on dirt to appear?"]
 		]
 
 [[Actor]]
@@ -2430,8 +2430,8 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[256,"Spawns gibdo //(needs object 0098)"],
-			[512,"Spawns 2 keese //(needs object 000D)"]
+			[4,"Spawns gibdo //(needs object 0098)"],
+			[8,"Spawns 2 keese //(needs object 000D)"]
 		]
 
 [[Actor]]
@@ -2641,7 +2641,7 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[32768,"Used in Death Mountain Trail"],
+			[512,"Used in Death Mountain Trail"],
 			[0,"Used in Death Mountain Crater (cutscene setups)"]
 		]
 
@@ -2696,10 +2696,10 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Temple Gate"],
-			[256,"Gate lock"],
-			[512,"Water plane"],
-			[768,"Nothing //FIXME: Is Spawned"],
-			[1024,"Crashes"]
+			[1,"Gate lock"],
+			[2,"Water plane"],
+			[3,"Nothing //FIXME: Is Spawned"],
+			[4,"Crashes"]
 		]
 
 [[Actor]]
@@ -2953,10 +2953,10 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Large crystal"],
-			[256,"Smaller crystal"],
-			[512,"Crystal platform"],
-			[768,"Meltable ice sheet"],
-			[1024,"Giant crystal"]
+			[1,"Smaller crystal"],
+			[2,"Crystal platform"],
+			[3,"Meltable ice sheet"],
+			[4,"Giant crystal"]
 		]
 
 [[Actor]]
@@ -3085,8 +3085,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Large shadow //looks like it’s reproduced, well-done though"],
-			[1,"Small Shadow //CRASH?"],
-			[2,"No shadow //CRASH?"]
+			[0,"Small Shadow //CRASH?"],
+			[0,"No shadow //CRASH?"]
 		]
 
 [[Actor]]
@@ -3132,8 +3132,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Red"],
-			[64,"Green"],
-			[192,"?"]
+			[16,"Green"],
+			[48,"?"]
 		]
 
 [[Actor]]
@@ -3203,9 +3203,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Purple (Meg)"],
-			[256,"Red (Joelle)"],
-			[512,"Blue (Beth)"],
-			[768,"Green (Amy)"]
+			[4,"Red (Joelle)"],
+			[8,"Blue (Beth)"],
+			[12,"Green (Amy)"]
 		]
 
 [[Actor]]
@@ -3326,10 +3326,10 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Collect Immediately //Not used?"],
-			[4096,"Invisible, free collectible"],
-			[6144,"Invisible hitbox, drops collectible when hit //See Z-Rotation for parameters"],
-			[14336,"Invisible hitbox, set switch flag when touched"],
-			[16384,"Slingshotable hitbox, spawns Hylian Soldier (actor 00B3) who throws a bomb"]
+			[2,"Invisible, free collectible"],
+			[3,"Invisible hitbox, drops collectible when hit //See Z-Rotation for parameters"],
+			[7,"Invisible hitbox, set switch flag when touched"],
+			[8,"Slingshotable hitbox, spawns Hylian Soldier (actor 00B3) who throws a bomb"]
 		]
 
 [[Actor]]
@@ -3391,8 +3391,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Rupee Chain"],
-			[4096,"Silver Rupee //Check SharpOcarina fill with... example for how to use this puzzle"],
-			[8192,"Horseback Archery Pot"]
+			[1,"Silver Rupee //Check SharpOcarina fill with... example for how to use this puzzle"],
+			[2,"Horseback Archery Pot"]
 		]
 
 [[Actor]]
@@ -3451,7 +3451,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Talk when in range"],
-			[32768,"C-Up Prompt"]
+			[2,"C-Up Prompt"]
 		]
 
 [[Actor]]
@@ -3486,13 +3486,13 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Heart or Green Rupee"],
-			[256,"Bombs"],
-			[512,"Deku Seeds"],
-			[768,"Deku Nuts"],
-			[1024,"Deku Seeds"],
-			[1280,"Giant Purple Rupee"],
-			[1536,"Goron Tunic"],
-			[65280,"Nothing"]
+			[4,"Bombs"],
+			[8,"Deku Seeds"],
+			[12,"Deku Nuts"],
+			[16,"Deku Seeds"],
+			[20,"Giant Purple Rupee"],
+			[24,"Goron Tunic"],
+			[1020,"Nothing"]
 		]
 
 [[Actor]]
@@ -3561,7 +3561,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Rotating platform"],
-			[256,"+ Thick stone door //Opened when Dampe approaches"]
+			[1,"+ Thick stone door //Opened when Dampe approaches"]
 		]
 
 [[Actor]]
@@ -3736,12 +3736,12 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[1024,"Zora River, Zelda's Lullaby Spot (no cutscene)"],
-			[2048,"Windmill, Song of Storms spot (cutscene)"],
-			[4096,"Temple of Time, Song of Time spot (cutscene)"],
-			[5120,"Learn Sun's Song spot"],
-			[6144,"Royal Family Tomb, Zelda's Lullaby spot"],
-			[7168,"Puzzle Spot"]
+			[1,"Zora River, Zelda's Lullaby Spot (no cutscene)"],
+			[2,"Windmill, Song of Storms spot (cutscene)"],
+			[4,"Temple of Time, Song of Time spot (cutscene)"],
+			[5,"Learn Sun's Song spot"],
+			[6,"Royal Family Tomb, Zelda's Lullaby spot"],
+			[7,"Puzzle Spot"]
 		]
 
 [[Actor]]
@@ -3778,9 +3778,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Follows path, disappears, reappears at first waypoint //simulates falling into a hole"],
-			[256,"Follows path, breaks into pieces, reappears at first waypoint //As in adult Death Mountain Trail"],
-			[512,"Follows path, treating it as a closed loop"],
-			[768,"Follows path, halts, reverses, repeat //As in Fire Temple boulder maze"]
+			[1,"Follows path, breaks into pieces, reappears at first waypoint //As in adult Death Mountain Trail"],
+			[2,"Follows path, treating it as a closed loop"],
+			[3,"Follows path, halts, reverses, repeat //As in Fire Temple boulder maze"]
 		]
 
 [[Actor]]
@@ -4111,11 +4111,11 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Bean Seller's dialog //Doesn't work properly?"],
-			[2048,"Temple of Time stone altar dialog"],
-			[4096,"Gravekeeper's diary dialog //Navi hovers higher than normal"],
-			[6144,"Royal Composer Sharp's grave dialog //Use Object 006E, Sets Temporary Switch Flag 09, spawns Sharp"],
-			[8192,"\"Royal Family Tomb\" dialog"],
-			[10240,"Royal Composer Flat's grave dialog //Use Object 006E, Sets Temporary Switch Flag 08, spawns Flat"]
+			[32,"Temple of Time stone altar dialog"],
+			[64,"Gravekeeper's diary dialog //Navi hovers higher than normal"],
+			[96,"Royal Composer Sharp's grave dialog //Use Object 006E, Sets Temporary Switch Flag 09, spawns Sharp"],
+			[128,"\"Royal Family Tomb\" dialog"],
+			[160,"Royal Composer Flat's grave dialog //Use Object 006E, Sets Temporary Switch Flag 08, spawns Flat"]
 		]
 
 [[Actor]]
@@ -4163,19 +4163,19 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Does nothing"],
-			[64,"Outside of Kokiri Forest exit, auto talks"],
-			[128,"Near Hyrule Castle, auto talks"],
-			[192,"In front of Kakariko Village, auto talks"],
-			[256,"Between Lake Hylia and Gerudo Valley, auto talks"],
-			[320,"In front of Lake Hylia, auto talks"],
-			[384,"Nothing"],
-			[448,"Lake Hylia, manual talk, talon grab shortcut"],
-			[512,"Death Mountain summit, manual talk, talon grab shortcut"],
-			[576,"Death Mountain summit, manual talk, talon grab shortcut"],
-			[640,"Desert Colossus, auto talks"],
-			[704,"Lost Woods, before meeting Saria, auto talks"],
-			[768,"Lost Woods, after meeting Saria, auto talks"],
-			[832,"Outside of Kokiri Forest exit, auto talks, Head position alternates?"]
+			[1,"Outside of Kokiri Forest exit, auto talks"],
+			[2,"Near Hyrule Castle, auto talks"],
+			[3,"In front of Kakariko Village, auto talks"],
+			[4,"Between Lake Hylia and Gerudo Valley, auto talks"],
+			[5,"In front of Lake Hylia, auto talks"],
+			[6,"Nothing"],
+			[7,"Lake Hylia, manual talk, talon grab shortcut"],
+			[8,"Death Mountain summit, manual talk, talon grab shortcut"],
+			[9,"Death Mountain summit, manual talk, talon grab shortcut"],
+			[10,"Desert Colossus, auto talks"],
+			[11,"Lost Woods, before meeting Saria, auto talks"],
+			[12,"Lost Woods, after meeting Saria, auto talks"],
+			[13,"Outside of Kokiri Forest exit, auto talks, Head position alternates?"]
 		]
 
 [[Actor]]
@@ -4381,7 +4381,7 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[4096,"Lowering"],
+			[128,"Lowering"],
 			[0,"Rising"]
 		]
 
@@ -4605,7 +4605,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Big Poe"],
-			[65535,"Normal poe, circles around you"]
+			[1023,"Normal poe, circles around you"]
 		]
 
 [[Actor]]
@@ -4780,9 +4780,9 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Checkable, Sets Switch"],
-			[16384,"Instant Text"],
-			[32768,"Checkable, Disappears on Switch"],
-			[49152,"Z-Target, No Text"]
+			[1,"Instant Text"],
+			[2,"Checkable, Disappears on Switch"],
+			[3,"Z-Target, No Text"]
 		]
 
 [[Actor]]
@@ -4986,9 +4986,9 @@
 		Name = "Presets"
 		Target = "Var"
 		Dropdown = [
-			[6656,"Scrub on path to Deku Slingshot"],
-			[39680,"231/312 Hint scrub"],
-			[39936,"Final Deku Scrub"]
+			[26,"Scrub on path to Deku Slingshot"],
+			[155,"231/312 Hint scrub"],
+			[156,"Final Deku Scrub"]
 		]
 
 [[Actor]]
@@ -5540,8 +5540,8 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Vertical"],
-			[4096,"Horizontal"],
-			[8192,"+ Invalid"]
+			[1,"Horizontal"],
+			[2,"+ Invalid"]
 		]
 
 [[Actor]]
@@ -5759,14 +5759,14 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Zora //Text ID 4007"],
-			[1,"Zora //Text ID 4008"],
-			[2,"Zora //Text ID 4009"],
-			[3,"Zora //Text ID 400A"],
-			[4,"Zora //Text ID 400B"],
-			[5,"Zora //Text ID 400C"],
-			[6,"Zora //Text ID 400D"],
-			[7,"Zora //Text ID 400E"],
-			[8,"Zora //Text ID 400F"]
+			[0,"Zora //Text ID 4008"],
+			[0,"Zora //Text ID 4009"],
+			[0,"Zora //Text ID 400A"],
+			[0,"Zora //Text ID 400B"],
+			[0,"Zora //Text ID 400C"],
+			[0,"Zora //Text ID 400D"],
+			[0,"Zora //Text ID 400E"],
+			[0,"Zora //Text ID 400F"]
 		]
 
 [[Actor]]
@@ -5817,7 +5817,7 @@
 		Target = "Var"
 		Dropdown = [
 			[0,"Child Visible (Age inverted) Invisible (normal)"],
-			[32768,"Adult Visible (Age inverted) Visible (normal)"]
+			[256,"Adult Visible (Age inverted) Visible (normal)"]
 		]
 
 [[Actor]]
