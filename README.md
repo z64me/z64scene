@@ -19,8 +19,7 @@ and then you should be able to do this:
 ```sh
 git clone --recurse-submodules https://github.com/z64me/z64scene.git
 cd z64scene
-./ready-deps.sh     # you only have to run this once
-./build.sh          # do this each time you want to build
-bin/z64scene        # to run it
+make linux          # if building for windows, make win32
+bin/z64scene        # if running on windows, bin/z64scene.exe
 ```
 
