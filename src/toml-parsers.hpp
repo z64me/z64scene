@@ -5,6 +5,7 @@
 // it's relatively slow to compile
 //
 
+#include <stdio.h>
 #include <stdint.h>
 
 #include <vector>
@@ -32,6 +33,47 @@ struct ActorDatabase
 				
 				combos.emplace_back(combo);
 			}
+			
+			uint16_t *GetWhich(uint16_t *params, uint16_t *xrot, uint16_t *yrot, uint16_t *zrot)
+			{
+				uint16_t *which =
+					!strcmp(target, "Var") ? params
+					: !strcmp(target, "XRot") ? xrot
+					: !strcmp(target, "YRot") ? yrot
+					: !strcmp(target, "ZRot") ? zrot
+					: 0;
+				
+				return which;
+			}
+			
+			uint16_t Extract(uint16_t params, uint16_t xrot, uint16_t yrot, uint16_t zrot)
+			{
+				uint16_t *which = GetWhich(&params, &xrot, &yrot, &zrot);
+				
+				if (!which)
+					return 0;
+				
+				uint16_t tmp = mask;
+				uint16_t result = (*which) & mask;
+				while (!(tmp & 1))
+					tmp >>= 1, result >>= 1;
+				
+				return result;
+			}
+			
+			void Inject(uint16_t v, uint16_t *params, uint16_t *xrot, uint16_t *yrot, uint16_t *zrot)
+			{
+				uint16_t *which = GetWhich(params, xrot, yrot, zrot);
+				
+				if (!which)
+					return;
+				
+				uint16_t tmp = mask;
+				while (!(tmp & 1))
+					tmp >>= 1, v <<= 1;
+				*which &= ~mask;
+				*which |= v;
+			}
 		};
 		
 		const char             *name;
@@ -56,12 +98,21 @@ struct ActorDatabase
 		entries[entry.index] = entry;
 	}
 	
-	const char *GetActorName(uint16_t index)
+	Entry &GetEntry(uint16_t index)
 	{
 		if (index >= entries.size())
-			return "unknown";
+		{
+			static Entry empty;
+			
+			return empty;
+		}
 		
-		auto entry = entries[index];
+		return entries[index];
+	}
+	
+	const char *GetActorName(uint16_t index)
+	{
+		auto entry = GetEntry(index);
 		
 		if (!entry.name)
 			return "unknown";

@@ -411,25 +411,57 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			inst->yrot = yrot;
 			inst->zrot = zrot;
 			
-			ImGui::SeparatorText("Options");
-			static int item_current_idx = 0; // Here we store our selection data as an index.
-			const char* items[] = { "TODO", "source", "from", "config" };
-			if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			auto &options = gGuiSettings.actorDatabase.GetEntry(inst->id).properties;
+			if (options.size())
 			{
-				for (int n = 0; n < 10; n++)
+				ImGui::SeparatorText("Options");
+				
+				static ActorDatabase::Entry::Property *current = 0;
+				if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
 				{
-					const bool is_selected = (item_current_idx == n);
-					if (ImGui::Selectable(items[n % IM_ARRAYSIZE(items)], is_selected))
-						item_current_idx = n;
+					for (auto &option : options)
+					{
+						const bool is_selected = (current == &option);
+						
+						if (ImGui::Selectable(option.name, is_selected))
+							current = &option;
 
-					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-					if (is_selected)
-						ImGui::SetItemDefaultFocus();
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					}
+					ImGui::EndListBox();
 				}
-				ImGui::EndListBox();
+				
+				if (current)
+				{
+					int comboOpt = current->Extract(inst->params, inst->xrot, inst->yrot, inst->zrot);
+					
+					// TODO different value input types for different options? or hide this if combos.size()?
+					ImGui::InputInt("Value##Instance##InstanceOptions##Value", &comboOpt);
+					
+					// display combo boxes
+					auto &combos = current->combos;
+					if (combos.size())
+					{
+						const char *previewText = "Custom Value (Above)";
+						for (auto &combo : combos)
+							if (combo.value == comboOpt)
+								previewText = combo.label;
+						
+						if (ImGui::BeginCombo("##Instance##InstanceOptions##Dropdown", previewText))
+						{
+							for (auto &combo : combos)
+								if (ImGui::Selectable(combo.label, combo.value == comboOpt))
+									comboOpt = combo.value;
+							ImGui::EndCombo();
+						}
+						IMGUI_COMBO_HOVER(comboOpt, combos.size());
+					}
+					
+					current->Inject(comboOpt, &inst->params, &inst->xrot, &inst->yrot, &inst->zrot);
+				}
 			}
-			// TODO different value input types for different options
-			static int todoOptions; ImGui::InputInt("Value##InstanceOptions", &todoOptions);
 		}
 	},
 	new LinkedStringFunc{

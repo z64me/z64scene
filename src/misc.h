@@ -83,9 +83,9 @@ struct Instance
 	int16_t   x;
 	int16_t   y;
 	int16_t   z;
-	int16_t   xrot;
-	int16_t   yrot;
-	int16_t   zrot;
+	uint16_t  xrot;
+	uint16_t  yrot;
+	uint16_t  zrot;
 	uint16_t  params;
 	
 	Vec3f     pos;
