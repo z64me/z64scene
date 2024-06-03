@@ -8,6 +8,7 @@
 // standard stuff
 #include <iostream>
 #include <cstring>
+#include <stdio.h>
 
 // toml stuff
 #include <toml.hpp>
@@ -33,6 +34,12 @@ static ActorDatabase::Entry::Property ActorDatabasePropertyFromToml(toml::value 
 	result.mask = TOML_INT(property["Mask"]);
 	result.name = TOML_CSTRING(property["Name"]);
 	result.target = TOML_CSTRING(property["Target"]);
+	
+	// this should never be the case
+	if (!result.mask)
+	{
+		fprintf(stderr, "property '%s' mask == 0\n", result.name);
+	}
 	
 	auto dropdown = property["Dropdown"];
 	

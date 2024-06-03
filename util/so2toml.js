@@ -221,6 +221,20 @@ for (const _actor of _test.Table.Actor)
 			_actor.Variable = [ _actor.Variable ]
 		}
 		
+		if (!_variableMask && _actor.Variable.length)
+		{
+			console.log(`actor ${_newActor.Name} _variableMask == 0 (this shouldn't happen)`)
+		}
+		
+		// determine how much to shift presets
+		var _shiftEach = 0
+		var _tmp = _variableMask
+		while (_tmp && !(_tmp & 1))
+		{
+			_tmp >>= 1
+			_shiftEach += 1
+		}
+		
 		var _prop = {
 			Mask: _variableMask,
 			Name: "Presets",
@@ -230,7 +244,7 @@ for (const _actor of _test.Table.Actor)
 		
 		for (const _v of _actor.Variable)
 		{
-			var _dropdown = [ parseInt('0x' + _v.Var), _v.tagInnerText ]
+			var _dropdown = [ parseInt('0x' + _v.Var) >> _shiftEach, _v.tagInnerText ]
 			
 			_dropdownArray.push(_dropdown)
 		}

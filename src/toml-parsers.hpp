@@ -50,7 +50,7 @@ struct ActorDatabase
 			{
 				uint16_t *which = GetWhich(&params, &xrot, &yrot, &zrot);
 				
-				if (!which)
+				if (!which || !mask)
 					return 0;
 				
 				uint16_t tmp = mask;
@@ -65,7 +65,7 @@ struct ActorDatabase
 			{
 				uint16_t *which = GetWhich(params, xrot, yrot, zrot);
 				
-				if (!which)
+				if (!which || !mask)
 					return;
 				
 				uint16_t tmp = mask;
