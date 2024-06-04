@@ -74,17 +74,29 @@ struct DataBlob *DataBlobPush(
 	, enum DataBlobType type
 )
 {
+	struct DataBlob *prev = listHead;
+	
 	for (struct DataBlob *each = listHead; each; each = each->next)
 	{
-		// TODO if already exists, move to front
+		// already in list
 		if (each->originalSegmentAddress == segmentAddr)
 		{
 			// it's possible for blocks to be coalesced
 			if (sizeBytes > each->sizeBytes)
 				each->sizeBytes = sizeBytes;
 			
-			return listHead;
+			// already at beginning of list
+			if (each == listHead)
+				return listHead;
+			
+			// move to beginning of list
+			if (prev)
+				prev->next = each->next;
+			each->next = listHead;
+			return each;
 		}
+		
+		prev = each;
 	}
 	
 	// prepend so addresses can later be resolved in reverse order
