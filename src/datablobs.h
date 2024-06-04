@@ -23,7 +23,6 @@ enum DataBlobType
 struct DataBlob
 {
 	struct DataBlob *next;
-	struct DataBlob *prev; // this is volatile
 	const void *refData; // is a reference, do not free
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;
@@ -36,7 +35,7 @@ struct DataBlob
 			int h;
 			int siz;
 			int fmt;
-			uint32_t pal;
+			struct DataBlob *pal;
 		} texture;
 	} data;
 };
@@ -46,6 +45,13 @@ struct DataBlobSegment
 	struct DataBlob *head;
 	const void *data;
 };
+
+struct TextureBlob
+{
+	struct DataBlob *data;
+	struct File *file;
+};
+#define TextureBlobStack(DATA, FILE) (struct TextureBlob){ DATA, FILE}
 
 // functions
 void DataBlobSegmentsPopulateFromRoomMesh(

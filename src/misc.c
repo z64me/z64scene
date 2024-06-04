@@ -166,6 +166,11 @@ struct File *FileFromFilename(const char *filename)
 		Die("error reading contents of '%s'", filename);
 	if (fclose(fp)) Die("error closing file '%s' after reading", filename);
 	result->filename = Strdup(filename);
+	result->shortname = Strdup(MAX3(
+		strrchr(filename, '/') + 1
+		, strrchr(filename, '\\') + 1
+		, filename
+	));
 	
 	return result;
 }
@@ -267,6 +272,24 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	
 	fprintf(stderr, "'%s' data blobs:\n", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);
+	
+	// generate texture blob list
+	{
+		for (struct DataBlob *blob = scene->blobs; blob; blob = blob->next)
+		{
+			if (blob->type == DATA_BLOB_TYPE_TEXTURE)
+				sb_push(scene->textureBlobs, TextureBlobStack(blob, scene->file));
+		};
+		sb_foreach(scene->rooms, {
+			for (struct DataBlob *blob = each->blobs; blob; blob = blob->next)
+			{
+				if (blob->type == DATA_BLOB_TYPE_TEXTURE)
+					sb_push(scene->textureBlobs, TextureBlobStack(blob, each->file));
+			}
+		});
+	}
+	
+	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
 }
 
 void RoomAddHeader(struct Room *room, struct RoomHeader *header)
@@ -288,6 +311,9 @@ void FileFree(struct File *file)
 	
 	if (file->filename)
 		free(file->filename);
+	
+	if (file->shortname)
+		free(file->shortname);
 	
 	free(file);
 }

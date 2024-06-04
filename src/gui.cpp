@@ -45,7 +45,8 @@ struct GuiSettings
 	struct
 	{
 		int instanceCurrent;
-		struct DataBlob *textureViewerBlob;
+		struct TextureBlob *textureBlob;
+		int textureBlobIndex;
 	} combos;
 	
 	void Reset(void)
@@ -506,16 +507,31 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			static int imageSiz;
 			static GLuint imageTexture;
 			static bool reloadTexture = false;
+			static bool isBadTexture = false;
 			static uint32_t segAddr = 0;
 			static uint32_t palAddr = 0;
 			static int scale = 0;
 			const int scaleMax = 3;
-			struct DataBlob *blob = gGuiSettings.combos.textureViewerBlob;
+			
+			if (!sb_count(gScene->textureBlobs))
+			{
+				ImGui::Text("No textures detected");
+				return;
+			}
+			
+			// loaded a new scene
+			if (gGuiSettings.combos.textureBlob == 0)
+				reloadTexture = true;
+			
+			int textureBlobIndex = gGuiSettings.combos.textureBlobIndex;
+			struct TextureBlob *textureBlob = &gScene->textureBlobs[textureBlobIndex];
+			gGuiSettings.combos.textureBlob = textureBlob;
 			
 			if (!imageData)
 			{
 				// n64 tmem = 4kib, *4 for 32-bit color conversion
-				imageData = (uint8_t*)malloc(4096 * 4);
+				// and *2 b/c 4bit textures expand to *2*4x the bytes
+				imageData = (uint8_t*)malloc(4096 * 4 * 2);
 				
 				/* test
 				imageWidth = imageHeight = 64;
@@ -533,31 +549,40 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			
 			if (reloadTexture)
 			{
-				if (imageTexture)
-				{
-					glDeleteTextures(1, &imageTexture);
-					imageTexture = 0;
-				}
+				reloadTexture = false;
 				
-				if (!blob)
-					for (blob = gScene->rooms[0].blobs
-						; blob && blob->type != DATA_BLOB_TYPE_TEXTURE
-						; blob = blob->next
-					);
-				
-				if (blob)
+				if (textureBlob)
 				{
+					if (imageTexture)
+					{
+						glDeleteTextures(1, &imageTexture);
+						imageTexture = 0;
+					}
+					
+					struct DataBlob *blob = textureBlob->data;
+					struct DataBlob *palBlob = blob->data.texture.pal;
 					imageWidth = blob->data.texture.w;
 					imageHeight = blob->data.texture.h;
 					imageFmt = blob->data.texture.fmt;
 					imageSiz = blob->data.texture.siz;
 					segAddr = blob->originalSegmentAddress;
-					palAddr = blob->data.texture.pal;
+					palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
+					
+					isBadTexture = false;
+					if (blob->sizeBytes > 4096
+						|| (((uint8_t*)blob->refData) + blob->sizeBytes) > textureBlob->file->dataEnd
+						// TODO bounds checking for palette as well, if applicable
+					)
+					{
+						fprintf(stderr, "warning: width height %d x %d\n", imageWidth, imageHeight);
+						isBadTexture = true;
+						goto L_textureError;
+					}
 					
 					n64texconv_to_rgba8888(
 						imageData
 						, (unsigned char*)blob->refData // TODO const correctness
-						, (unsigned char*)DataBlobSegmentAddressToRealAddress(palAddr)
+						, (unsigned char*)(palBlob ? palBlob->refData : 0)
 						, (n64texconv_fmt)imageFmt
 						, (n64texconv_bpp)imageSiz
 						, imageWidth
@@ -581,11 +606,17 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 				}
 			}
-			
-			ImGui::Text("texture %08x%s", segAddr, palAddr ? "," : "");
+		
+		L_textureError:
+			ImGui::Text("%d/%d: tex %08x%s"
+				, textureBlobIndex
+				, sb_count(gScene->textureBlobs) - 1
+				, segAddr
+				, palAddr ? "," : ""
+			);
 			if (palAddr) {
 				ImGui::SameLine();
-				ImGui::Text("palette %08x", palAddr);
+				ImGui::Text("pal %08x", palAddr);
 			}
 			const char *fmt[] = { "rgba", "yuv", "  ci", "  ia", "   i" };
 			const char *bpp[] = { "4 ", "8 ", "16", "32" };
@@ -596,26 +627,20 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			// buttons
 			if (ImGui::Button("<-##Textures"))
 			{
-				if (blob)
-					do { blob = blob->prev; } while (blob && blob->type != DATA_BLOB_TYPE_TEXTURE);
-				
-				// wrap back to last texture
-				if (!blob)
-				{
-					struct DataBlob *last = 0;
-					for (blob = gScene->rooms[0].blobs; blob; blob = blob->next)
-						if (blob->type == DATA_BLOB_TYPE_TEXTURE)
-							last = blob;
-					blob = last;
-				}
-				reloadTexture = true;
+				textureBlobIndex = WRAP(
+					textureBlobIndex - 1
+					, 0
+					, sb_count(gScene->textureBlobs) - 1
+				);
 			}
 			ImGui::SameLine();
 			if (ImGui::Button("->##Textures"))
 			{
-				if (blob)
-					do { blob = blob->next; } while (blob && blob->type != DATA_BLOB_TYPE_TEXTURE);
-				reloadTexture = true;
+				textureBlobIndex = WRAP(
+					textureBlobIndex + 1
+					, 0
+					, sb_count(gScene->textureBlobs) - 1
+				);
 			}
 			ImGui::SameLine();
 			ImGui::SetNextItemWidth(48);
@@ -632,13 +657,21 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			);
 			IMGUI_COMBO_HOVER(scale, scaleMax);
 			
-			if (imageTexture)
+			ImGui::Text(textureBlob->file->shortname);
+			
+			if (isBadTexture)
+				ImGui::Text("Bad texture");
+			else if (imageTexture)
 				ImGui::Image((void*)(intptr_t)imageTexture
 					, ImVec2(imageWidth * (scale + 1)
 					, imageHeight * (scale + 1))
 				);
 			
-			gGuiSettings.combos.textureViewerBlob = blob;
+			if (textureBlobIndex != gGuiSettings.combos.textureBlobIndex)
+			{
+				gGuiSettings.combos.textureBlobIndex = textureBlobIndex;
+				reloadTexture = true;
+			}
 		}
 	},
 };

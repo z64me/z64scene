@@ -28,6 +28,7 @@ extern "C" {
 #define UNFOLD_ARRAY_3(TYPE, ADDR) ((TYPE*)ADDR)[0], ((TYPE*)ADDR)[1], ((TYPE*)ADDR)[2]
 
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
+#define MAX3(A, B, C) MAX(A, MAX(B, C))
 
 #endif /* macros */
 
@@ -75,6 +76,7 @@ struct File
 	void *data;
 	void *dataEnd;
 	char *filename;
+	char *shortname;
 	size_t size;
 };
 
@@ -139,6 +141,7 @@ struct Scene
 {
 	struct File *file;
 	struct DataBlob *blobs;
+	sb_array(struct TextureBlob, textureBlobs);
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
 	int test;

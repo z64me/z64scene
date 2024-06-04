@@ -143,14 +143,6 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex)
 	if (!segment)
 		return 0;
 	
-	// resolve prev for each
-	struct DataBlob *prev = 0;
-	for (struct DataBlob *blob = segment->head; blob; blob = blob->next)
-	{
-		blob->prev = prev;
-		prev = blob;
-	}
-	
 	return segment->head;
 }
 
@@ -229,7 +221,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 		qu102_t lrt;
 	} tileDescriptors[8] = { 0 };
 	
-	static uint32_t palAddr = 0;
+	static struct DataBlob *palBlob = 0;
 	static sb_array(struct DataBlob *, needsPalettes); // color-indexed textures w/o palettes
 	
 	bool exit = false;
@@ -369,6 +361,15 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 						size_t size = G_SIZ_BYTES(siz) * width * height;
 						struct DataBlob *blob;
 						
+						// old method was returning 0 here
+						if (siz == G_IM_SIZ_4b)
+							size = (width * height) / 2;
+						else
+							size = G_SIZ_BYTES(siz) * width * height;
+						
+						if (size > 4096)
+							fprintf(stderr, "warning: width height %d x %d\n", width, height);
+						
 						blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
 						blob->data.texture.w = width;
 						blob->data.texture.h = height;
@@ -400,9 +401,8 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 					if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
 					{
 						size_t size = ALIGN8(G_SIZ_BYTES(G_IM_SIZ_16b) * count);
-						palAddr = addr;
 						
-						DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
+						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
 						//ret = DisplayList_CopyData(obj1, addr, size, obj2, &newAddr, "TLUT");
 						//if (ret != 0)
 						//	goto err;
@@ -417,7 +417,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 				if (sb_count(needsPalettes))
 				{
 					sb_foreach(needsPalettes, {
-						(*each)->data.texture.pal = palAddr;
+						(*each)->data.texture.pal = palBlob;
 					});
 					
 					sb_clear(needsPalettes);
@@ -504,7 +504,7 @@ void DataBlobPrint(struct DataBlob *blob)
 				, blob->data.texture.h
 				, blob->data.texture.siz
 				, blob->data.texture.fmt
-				, blob->data.texture.pal
+				, blob->data.texture.pal ? blob->data.texture.pal->originalSegmentAddress : 0
 			);
 			break;
 		case DATA_BLOB_TYPE_PALETTE: typeName = "palette"; break;
