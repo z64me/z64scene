@@ -143,6 +143,14 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex)
 	if (!segment)
 		return 0;
 	
+	// resolve prev for each
+	struct DataBlob *prev = 0;
+	for (struct DataBlob *blob = segment->head; blob; blob = blob->next)
+	{
+		blob->prev = prev;
+		prev = blob;
+	}
+	
 	return segment->head;
 }
 

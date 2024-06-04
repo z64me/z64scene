@@ -23,6 +23,7 @@ enum DataBlobType
 struct DataBlob
 {
 	struct DataBlob *next;
+	struct DataBlob *prev; // this is volatile
 	const void *refData; // is a reference, do not free
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;
@@ -58,5 +59,6 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
 void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr);
 void DataBlobPrint(struct DataBlob *blob);
 void DataBlobPrintAll(struct DataBlob *blobs);
+const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);
 
 #endif

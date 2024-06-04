@@ -3,12 +3,17 @@
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #define GL_SILENCE_DEPRECATION
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <functional>
 #include <climits>
 #include "misc.h"
 #include "gui.h"
 #include "toml-parsers.hpp"
+
+extern "C" {
+#include <n64texconv.h>
+}
 
 #if 1 // region: helper macros
 
@@ -40,6 +45,7 @@ struct GuiSettings
 	struct
 	{
 		int instanceCurrent;
+		struct DataBlob *textureViewerBlob;
 	} combos;
 	
 	void Reset(void)
@@ -488,6 +494,151 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		"Objects"
 		, [](){
 			ImGui::TextWrapped("TODO: 'Objects' tab");
+		}
+	},
+	new LinkedStringFunc{
+		"Textures"
+		, [](){
+			static int imageWidth = 0;
+			static int imageHeight = 0;
+			static uint8_t *imageData = 0;
+			static int imageFmt;
+			static int imageSiz;
+			static GLuint imageTexture;
+			static bool reloadTexture = false;
+			static uint32_t segAddr = 0;
+			static uint32_t palAddr = 0;
+			static int scale = 0;
+			const int scaleMax = 3;
+			struct DataBlob *blob = gGuiSettings.combos.textureViewerBlob;
+			
+			if (!imageData)
+			{
+				// n64 tmem = 4kib, *4 for 32-bit color conversion
+				imageData = (uint8_t*)malloc(4096 * 4);
+				
+				/* test
+				imageWidth = imageHeight = 64;
+				for (int i = 0; i < imageWidth * imageHeight; ++i)
+				{
+					uint8_t *color = imageData + i * 4;
+					
+					color[0] = i * 1;
+					color[1] = i * 2;
+					color[2] = i * 3;
+					color[3] = 0xff;
+				}
+				*/
+			}
+			
+			if (reloadTexture)
+			{
+				if (imageTexture)
+				{
+					glDeleteTextures(1, &imageTexture);
+					imageTexture = 0;
+				}
+				
+				if (!blob)
+					for (blob = gScene->rooms[0].blobs
+						; blob && blob->type != DATA_BLOB_TYPE_TEXTURE
+						; blob = blob->next
+					);
+				
+				if (blob)
+				{
+					imageWidth = blob->data.texture.w;
+					imageHeight = blob->data.texture.h;
+					imageFmt = blob->data.texture.fmt;
+					imageSiz = blob->data.texture.siz;
+					segAddr = blob->originalSegmentAddress;
+					palAddr = blob->data.texture.pal;
+					
+					n64texconv_to_rgba8888(
+						imageData
+						, (unsigned char*)blob->refData // TODO const correctness
+						, (unsigned char*)DataBlobSegmentAddressToRealAddress(palAddr)
+						, (n64texconv_fmt)imageFmt
+						, (n64texconv_bpp)imageSiz
+						, imageWidth
+						, imageHeight
+					);
+					
+					// Create a OpenGL texture identifier
+					glGenTextures(1, &imageTexture);
+					glBindTexture(GL_TEXTURE_2D, imageTexture);
+					
+					// Setup filtering parameters for display
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+					
+					// Upload pixels into texture
+				#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+					glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+				#endif
+					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+				}
+			}
+			
+			ImGui::Text("texture %08x%s", segAddr, palAddr ? "," : "");
+			if (palAddr) {
+				ImGui::SameLine();
+				ImGui::Text("palette %08x", palAddr);
+			}
+			const char *fmt[] = { "rgba", "yuv", "  ci", "  ia", "   i" };
+			const char *bpp[] = { "4 ", "8 ", "16", "32" };
+			ImGui::Text("%s-%s", fmt[imageFmt], bpp[imageSiz]);
+			ImGui::SameLine();
+			ImGui::Text("%3d x %3d", imageWidth, imageHeight);
+			ImGui::SameLine();
+			// buttons
+			if (ImGui::Button("<-##Textures"))
+			{
+				if (blob)
+					do { blob = blob->prev; } while (blob && blob->type != DATA_BLOB_TYPE_TEXTURE);
+				
+				// wrap back to last texture
+				if (!blob)
+				{
+					struct DataBlob *last = 0;
+					for (blob = gScene->rooms[0].blobs; blob; blob = blob->next)
+						if (blob->type == DATA_BLOB_TYPE_TEXTURE)
+							last = blob;
+					blob = last;
+				}
+				reloadTexture = true;
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("->##Textures"))
+			{
+				if (blob)
+					do { blob = blob->next; } while (blob && blob->type != DATA_BLOB_TYPE_TEXTURE);
+				reloadTexture = true;
+			}
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(48);
+			ImGui::Combo(
+				"##Textures##Scale"
+				, &scale
+				, [](void* data, int n) {
+					static char test[64];
+					sprintf(test, "%d", n + 1);
+					return (const char*)test;
+				}
+				, 0
+				, scaleMax
+			);
+			IMGUI_COMBO_HOVER(scale, scaleMax);
+			
+			if (imageTexture)
+				ImGui::Image((void*)(intptr_t)imageTexture
+					, ImVec2(imageWidth * (scale + 1)
+					, imageHeight * (scale + 1))
+				);
+			
+			gGuiSettings.combos.textureViewerBlob = blob;
 		}
 	},
 };
