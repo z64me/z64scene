@@ -35,6 +35,7 @@ struct DataBlob
 			int h;
 			int siz;
 			int fmt;
+			uint32_t pal;
 		} texture;
 	} data;
 };

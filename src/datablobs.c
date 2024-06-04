@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 #include "datablobs.h"
+#include "stretchy_buffer.h"
 
 #define F3DEX_GBI_2
 #include "gbi.h"
@@ -220,6 +221,9 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 		qu102_t lrt;
 	} tileDescriptors[8] = { 0 };
 	
+	static uint32_t palAddr = 0;
+	static sb_array(struct DataBlob *, needsPalettes); // color-indexed textures w/o palettes
+	
 	bool exit = false;
 	for (const uint8_t *data = DataBlobSegmentAddressToRealAddress(segAddr); !exit; )
 	{
@@ -362,6 +366,10 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 						blob->data.texture.h = height;
 						blob->data.texture.siz = siz;
 						blob->data.texture.fmt = tileDescriptors[tile].fmt;
+						if (blob->data.texture.fmt == G_IM_FMT_CI
+							&& blob->data.texture.pal == 0
+						)
+							sb_push(needsPalettes, blob);
 						//ret = DisplayList_CopyData(obj1, addr, size, obj2, &newAddr, "Texture/Multi Block");
 						//if (ret != 0)
 						//	goto err;
@@ -384,12 +392,27 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 					if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
 					{
 						size_t size = ALIGN8(G_SIZ_BYTES(G_IM_SIZ_16b) * count);
+						palAddr = addr;
 						
 						DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
 						//ret = DisplayList_CopyData(obj1, addr, size, obj2, &newAddr, "TLUT");
 						//if (ret != 0)
 						//	goto err;
 					}
+				}
+				break;
+			
+			// game should be ready to draw at this point, so use
+			// this as an opportunity to resolve palette address
+			case G_TRI1:
+			case G_TRI2:
+				if (sb_count(needsPalettes))
+				{
+					sb_foreach(needsPalettes, {
+						(*each)->data.texture.pal = palAddr;
+					});
+					
+					sb_clear(needsPalettes);
 				}
 				break;
 			
@@ -468,11 +491,12 @@ void DataBlobPrint(struct DataBlob *blob)
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
 		case DATA_BLOB_TYPE_TEXTURE:
 			typeName = "texture";
-			sprintf(extraInfo, "w/h/siz/fmt = %d/%d/%d/%d"
+			sprintf(extraInfo, "w/h/siz/fmt/pal = %d/%d/%d/%d/%08x"
 				, blob->data.texture.w
 				, blob->data.texture.h
 				, blob->data.texture.siz
 				, blob->data.texture.fmt
+				, blob->data.texture.pal
 			);
 			break;
 		case DATA_BLOB_TYPE_PALETTE: typeName = "palette"; break;
