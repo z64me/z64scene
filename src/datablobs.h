@@ -24,6 +24,7 @@ struct DataBlob
 {
 	struct DataBlob *next;
 	const void *refData; // is a reference, do not free
+	const void *refDataFileEnd;
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;
 	uint32_t sizeBytes;
@@ -44,6 +45,7 @@ struct DataBlobSegment
 {
 	struct DataBlob *head;
 	const void *data;
+	const void *dataEnd;
 };
 
 struct TextureBlob
@@ -51,7 +53,7 @@ struct TextureBlob
 	struct DataBlob *data;
 	struct File *file;
 };
-#define TextureBlobStack(DATA, FILE) (struct TextureBlob){ DATA, FILE}
+#define TextureBlobStack(DATA, FILE) (struct TextureBlob){ DATA, FILE }
 
 // functions
 void DataBlobSegmentsPopulateFromRoomMesh(
@@ -60,7 +62,8 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 	, const void *seg2
 	, const void *seg3
 );
-void DataBlobSegmentSetup(int segmentIndex, const void *data, struct DataBlob *head);
+void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEnd, struct DataBlob *head);
+struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex);
 struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
 void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr);
 void DataBlobPrint(struct DataBlob *blob);

@@ -243,11 +243,11 @@ void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 
 void SceneReadyDataBlobs(struct Scene *scene)
 {
-	DataBlobSegmentSetup(2, scene->file->data, scene->blobs);
+	DataBlobSegmentSetup(2, scene->file->data, scene->file->dataEnd, scene->blobs);
 	
 	sb_foreach(scene->rooms, {
 		
-		DataBlobSegmentSetup(3, each->file->data, each->blobs);
+		DataBlobSegmentSetup(3, each->file->data, each->file->dataEnd, each->blobs);
 		
 		typeof(each->headers) headers = each->headers;
 		

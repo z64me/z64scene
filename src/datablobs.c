@@ -120,12 +120,13 @@ void DataBlobSegmentClearAll(void)
 	memset(gSegments, 0, sizeof(gSegments));
 }
 
-void DataBlobSegmentSetup(int segmentIndex, const void *data, struct DataBlob *head)
+void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEnd, struct DataBlob *head)
 {
 	struct DataBlobSegment *seg = &gSegments[segmentIndex];
 	
 	seg->head = head;
 	seg->data = data;
+	seg->dataEnd = dataEnd;
 }
 
 struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex)
@@ -159,6 +160,7 @@ struct DataBlob *DataBlobSegmentPush(
 		return 0;
 	
 	seg->head = DataBlobPush(seg->head, refData, sizeBytes, segmentAddr, type);
+	seg->head->refDataFileEnd = seg->dataEnd;
 	
 	return seg->head;
 }
@@ -172,6 +174,19 @@ const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr)
 		return 0;
 	
 	return ((const uint8_t*)gSegments[segAddr >> 24].data) + (segAddr & 0x00ffffff);
+}
+
+const void *DataBlobSegmentAddressBoundsEnd(uint32_t segAddr)
+{
+	// skip unpopulated segments
+	if ((segAddr >> 24) >= ARRLEN(gSegments)
+		|| gSegments[segAddr >> 24].data == 0
+	)
+		return 0;
+	
+	struct DataBlobSegment *seg = DataBlobSegmentGet(segAddr >> 24);
+	
+	return seg->dataEnd;
 }
 
 // adapted from DisplayList_Copy() from Tharo's dlcopy for this
@@ -464,25 +479,6 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 	}
 //err:
 //	do{}while(0);
-}
-
-void DataBlobSegmentsPopulateFromRoomMesh(
-	struct DataBlob **seg2head
-	, struct DataBlob **seg3head
-	, const void *seg2
-	, const void *seg3
-)
-{
-	// initial run
-	if (!*seg2head)
-		DataBlobSegmentSetup(2, seg2, *seg2head);
-	
-	DataBlobSegmentSetup(3, seg3, *seg3head);
-	
-	// TODO for each dlist
-	
-	*seg2head = DataBlobSegmentGetHead(2);
-	*seg3head = DataBlobSegmentGetHead(3);
 }
 
 void DataBlobPrint(struct DataBlob *blob)

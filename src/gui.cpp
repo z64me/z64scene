@@ -570,8 +570,9 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					
 					isBadTexture = false;
 					if (blob->sizeBytes > 4096
-						|| (((uint8_t*)blob->refData) + blob->sizeBytes) > textureBlob->file->dataEnd
-						// TODO bounds checking for palette as well, if applicable
+						|| (((uint8_t*)blob->refData) + blob->sizeBytes) > blob->refDataFileEnd
+						// bounds checking for palette, if applicable:
+						|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
 					)
 					{
 						fprintf(stderr, "warning: width height %d x %d\n", imageWidth, imageHeight);
