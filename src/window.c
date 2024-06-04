@@ -208,6 +208,12 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			if (pressed && gInput.textInput.isEnabled)
 				gInput.textInput.text[strlen(gInput.textInput.text) - 1] = '\0';
 			break;
+		
+		case GLFW_KEY_O:
+			// ctrl + o ; Ctrl+O
+			if (mods & GLFW_MOD_CONTROL)
+				WindowOpenFile();
+			break;
 	}
 }
 
