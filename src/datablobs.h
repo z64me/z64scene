@@ -66,6 +66,7 @@ void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEn
 struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex);
 struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
 void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr);
+void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr);
 void DataBlobPrint(struct DataBlob *blob);
 void DataBlobPrintAll(struct DataBlob *blobs);
 const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);

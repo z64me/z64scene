@@ -256,9 +256,9 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			
 			sb_foreach(dls, {
 				if (each->opa)
-					DataBlobSegmentsPopulateFromMesh(each->opa);
+					DataBlobSegmentsPopulateFromMeshNew(each->opa);
 				if (each->xlu)
-					DataBlobSegmentsPopulateFromMesh(each->xlu);
+					DataBlobSegmentsPopulateFromMeshNew(each->xlu);
 			});
 		});
 		

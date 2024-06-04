@@ -15,6 +15,8 @@
 #define F3DEX_GBI_2
 #include "gbi.h"
 
+#define Min(A, B) ((A) < (B) ? (A) : (B))
+
 // gbi extras
 /* dl push flag */
 #define G_DL_PUSH   0
@@ -42,6 +44,7 @@ typedef uint16_t qu102_t;
 	((uint32_t)(((uint32_t)(v) & ((0x01 << (w)) - 1)) << (s)))
 #define SHIFTR(v, s, w) \
 	((uint32_t)(((uint32_t)(v) >> (s)) & ((0x01 << (w)) - 1)))
+#define ShiftR SHIFTR
 
 static struct DataBlobSegment gSegments[16];
 
@@ -479,6 +482,451 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 	}
 //err:
 //	do{}while(0);
+}
+
+// new method, based on cooliscool's uot: https://code.google.com/p/uot
+// TODO nested functions are not standard c99, so refactor this eventually
+void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
+{
+	// skip unpopulated segments
+	if ((segAddr >> 24) >= ARRLEN(gSegments)
+		|| gSegments[segAddr >> 24].data == 0
+	)
+		return;
+	
+	// last 8 commands
+	int i = 0;
+	uint8_t history[8] = { G_NOOP };
+	const void *realAddr;
+	
+#define HISTORY_GET(n) \
+	history[(i - 1 - (n) < 0) ? (i - 1 - (n) + ARRLEN(history)) : (i - 1 - (n))]
+	
+	static struct {
+		uint32_t Dram;
+		int Width;
+		int Height;
+		int RealWidth;
+		int RealHeight;
+		float ShiftS;
+		float ShiftT;
+		float S_Scale;
+		float T_Scale;
+		float TextureHRatio;
+		float TextureWRatio;
+		// SetTile
+		int TexFormat;
+		int TexFormatUOT;
+		int TexelSize;
+		int LineSize;
+		int CMT;
+		int CMS;
+		int MaskS;
+		int MaskT;
+		int TShiftS;
+		int TShiftT;
+		// SetTileSize
+		qu102_t ULS;
+		qu102_t ULT;
+		qu102_t LRS;
+		qu102_t LRT;
+	} textures[2];
+	#define Textures(X) textures[X]
+	static int CurrentTex;
+	static bool MultiTexCoord; (void)MultiTexCoord;
+	static bool MultiTexture; (void)MultiTexture;
+	
+	static struct DataBlob *palBlob = 0;
+	static sb_array(struct DataBlob *, needsPalettes); // color-indexed textures w/o palettes
+	
+	int Pow2(int val)
+	{
+		int i = 1;
+		while (i < val)
+			i <<= 1;
+		return i;
+	}
+	int PowOf(int val)
+	{
+		int num = 1;
+		int i = 0;
+		while (num < val)
+		{
+			num <<= 1;
+			i += 1;
+		}
+		return i;
+	}
+	float Fixed2Float(float v, int b)
+	{
+		float FIXED2FLOATRECIP[] = { 0.5F, 0.25F, 0.125F, 0.0625F, 0.03125F
+			, 0.015625F, 0.0078125F, 0.00390625F, 0.001953125F, 0.0009765625F
+			, 0.00048828125F, 0.000244140625F, 0.000122070313F, 0.0000610351563F
+			, 0.0000305175781F, 0.0000152587891F
+		};
+		return v * FIXED2FLOATRECIP[b - 1];
+	}
+	void CalculateTexSize(int id)
+	{
+		int MaxTexel = 0;
+		int Line_Shift = 0;
+		
+		switch (Textures(id).TexFormatUOT)
+		{
+			case 0x00: case 0x40:
+				MaxTexel = 4096;
+				Line_Shift = 4;
+				break;
+			case 0x60: case 0x80:
+				MaxTexel = 8192;
+				Line_Shift = 4;
+				break;
+			case 0x8: case 0x48:
+				MaxTexel = 2048;
+				Line_Shift = 3;
+				break;
+			case 0x68: case 0x88:
+				MaxTexel = 4096;
+				Line_Shift = 3;
+				break;
+			case 0x10: case 0x70:
+				MaxTexel = 2048;
+				Line_Shift = 2;
+				break;
+			case 0x50: case 0x90:
+				MaxTexel = 2048;
+				Line_Shift = 0;
+				break;
+			case 0x18:
+				MaxTexel = 1024;
+				Line_Shift = 2;
+				break;
+		}
+		
+		int Line_Width = Textures(id).LineSize << Line_Shift;
+		
+		int Tile_Width = Textures(id).LRS - Textures(id).ULS + 1;
+		int Tile_Height = Textures(id).LRT - Textures(id).ULT + 1;
+		
+		int Mask_Width = 1 << Textures(id).MaskS;
+		int Mask_Height = 1 << Textures(id).MaskT;
+		
+		int Line_Height = 0;
+		if (Line_Width > 0)
+			Line_Height = Min(MaxTexel / Line_Width, Tile_Height);
+		
+		if (Textures(id).MaskS > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
+			Textures(id).Width = Mask_Width;
+		else if ((Tile_Width * Tile_Height) <= MaxTexel)
+			Textures(id).Width = Tile_Width;
+		else
+			Textures(id).Width = Line_Width;
+		
+		if (Textures(id).MaskT > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
+			Textures(id).Height = Mask_Height;
+		else if ((Tile_Width * Tile_Height) <= MaxTexel)
+			Textures(id).Height = Tile_Height;
+		else
+			Textures(id).Height = Line_Height;
+		
+		int Clamp_Width = 0;
+		int Clamp_Height = 0;
+		if (Textures(id).CMS == 1)
+			Clamp_Width = Tile_Width;
+		else
+			Clamp_Width = Textures(id).Width;
+		if (Textures(id).CMT == 1)
+			Clamp_Height = Tile_Height;
+		else
+			Clamp_Height = Textures(id).Height;
+		
+		if (Mask_Width > Textures(id).Width)
+		{
+			Textures(id).MaskS = PowOf(Textures(id).Width);
+			Mask_Width = 1 << Textures(id).MaskS;
+		}
+		if (Mask_Height > Textures(id).Height)
+		{
+			Textures(id).MaskT = PowOf(Textures(id).Height);
+			Mask_Height = 1 << Textures(id).MaskT;
+		}
+		
+		if (Textures(id).CMS == 2 || Textures(id).CMS == 3)
+			Textures(id).RealWidth = Pow2(Clamp_Width);
+		else if (Textures(id).CMS == 1)
+			Textures(id).RealWidth = Pow2(Mask_Width);
+		else
+			Textures(id).RealWidth = Pow2(Textures(id).Width);
+		
+		if (Textures(id).CMT == 2 || Textures(id).CMT == 3)
+			Textures(id).RealHeight = Pow2(Clamp_Height);
+		else if (Textures(id).CMT == 1)
+			Textures(id).RealHeight = Pow2(Mask_Height);
+		else
+			Textures(id).RealHeight = Pow2(Textures(id).Height);
+		
+		Textures(id).ShiftS = 1.0f;
+		Textures(id).ShiftT = 1.0f;
+		
+		if (Textures(id).TShiftS > 10)
+			Textures(id).ShiftS = (1 << (16 - Textures(id).TShiftS));
+		else if (Textures(id).TShiftS > 0)
+			Textures(id).ShiftS /= (1 << Textures(id).TShiftS);
+		
+		if (Textures(id).TShiftT > 10)
+			Textures(id).ShiftT = (1 << (16 - Textures(id).TShiftT));
+		else if (Textures(id).TShiftT > 0)
+			Textures(id).ShiftT /= (1 << Textures(id).TShiftT);
+		
+		Textures(id).TextureHRatio = ((Textures(id).T_Scale * Textures(id).ShiftT) / 32.0f / Textures(id).RealHeight);
+		Textures(id).TextureWRatio = ((Textures(id).S_Scale * Textures(id).ShiftS) / 32.0f / Textures(id).RealWidth);
+	}
+	
+	bool exit = false;
+	for (const uint8_t *data = DataBlobSegmentAddressToRealAddress(segAddr); !exit; )
+	{
+		size_t cmdlen = SIZEOF_GFX;
+		uint32_t w0 = READ_32_BE(data, 0);
+		uint32_t w1 = READ_32_BE(data, 4);
+		
+		int cmd = w0 >> 24;
+		switch (cmd)
+		{
+			/*
+			 * These commands contain pointers, except G_ENDDL which is here for convenience
+			 */
+			
+			case G_DL:
+				// recursively copy called display lists
+				DataBlobSegmentsPopulateFromMeshNew(w1);
+				// if not branchlist, carry on
+				if (SHIFTR(w0, 16, 8) == G_DL_PUSH)
+					break;
+				// if branchlist, exit
+				FALLTHROUGH;
+			case G_ENDDL:
+				// exit
+				exit = true;
+				break;
+			
+			case G_MOVEMEM:
+				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1))) {
+					uint32_t len = SHIFTR(w0, 19,  5) * 8 + 1;
+					int idx = SHIFTR(w0,  0,  8);
+					switch (idx)
+					{
+						case G_MV_VIEWPORT:
+							//typeName = "Viewport";
+							break;
+						case G_MV_LIGHT:
+							//typeName = "Light";
+							break;
+						case G_MV_MATRIX:
+							//typeName = "Forced Matrix";
+							break;
+						case G_MV_MMTX:
+						case G_MV_PMTX:
+						case G_MV_POINT:
+						default:
+							fprintf(stderr, "Unrecognized Movemem Index %d for data at %08X\n", idx, segAddr);
+							break;
+					}
+					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_MATRIX);
+				}
+				break;
+			
+			case G_MTX:
+				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1)))
+					DataBlobSegmentPush(realAddr, SIZEOF_MTX, w1, DATA_BLOB_TYPE_MATRIX);
+				break;
+			
+			case G_VTX:
+				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1)))
+					DataBlobSegmentPush(realAddr, (SHIFTR(w0, 12, 8)) * SIZEOF_VTX, w1, DATA_BLOB_TYPE_VERTEX);
+				break;
+			
+			/*
+			 * Texture and TLUT Loading
+			 */
+			
+			case G_SETTIMG: {
+				bool palMode = data[8] == G_RDPTILESYNC;
+				if (HISTORY_GET(0) == G_SETTILESIZE)
+				{
+					CurrentTex = 1;
+					if (true) // GLExtensions.GLMultiTexture And GLExtensions.GLFragProg
+						MultiTexCoord = true;
+					else if (false)
+						MultiTexCoord = false;
+					MultiTexture = true;
+				}
+				else
+				{
+					CurrentTex = 0;
+					MultiTexCoord = false;
+					MultiTexture = false;
+				}
+				if (palMode)
+					Textures(0).Dram = w1;
+				else
+					Textures(CurrentTex).Dram = w1;
+				break;
+			}
+			
+			case G_SETTILE:
+				//If .CMDParams(1) > 0 Then SETTILE(.CMDLow, .CMDHigh)
+				{
+					//int tile = SHIFTR(w1, 24, 3);
+					
+					Textures(CurrentTex).TexFormatUOT = (w0 >> 16) & 0xff; // uot
+					Textures(CurrentTex).TexFormat =   SHIFTR(w0, 21, 3);
+					Textures(CurrentTex).TexelSize =   SHIFTR(w0, 19, 2);
+					Textures(CurrentTex).LineSize =  SHIFTR(w0,  9, 9);
+					//tileDescriptors[tile].tmem =  SHIFTR(w0,  0, 9); // unused
+					//tileDescriptors[tile].pal =   SHIFTR(w1, 20, 4); // unused
+					Textures(CurrentTex).CMT = ShiftR(w1, 18, 2);
+					Textures(CurrentTex).CMS = ShiftR(w1, 8, 2);
+					Textures(CurrentTex).MaskS = ShiftR(w1, 4, 4);
+					Textures(CurrentTex).MaskT = ShiftR(w1, 14, 4);
+					Textures(CurrentTex).TShiftS = ShiftR(w1, 0, 4);
+					Textures(CurrentTex).TShiftT = ShiftR(w1, 10, 4);
+				}
+				break;
+			
+			case G_LOADTILE:
+			case G_LOADBLOCK:
+				// These commands are only used inside larger texture macros, so we don't need to do anything special with them
+				break;
+			
+			case G_SETTILESIZE: {
+				{
+					Textures(CurrentTex).ULS =  SHIFTR(w0, 12, 12);
+					Textures(CurrentTex).ULT =  SHIFTR(w0,  0, 12);
+					Textures(CurrentTex).LRS =  SHIFTR(w1, 12, 12);
+					Textures(CurrentTex).LRT =  SHIFTR(w1,  0, 12);
+					Textures(CurrentTex).Width =  ((Textures(CurrentTex).LRS - Textures(CurrentTex).ULS) + 1);
+					Textures(CurrentTex).Height = ((Textures(CurrentTex).LRT - Textures(CurrentTex).ULT) + 1);
+				}
+				
+				CalculateTexSize(CurrentTex);
+				
+				// gsDPLoadTextureBlock / gsDPLoadMultiBlock
+				uint32_t addr = Textures(CurrentTex).Dram;
+				int siz = Textures(CurrentTex).TexelSize;
+				uint32_t width = Textures(CurrentTex).RealWidth;
+				uint32_t height = Textures(CurrentTex).RealHeight;
+				
+				if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
+				{
+					size_t size = G_SIZ_BYTES(siz) * width * height;
+					struct DataBlob *blob;
+					
+					// old method was returning 0 here
+					if (siz == G_IM_SIZ_4b)
+						size = (width * height) / 2;
+					else
+						size = G_SIZ_BYTES(siz) * width * height;
+					
+					if (size > 4096)
+						fprintf(stderr, "warning: width height %d x %d\n", width, height);
+					
+					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
+					blob->data.texture.w = width;
+					blob->data.texture.h = height;
+					blob->data.texture.siz = siz;
+					blob->data.texture.fmt = Textures(CurrentTex).TexFormat;
+					if (blob->data.texture.fmt == G_IM_FMT_CI
+						&& blob->data.texture.pal == 0
+					)
+						sb_push(needsPalettes, blob);
+				}
+				break;
+			}
+			
+			case G_LOADTLUT: {
+				{
+					uint32_t addr = Textures(0).Dram;
+					uint32_t count = SHIFTR(w1, 14, 10) + 1;
+					
+					if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
+					{
+						size_t size = ALIGN8(G_SIZ_BYTES(G_IM_SIZ_16b) * count);
+						
+						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
+					}
+				}
+				break;
+			}
+			
+			case G_TEXTURE: {
+				uint32_t w1x = w1 & 0x00ffffff;
+				for (int i = 0; i <= 1; ++i)
+				{
+					if (ShiftR(w1x, 16, 16) < 0xFFFF)
+						Textures(i).S_Scale = Fixed2Float(ShiftR(w1x, 16, 16), 16);
+					else
+						Textures(i).S_Scale = 1.0F;
+					
+					if (ShiftR(w1x, 0, 16) < 0xFFFF)
+						Textures(i).T_Scale = Fixed2Float(ShiftR(w1x, 0, 16), 16);
+					else
+						Textures(i).T_Scale = 1.0F;
+				}
+				break;
+			}
+			
+			// game should be ready to draw at this point, so use
+			// this as an opportunity to resolve palette address
+			case G_TRI1:
+			case G_TRI2:
+				if (sb_count(needsPalettes))
+				{
+					sb_foreach(needsPalettes, {
+						(*each)->data.texture.pal = palBlob;
+					});
+					
+					sb_clear(needsPalettes);
+				}
+				break;
+			
+			/*
+			 * These commands are 128 bits rather than the usual 64 bits
+			 */
+			
+			case G_TEXRECTFLIP:
+			case G_TEXRECT:
+				cmdlen = 16;
+				break;
+			
+			/*
+			 * These should not appear in objects
+			 */
+			
+			case G_MOVEWORD:
+			case G_DMA_IO:
+			case G_LOAD_UCODE:
+			case G_SETCIMG:
+			case G_SETZIMG:
+				fprintf(stderr, "Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				break;
+				//ret = DisplayList_ErrMsgSet("Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				//goto err;
+			
+			/*
+			 * All other commands do not need any special handling, we know they are valid from the length check
+			 */
+			
+			default:
+				break;
+		}
+		
+		// Increment to next command
+		data += cmdlen;
+		
+		// Update history ringbuffer
+		history[i] = cmd;
+		i = (i + 1) % ARRLEN(history);
+	}
 }
 
 void DataBlobPrint(struct DataBlob *blob)
