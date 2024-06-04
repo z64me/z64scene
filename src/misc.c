@@ -244,13 +244,17 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		
 		DataBlobSegmentSetup(3, each->file->data, each->blobs);
 		
-		typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
+		typeof(each->headers) headers = each->headers;
 		
-		sb_foreach(dls, {
-			if (each->opa)
-				DataBlobSegmentsPopulateFromMesh(each->opa);
-			if (each->xlu)
-				DataBlobSegmentsPopulateFromMesh(each->xlu);
+		sb_foreach(headers, {
+			typeof(each->displayLists) dls = each->displayLists;
+			
+			sb_foreach(dls, {
+				if (each->opa)
+					DataBlobSegmentsPopulateFromMesh(each->opa);
+				if (each->xlu)
+					DataBlobSegmentsPopulateFromMesh(each->xlu);
+			});
 		});
 		
 		each->blobs = DataBlobSegmentGetHead(3);
