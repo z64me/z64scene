@@ -76,6 +76,7 @@ struct DataBlob *DataBlobPush(
 {
 	for (struct DataBlob *each = listHead; each; each = each->next)
 	{
+		// TODO if already exists, move to front
 		if (each->originalSegmentAddress == segmentAddr)
 		{
 			// it's possible for blocks to be coalesced
@@ -432,4 +433,29 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 	
 	*seg2head = DataBlobSegmentGetHead(2);
 	*seg3head = DataBlobSegmentGetHead(3);
+}
+
+void DataBlobPrint(struct DataBlob *blob)
+{
+	const char *typeName = 0;
+	
+	switch (blob->type)
+	{
+		case DATA_BLOB_TYPE_MESH: typeName = "mesh"; break;
+		case DATA_BLOB_TYPE_VERTEX: typeName = "vertex"; break;
+		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
+		case DATA_BLOB_TYPE_TEXTURE: typeName = "texture"; break;
+		case DATA_BLOB_TYPE_PALETTE: typeName = "palette"; break;
+		case DATA_BLOB_TYPE_GENERIC: typeName = "generic"; break;
+		default: typeName = "unknown"; break;
+	}
+	
+	if (typeName)
+		fprintf(stderr, "%s %08x\n", typeName, blob->originalSegmentAddress);
+}
+
+void DataBlobPrintAll(struct DataBlob *blobs)
+{
+	for (struct DataBlob *blob = blobs; blob; blob = blob->next)
+		DataBlobPrint(blob);
 }

@@ -36,4 +36,17 @@ struct DataBlobSegment
 	const void *data;
 };
 
+// functions
+void DataBlobSegmentsPopulateFromRoomMesh(
+	struct DataBlob **seg2head
+	, struct DataBlob **seg3head
+	, const void *seg2
+	, const void *seg3
+);
+void DataBlobSegmentSetup(int segmentIndex, const void *data, struct DataBlob *head);
+struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
+void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr);
+void DataBlobPrint(struct DataBlob *blob);
+void DataBlobPrintAll(struct DataBlob *blobs);
+
 #endif

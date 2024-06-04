@@ -220,6 +220,9 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 			Die("could not find room_%d", i);
 	}
 	
+	// test this out
+	SceneReadyDataBlobs(scene);
+	
 	free(roomNameBuf);
 	return scene;
 }
@@ -231,6 +234,35 @@ void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 	sb_push(scene->headers, *header);
 	
 	free(header);
+}
+
+void SceneReadyDataBlobs(struct Scene *scene)
+{
+	DataBlobSegmentSetup(2, scene->file->data, scene->blobs);
+	
+	sb_foreach(scene->rooms, {
+		
+		DataBlobSegmentSetup(3, each->file->data, each->blobs);
+		
+		typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
+		
+		sb_foreach(dls, {
+			if (each->opa)
+				DataBlobSegmentsPopulateFromMesh(each->opa);
+			if (each->xlu)
+				DataBlobSegmentsPopulateFromMesh(each->xlu);
+		});
+		
+		each->blobs = DataBlobSegmentGetHead(3);
+		
+		fprintf(stderr, "'%s' data blobs:\n", each->file->filename);
+		DataBlobPrintAll(each->blobs);
+	});
+	
+	scene->blobs = DataBlobSegmentGetHead(2);
+	
+	fprintf(stderr, "'%s' data blobs:\n", scene->file->filename);
+	DataBlobPrintAll(scene->blobs);
 }
 
 void RoomAddHeader(struct Room *room, struct RoomHeader *header)

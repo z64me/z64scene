@@ -12,6 +12,7 @@ extern "C" {
 #endif
 
 #include "stretchy_buffer.h"
+#include "datablobs.h"
 #include "extmath.h"
 #include <stdint.h>
 #include <stdbool.h>
@@ -110,6 +111,7 @@ struct Room
 {
 	struct File *file;
 	struct Scene *scene;
+	struct DataBlob *blobs;
 	sb_array(struct RoomHeader, headers);
 };
 
@@ -136,6 +138,7 @@ struct SceneHeader
 struct Scene
 {
 	struct File *file;
+	struct DataBlob *blobs;
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
 	int test;
@@ -151,6 +154,7 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename);
 struct Room *RoomFromFilename(const char *filename);
 struct Object *ObjectFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
+void SceneReadyDataBlobs(struct Scene *scene);
 void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void *Calloc(size_t howMany, size_t sizeEach);
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header);
