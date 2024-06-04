@@ -28,6 +28,15 @@ struct DataBlob
 	uint32_t updatedSegmentAddress;
 	uint32_t sizeBytes;
 	enum DataBlobType type;
+	
+	union {
+		struct {
+			int w;
+			int h;
+			int siz;
+			int fmt;
+		} texture;
+	} data;
 };
 
 struct DataBlobSegment

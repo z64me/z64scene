@@ -145,7 +145,7 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex)
 	return segment->head;
 }
 
-void DataBlobSegmentPush(
+struct DataBlob *DataBlobSegmentPush(
 	const void *refData
 	, uint32_t sizeBytes
 	, uint32_t segmentAddr
@@ -155,9 +155,11 @@ void DataBlobSegmentPush(
 	struct DataBlobSegment *seg = DataBlobSegmentGet(segmentAddr >> 24);
 	
 	if (!seg)
-		return;
+		return 0;
 	
 	seg->head = DataBlobPush(seg->head, refData, sizeBytes, segmentAddr, type);
+	
+	return seg->head;
 }
 
 const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr)
@@ -353,8 +355,13 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 					if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
 					{
 						size_t size = G_SIZ_BYTES(siz) * width * height;
+						struct DataBlob *blob;
 						
-						DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
+						blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
+						blob->data.texture.w = width;
+						blob->data.texture.h = height;
+						blob->data.texture.siz = siz;
+						blob->data.texture.fmt = tileDescriptors[tile].fmt;
 						//ret = DisplayList_CopyData(obj1, addr, size, obj2, &newAddr, "Texture/Multi Block");
 						//if (ret != 0)
 						//	goto err;
@@ -450,20 +457,36 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 void DataBlobPrint(struct DataBlob *blob)
 {
 	const char *typeName = 0;
+	char extraInfo[256];
+	
+	extraInfo[0] = '\0';
 	
 	switch (blob->type)
 	{
 		case DATA_BLOB_TYPE_MESH: typeName = "mesh"; break;
 		case DATA_BLOB_TYPE_VERTEX: typeName = "vertex"; break;
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
-		case DATA_BLOB_TYPE_TEXTURE: typeName = "texture"; break;
+		case DATA_BLOB_TYPE_TEXTURE:
+			typeName = "texture";
+			sprintf(extraInfo, "w/h/siz/fmt = %d/%d/%d/%d"
+				, blob->data.texture.w
+				, blob->data.texture.h
+				, blob->data.texture.siz
+				, blob->data.texture.fmt
+			);
+			break;
 		case DATA_BLOB_TYPE_PALETTE: typeName = "palette"; break;
 		case DATA_BLOB_TYPE_GENERIC: typeName = "generic"; break;
 		default: typeName = "unknown"; break;
 	}
 	
 	if (typeName)
-		fprintf(stderr, "%s %08x\n", typeName, blob->originalSegmentAddress);
+		fprintf(stderr, "%s %08x%s%s\n"
+			, typeName
+			, blob->originalSegmentAddress
+			, *extraInfo ? " : " : ""
+			, *extraInfo ? extraInfo : ""
+		);
 }
 
 void DataBlobPrintAll(struct DataBlob *blobs)
