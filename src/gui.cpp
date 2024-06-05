@@ -567,10 +567,11 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					imageSiz = blob->data.texture.siz;
 					segAddr = blob->originalSegmentAddress;
 					palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
+					int sizeBytesClamped = blob->data.texture.sizeBytesClamped;
 					
 					isBadTexture = false;
-					if (blob->sizeBytes > 4096
-						|| (((uint8_t*)blob->refData) + blob->sizeBytes) > blob->refDataFileEnd
+					if (sizeBytesClamped > 4096
+						|| (((uint8_t*)blob->refData) + sizeBytesClamped) > blob->refDataFileEnd
 						// bounds checking for palette, if applicable:
 						|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
 					)

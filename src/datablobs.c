@@ -629,14 +629,14 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 			else if ((Tile_Width * Tile_Height) <= MaxTexel)
 				Textures(id).RealWidth = Tile_Width;
 			else
-				Textures(id).RealWidth = Line_Width;
+				Textures(id).RealWidth = (Textures(id).Width >> 2) + 1;//Line_Width;
 			
 			if (Textures(id).MaskT > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
 				Textures(id).RealHeight = Mask_Height;
 			else if ((Tile_Width * Tile_Height) <= MaxTexel)
 				Textures(id).RealHeight = Tile_Height;
 			else
-				Textures(id).RealHeight = Line_Height;
+				Textures(id).RealHeight = Min(Line_Height, (Textures(id).Height >> 2) + 1);//Line_Height;
 			
 			#ifndef NDEBUG
 			{
@@ -926,7 +926,22 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 				
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
 				{
-					size_t size = Textures(CurrentTex).LineSize * sizeof(uint64_t) * height;
+					int lineSize = Textures(CurrentTex).LineSize;
+					size_t lineSizeBytes = lineSize * sizeof(uint64_t);
+					int trueWidth = (Textures(CurrentTex).Width >> 2) + 1; // width of tex within file
+					int trueHeight = (Textures(CurrentTex).Height >> 2) + 1; // height of tex within file
+					
+					// override for embedded textures with non-standard dimensions
+					if (trueWidth % 4) {
+						if (siz == G_IM_SIZ_4b)
+							lineSizeBytes = trueWidth / 2;
+						else
+							lineSizeBytes = G_SIZ_BYTES(siz) * trueWidth;
+						lineSize = 0;
+					}
+					
+					size_t size = lineSizeBytes * trueHeight;
+					size_t sizeBytesClamped = lineSizeBytes * height;
 					struct DataBlob *blob;
 					
 					// G_SIZ_BYTES(G_IM_SIZ_4b) is 0, so handle separately
@@ -938,7 +953,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 					*/
 					
 					if (size > 4096)
-						fprintf(stderr, "warning: width height %d x %d\n", width, height);
+						fprintf(stderr, "warning: width height %d x %d\n", trueWidth, trueHeight);
 					
 					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
 					
@@ -949,13 +964,15 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 						blob->data.texture.h = height;
 						blob->data.texture.siz = siz;
 						blob->data.texture.fmt = Textures(CurrentTex).TexFormat;
-						blob->data.texture.lineSize = Textures(CurrentTex).LineSize;
+						blob->data.texture.lineSize = lineSize;
 						
 						if (blob->data.texture.fmt == G_IM_FMT_CI
 							&& blob->data.texture.pal == 0
 						)
 							sb_push(needsPalettes, blob);
 					}
+					if (sizeBytesClamped > blob->data.texture.sizeBytesClamped)
+						blob->data.texture.sizeBytesClamped = sizeBytesClamped;
 				}
 				break;
 			}

@@ -37,6 +37,7 @@ struct DataBlob
 			int siz;
 			int fmt;
 			int lineSize;
+			int sizeBytesClamped;
 			struct DataBlob *pal;
 		} texture;
 	} data;
