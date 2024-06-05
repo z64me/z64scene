@@ -861,6 +861,10 @@ extern "C" void GuiCleanup(void)
 
 extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop)
 {
+	// reset settings on extern scene load (handles Ctrl+O and dropped files)
+	if (scene != gScene)
+		gGuiSettings.Reset();
+	
 	// saves us the trouble of passing this variable around
 	gScene = scene;
 	gGui = interop;
