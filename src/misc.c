@@ -275,21 +275,47 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	
 	// generate texture blob list
 	{
-		for (struct DataBlob *blob = scene->blobs; blob; blob = blob->next)
-		{
-			if (blob->type == DATA_BLOB_TYPE_TEXTURE)
-				sb_push(scene->textureBlobs, TextureBlobStack(blob, scene->file));
-		};
+		TextureBlobSbArrayFromDataBlobs(scene->file, scene->blobs, &scene->textureBlobs);
 		sb_foreach(scene->rooms, {
-			for (struct DataBlob *blob = each->blobs; blob; blob = blob->next)
-			{
-				if (blob->type == DATA_BLOB_TYPE_TEXTURE)
-					sb_push(scene->textureBlobs, TextureBlobStack(blob, each->file));
-			}
+			TextureBlobSbArrayFromDataBlobs(each->file, each->blobs, &scene->textureBlobs);
 		});
 	}
 	
 	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
+}
+
+void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs)
+{
+	for (struct DataBlob *blob = head; blob; blob = blob->next)
+	{
+		if (blob->type == DATA_BLOB_TYPE_TEXTURE)
+			sb_push(*texBlobs, TextureBlobStack(blob, file));
+	};
+}
+
+struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr)
+{
+	DataBlobSegmentSetup(6, file->data, file->dataEnd, head);
+	
+	// skeleton
+	const uint8_t *sk = DataBlobSegmentAddressToRealAddress(segAddr);
+	if (sk)
+	{
+		int numLimbs = sk[4];
+		uint32_t limbTableSeg = u32r(sk);
+		const uint8_t *limbTable = DataBlobSegmentAddressToRealAddress(limbTableSeg);
+		
+		for (int i = 0; i < numLimbs; ++i)
+		{
+			uint32_t limbSeg = u32r(limbTable + i * 4);
+			const uint8_t *limb = DataBlobSegmentAddressToRealAddress(limbSeg);
+			uint32_t dlist = u32r(limb + 8);
+			
+			DataBlobSegmentsPopulateFromMeshNew(dlist);
+		}
+	}
+	
+	return DataBlobSegmentGetHead(6);
 }
 
 void RoomAddHeader(struct Room *room, struct RoomHeader *header)

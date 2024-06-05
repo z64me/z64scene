@@ -576,6 +576,9 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					)
 					{
 						fprintf(stderr, "warning: width height %d x %d\n", imageWidth, imageHeight);
+						fprintf(stderr, "refData    = %p\n", blob->refData);
+						fprintf(stderr, "refDataEnd = %p\n", blob->refDataFileEnd);
+						fprintf(stderr, "sizeBytes  = %x\n", blob->sizeBytes);
 						isBadTexture = true;
 						goto L_textureError;
 					}

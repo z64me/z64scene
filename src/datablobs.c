@@ -127,6 +127,10 @@ void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEn
 {
 	struct DataBlobSegment *seg = &gSegments[segmentIndex];
 	
+	fprintf(stderr, "DataBlobSegmentSetup(%d): %p - %p (%08x)\n"
+		, segmentIndex, data, dataEnd, (uint32_t)(dataEnd - data)
+	);
+	
 	seg->head = head;
 	seg->data = data;
 	seg->dataEnd = dataEnd;

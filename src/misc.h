@@ -173,6 +173,8 @@ void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize
 void StrToLower(char *str);
 void StrRemoveChar(char *charAt);
 const char *ExePath(const char *path);
+struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr);
+void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
