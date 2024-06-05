@@ -211,7 +211,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_O:
 			// ctrl + o ; Ctrl+O
-			if (mods & GLFW_MOD_CONTROL)
+			if (pressed && (mods & GLFW_MOD_CONTROL))
 				WindowOpenFile();
 			break;
 	}
