@@ -22,6 +22,20 @@ int main(int argc, char *argv[])
 	if (argc == 2)
 	{
 		scene = SceneFromFilenamePredictRooms(argv[1]);
+		
+		// test textures
+		if (false)
+		{
+			struct File *file = FileFromFilename("bin/test.bin");
+			
+			DataBlobSegmentSetup(6, file->data, file->dataEnd, 0);
+			
+			DataBlobSegmentsPopulateFromMeshNew(0x06000000);
+			
+			sb_array(struct TextureBlob, texBlobs) = 0;
+			TextureBlobSbArrayFromDataBlobs(file, DataBlobSegmentGetHead(6), &texBlobs);
+			scene->textureBlobs = texBlobs;
+		}
 	}
 	else if (argc > 2)
 	{

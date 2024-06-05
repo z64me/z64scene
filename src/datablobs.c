@@ -15,6 +15,8 @@
 #define F3DEX_GBI_2
 #include "gbi.h"
 
+void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+
 #define Min(A, B) ((A) < (B) ? (A) : (B))
 
 // gbi extras
@@ -24,7 +26,7 @@
 /* 10.2 fixed point */
 typedef uint16_t qu102_t;
 #define qu102_I(x) \
-    ((x) >> 2)
+    ((signed int)((x) >> 2))
 #define G_SIZ_BYTES(siz) (G_SIZ_BITS(siz) / 8)
 #define ALIGN8(x) (((x) + 7) & ~7)
 
@@ -618,6 +620,98 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 		int Line_Height = 0;
 		if (Line_Width > 0)
 			Line_Height = Min(MaxTexel / Line_Width, Tile_Height);
+		
+		// NPOT
+		if (true)
+		{
+			if (Textures(id).MaskS > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
+				Textures(id).RealWidth = Mask_Width;
+			else if ((Tile_Width * Tile_Height) <= MaxTexel)
+				Textures(id).RealWidth = Tile_Width;
+			else
+				Textures(id).RealWidth = Line_Width;
+			
+			if (Textures(id).MaskT > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
+				Textures(id).RealHeight = Mask_Height;
+			else if ((Tile_Width * Tile_Height) <= MaxTexel)
+				Textures(id).RealHeight = Tile_Height;
+			else
+				Textures(id).RealHeight = Line_Height;
+			
+			#ifndef NDEBUG
+			{
+				int width = Textures(id).RealWidth;
+				int height = Textures(id).RealHeight;
+				int siz = Textures(CurrentTex).TexelSize;
+				size_t size = 0;
+				
+				// old method was returning 0 here
+				if (siz == G_IM_SIZ_4b) size = (width * height) / 2;
+				else size = G_SIZ_BYTES(siz) * width * height;
+				
+				if (size > 4096) Die("this shouldn't happen");
+			}
+			#endif
+			
+			return;
+		}
+		// testing NPOT
+		/*
+		if (false)
+		{
+			// fixes NPOT textures, is it this simple?
+			//uint32_t width = fabs(qu102_I(Textures(id).ULS) - qu102_I(Textures(id).LRS)) + 1;
+			//uint32_t height = fabs(qu102_I(Textures(id).ULT) - qu102_I(Textures(id).LRT)) + 1;
+			uint32_t width = qu102_I(Textures(id).LRS) + 1;
+			uint32_t height = qu102_I(Textures(id).LRT) + 1;
+			//fprintf(stderr, "%d %d %d %d\n", Line_Width, Line_Height, width, height);
+			//fprintf(stderr, " -> %d %d\n", Textures(id).LRS, Textures(id).LRT);
+			//fprintf(stderr, " -> %d %d\n", Textures(id).ULS, Textures(id).ULT);
+			
+			//int scaleDown = Textures(id).LineSize / 4;
+			//if (!scaleDown) scaleDown = 1;
+			//width /= scaleDown;
+			//height /= scaleDown;
+			
+			Textures(id).RealWidth = width;
+			Textures(id).RealHeight = height;
+			
+			fprintf(stderr, "%d %d - %d\n", width, height, Textures(id).LineSize);
+			
+			int siz = Textures(CurrentTex).TexelSize;
+			size_t size = G_SIZ_BYTES(siz) * width * height;
+			
+			// old method was returning 0 here
+			if (siz == G_IM_SIZ_4b)
+				size = (width * height) / 2;
+			else
+				size = G_SIZ_BYTES(siz) * width * height;
+			
+			// maybe?
+			if (size > 4096)
+			{
+				fprintf(stderr, "mask s t %d %d\n", Textures(id).MaskS, Textures(id).MaskT);
+				bool axis = 0;
+				while (size > 4096)
+				{
+					if (!axis) height /= 2;
+					else width /= 2;
+					
+					// old method was returning 0 here
+					if (siz == G_IM_SIZ_4b) size = (width * height) / 2;
+					else size = G_SIZ_BYTES(siz) * width * height;
+				}
+				
+				Textures(id).RealWidth = width;
+				Textures(id).RealHeight = height;
+			}
+			
+			if (size <= 4096)
+				return;
+			
+			Die("this shouldn't happen");
+		}
+		*/
 		
 		if (Textures(id).MaskS > 0 && ((Mask_Width * Mask_Height) <= MaxTexel))
 			Textures(id).Width = Mask_Width;
