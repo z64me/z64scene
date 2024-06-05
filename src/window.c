@@ -994,7 +994,7 @@ void WindowMainLoop(struct Scene *scene)
 		// generate billboard matrices
 		{
 			Matrix inverse_mv;
-			uint8_t billboards[0x80];
+			static uint8_t billboards[0x80]; // static storage so it doesn't expire (is used beyond this scope)
 			uint8_t *sphere = billboards;
 			uint8_t *cylinder = billboards + 0x40;
 			
