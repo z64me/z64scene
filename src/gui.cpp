@@ -591,6 +591,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						, (n64texconv_bpp)imageSiz
 						, imageWidth
 						, imageHeight
+						, blob->data.texture.lineSize
 					);
 					
 					// Create a OpenGL texture identifier

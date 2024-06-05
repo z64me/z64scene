@@ -937,6 +937,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 						blob->data.texture.h = height;
 						blob->data.texture.siz = siz;
 						blob->data.texture.fmt = Textures(CurrentTex).TexFormat;
+						blob->data.texture.lineSize = Textures(CurrentTex).LineSize;
 						
 						if (blob->data.texture.fmt == G_IM_FMT_CI
 							&& blob->data.texture.pal == 0
