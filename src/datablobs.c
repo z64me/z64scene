@@ -888,12 +888,22 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 					Textures(CurrentTex).MaskT = ShiftR(w1, 14, 4);
 					Textures(CurrentTex).TShiftS = ShiftR(w1, 0, 4);
 					Textures(CurrentTex).TShiftT = ShiftR(w1, 10, 4);
+					
+					// getting linesize of 8 on a 32x32 rgba truecolor texture,
+					// should be 16, so maybe this math is required?
+					if (Textures(CurrentTex).TexelSize == G_IM_SIZ_32b)
+						Textures(CurrentTex).LineSize *= 2;
 				}
 				break;
 			
 			case G_LOADTILE:
 			case G_LOADBLOCK:
 				// These commands are only used inside larger texture macros, so we don't need to do anything special with them
+				break;
+			
+			// TODO support LOD textures
+			case G_SETOTHERMODE_L:
+			case G_SETOTHERMODE_H:
 				break;
 			
 			case G_SETTILESIZE: {
@@ -916,14 +926,16 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 				
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
 				{
-					size_t size = G_SIZ_BYTES(siz) * width * height;
+					size_t size = Textures(CurrentTex).LineSize * sizeof(uint64_t) * height;
 					struct DataBlob *blob;
 					
-					// old method was returning 0 here
+					// G_SIZ_BYTES(G_IM_SIZ_4b) is 0, so handle separately
+					/*
 					if (siz == G_IM_SIZ_4b)
 						size = (width * height) / 2;
 					else
 						size = G_SIZ_BYTES(siz) * width * height;
+					*/
 					
 					if (size > 4096)
 						fprintf(stderr, "warning: width height %d x %d\n", width, height);
@@ -1048,11 +1060,12 @@ void DataBlobPrint(struct DataBlob *blob)
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
 		case DATA_BLOB_TYPE_TEXTURE:
 			typeName = "texture";
-			sprintf(extraInfo, "w/h/siz/fmt/pal = %d/%d/%d/%d/%08x"
+			sprintf(extraInfo, "w/h/siz/fmt/linesize/pal = %d/%d/%d/%d/%d/%08x"
 				, blob->data.texture.w
 				, blob->data.texture.h
 				, blob->data.texture.siz
 				, blob->data.texture.fmt
+				, blob->data.texture.lineSize
 				, blob->data.texture.pal ? blob->data.texture.pal->originalSegmentAddress : 0
 			);
 			break;
