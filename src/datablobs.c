@@ -929,14 +929,20 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 						fprintf(stderr, "warning: width height %d x %d\n", width, height);
 					
 					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
-					blob->data.texture.w = width;
-					blob->data.texture.h = height;
-					blob->data.texture.siz = siz;
-					blob->data.texture.fmt = Textures(CurrentTex).TexFormat;
-					if (blob->data.texture.fmt == G_IM_FMT_CI
-						&& blob->data.texture.pal == 0
-					)
-						sb_push(needsPalettes, blob);
+					
+					// don't overwrite texture size if size already set
+					if (!blob->data.texture.w)
+					{
+						blob->data.texture.w = width;
+						blob->data.texture.h = height;
+						blob->data.texture.siz = siz;
+						blob->data.texture.fmt = Textures(CurrentTex).TexFormat;
+						
+						if (blob->data.texture.fmt == G_IM_FMT_CI
+							&& blob->data.texture.pal == 0
+						)
+							sb_push(needsPalettes, blob);
+					}
 				}
 				break;
 			}
