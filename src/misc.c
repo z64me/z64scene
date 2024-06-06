@@ -460,6 +460,17 @@ static struct ZeldaLight private_ZeldaLightParse(const void *data)
 	};
 }
 
+static bool private_IsLikelyHeader(uint32_t addr, uint8_t segment, uint32_t fileSize)
+{
+	if ((addr >> 24) != segment
+		|| (addr & 7) // not 8 byte aligned
+		|| (addr & 0x00ffffff) >= fileSize
+	)
+		return false;
+	
+	return true;
+}
+
 static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 {
 	struct SceneHeader *result = Calloc(1, sizeof(*result));
@@ -473,6 +484,10 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	} spawnPoints = {0};
 	uint8_t *altHeadersArray = 0;
 	result->mm.sceneSetupType = -1;
+	
+	// unlikely a scene header
+	if (private_IsLikelyHeader(addr, 0x02, file->size) == false)
+		addr = 0;
 	
 	// don't parse blank headers
 	if (!(result->addr = addr))
@@ -565,6 +580,10 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	uint8_t *data8 = file->data;
 	uint8_t *walk = file->data;
 	uint8_t *altHeadersArray = 0;
+	
+	// unlikely a room header
+	if (private_IsLikelyHeader(addr, 0x03, file->size) == false)
+		addr = 0;
 	
 	// don't parse blank headers
 	if (!(result->addr = addr))
