@@ -12,6 +12,7 @@
 #include "gizmo.h"
 #include "gui.h"
 #include "window.h"
+#include "texanim.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -795,6 +796,20 @@ Vec2f WindowGetLocalScreenPos(Vec3f point)
 	);
 }
 
+GbiGfx* Gfx_TexScroll(u32 x, u32 y, s32 width, s32 height)
+{
+	GbiGfx* displayList = n64_graph_alloc(3 * sizeof(*displayList));
+	
+	x %= 512 << 2;
+	y %= 512 << 2;
+	
+	gDPTileSync(displayList);
+	gDPSetTileSize(displayList + 1, 0, x, y, x + ((width - 1) << 2), y + ((height - 1) << 2));
+	gSPEndDisplayList(displayList + 2);
+
+	return displayList;
+}
+
 GbiGfx* Gfx_TwoTexScroll(s32 tile1, u32 x1, u32 y1, s32 width1, s32 height1, s32 tile2, u32 x2, u32 y2, s32 width2, s32 height2)
 {
 	GbiGfx* displayList = n64_graph_alloc(5 * sizeof(*displayList));
@@ -1091,6 +1106,7 @@ void WindowMainLoop(struct Scene *scene)
 		sb_foreach(scene->rooms, {
 			void *sceneSegment = scene->file->data;
 			void *roomSegment = each->file->data;
+			struct SceneHeader *sceneHeader = &scene->headers[0];
 			
 			gSPDisplayList(POLY_OPA_DISP++, n64_material_setup_dl[0x19]);
 			gSPSegment(POLY_OPA_DISP++, 2, sceneSegment);
@@ -1107,6 +1123,8 @@ void WindowMainLoop(struct Scene *scene)
 			// animate water in forest test scene
 			if (scene->file->size == 0x11240)
 				AnimateTheWater();
+			else if (sceneHeader->mm.sceneSetupType != -1)
+				TexAnimSetupSceneMM(sceneHeader->mm.sceneSetupType, sceneHeader->mm.sceneSetupData);
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
 			sb_foreach(dls, {

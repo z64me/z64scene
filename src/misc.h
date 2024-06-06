@@ -11,6 +11,7 @@
 extern "C" {
 #endif
 
+#include "texanim.h"
 #include "stretchy_buffer.h"
 #include "datablobs.h"
 #include "extmath.h"
@@ -135,6 +136,10 @@ struct SceneHeader
 	sb_array(ZeldaLight, lights);
 	uint32_t addr;
 	int numRooms;
+	struct {
+		int sceneSetupType;
+		AnimatedMaterial *sceneSetupData;
+	} mm;
 };
 
 struct Scene
