@@ -472,6 +472,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		int count;
 	} spawnPoints = {0};
 	uint8_t *altHeadersArray = 0;
+	result->mm.sceneSetupType = -1;
 	
 	// don't parse blank headers
 	if (!(result->addr = addr))
@@ -513,6 +514,16 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x18: { // alternate headers
 				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
+				break;
+			}
+			
+			case 0x1A: { // mm texture animation
+				result->mm.sceneSetupType = 1;
+				result->mm.sceneSetupData = AnimatedMaterialNewFromSegment(u32r(walk + 4));
+				sb_foreach(result->mm.sceneSetupData, {
+					fprintf(stderr, "texanim[%d] type%d, seg%d\n", eachIndex, each->type, each->segment);
+				});
+				//Die("%d texanims\n", sb_count(result->mm.sceneSetupData));
 				break;
 			}
 			
@@ -661,6 +672,8 @@ static struct Scene *private_SceneParseAfterLoad(struct Scene *scene)
 	assert(file);
 	assert(file->data);
 	assert(file->size);
+	
+	n64_segment_set(0x02, file->data);
 	
 	private_SceneParseAddHeader(scene, 0x02000000);
 	

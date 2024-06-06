@@ -15,6 +15,8 @@ typedef void GbiGfx;
 #define Gfx GbiGfx
 #endif
 
+#include "stretchy_buffer.h"
+
 #if 1 // region: types
 
 typedef uint32_t TexturePtr; // segment address
@@ -35,11 +37,11 @@ typedef struct {
 } F3DEnvColor; // size = 0x4
 
 typedef struct {
-	/* 0x0 */ uint16_t keyFrameLength;
+	/* 0x0 */ uint16_t durationFrames;
 	/* 0x2 */ uint16_t keyFrameCount;
-	/* 0x4 */ F3DPrimColor* primColors;
-	/* 0x8 */ F3DEnvColor* envColors;
-	/* 0xC */ uint16_t* keyFrames;
+	/* 0x4 */ sb_array(F3DPrimColor, primColors);
+	/* 0x8 */ sb_array(F3DEnvColor, envColors);
+	/* 0xC */ sb_array(uint16_t, keyFrames);
 } AnimatedMatColorParams; // size = 0x10
 
 typedef struct {
@@ -50,15 +52,15 @@ typedef struct {
 } AnimatedMatTexScrollParams; // size = 0x4
 
 typedef struct {
-	/* 0x0 */ uint16_t keyFrameLength;
-	/* 0x4 */ TexturePtr* textureList; // segmet addresses
-	/* 0x8 */ uint8_t* textureIndexList;
+	/* 0x0 */ uint16_t durationFrames;
+	/* 0x4 */ sb_array(TexturePtr, textureList); // segmet addresses
+	/* 0x8 */ sb_array(uint8_t, textureIndexList);
 } AnimatedMatTexCycleParams; // size = 0xC
 
 typedef struct {
 	/* 0x0 */ int8_t segment;
 	/* 0x2 */ int16_t type;
-	/* 0x4 */ void* params;
+	/* 0x4 */ sb_array(void, params);
 } AnimatedMaterial; // size = 0x8
 
 #endif // endregion
@@ -67,6 +69,8 @@ typedef struct {
 
 GbiGfx* Gfx_TexScroll(uint32_t x, uint32_t y, int32_t width, int32_t height);
 GbiGfx* Gfx_TwoTexScroll(int32_t tile1, uint32_t x1, uint32_t y1, int32_t width1, int32_t height1, int32_t tile2, uint32_t x2, uint32_t y2, int32_t width2, int32_t height2);
+AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr);
+void TexAnimSetGameplayFrames(float frames);
 
 // Executes the current scene draw config handler.
 void TexAnimSetupSceneMM(int which, AnimatedMaterial *sceneMaterialAnims);

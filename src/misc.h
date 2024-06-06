@@ -138,7 +138,7 @@ struct SceneHeader
 	int numRooms;
 	struct {
 		int sceneSetupType;
-		AnimatedMaterial *sceneSetupData;
+		sb_array(AnimatedMaterial, sceneSetupData);
 	} mm;
 };
 

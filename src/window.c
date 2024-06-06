@@ -927,6 +927,14 @@ void WindowMainLoop(struct Scene *scene)
 	{
 		//fprintf(stderr, "-- loop ----\n");
 		
+		// TODO use deltaTime
+		{
+			static float sGameplayFrames = 0;
+			sGameplayFrames += 0.1; // supports scrolling in reverse as well
+			
+			TexAnimSetGameplayFrames(sGameplayFrames);
+		}
+		
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime
 		EnvLightSettings settings = GetEnvironment(scene, &gui);
 		ZeldaLight *result = (void*)&settings;

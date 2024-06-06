@@ -8,6 +8,7 @@
 #include "misc.h"
 
 #include <n64.h>
+#include <stdio.h>
 
 #define GRAPH_ALLOC n64_graph_alloc
 #define Gfx GbiGfx
@@ -27,6 +28,37 @@
 #define CLAMP_MIN(x, min) ((x) < (min) ? (min) : (x))
 
 static uint32_t sGameplayFrames;
+
+#if 1 // region: private types
+
+typedef struct {
+	/* 0x0 */ uint16_t durationFrames;
+	/* 0x2 */ uint16_t keyFrameCount;
+	/* 0x4 */ uint32_t primColors;
+	/* 0x8 */ uint32_t envColors;
+	/* 0xC */ uint32_t keyFrames;
+} AnimatedMatColorParams64; // size = 0x10
+
+typedef struct {
+	/* 0x0 */ int8_t xStep;
+	/* 0x1 */ int8_t yStep;
+	/* 0x2 */ uint8_t width;
+	/* 0x3 */ uint8_t height;
+} AnimatedMatTexScrollParams64; // size = 0x4
+
+typedef struct {
+	/* 0x0 */ uint16_t durationFrames;
+	/* 0x4 */ uint32_t textureList; // segmet addresses
+	/* 0x8 */ uint32_t textureIndexList;
+} AnimatedMatTexCycleParams64; // size = 0xC
+
+typedef struct {
+	/* 0x0 */ int8_t segment;
+	/* 0x2 */ int16_t type;
+	/* 0x4 */ uint32_t params;
+} AnimatedMaterial64; // size = 0x8
+
+#endif // endregion
 
 #if 1 // region: mm, animatedmat, private
 
@@ -130,7 +162,7 @@ static void AnimatedMat_DrawColor(int32_t segment, void* params) {
 	AnimatedMatColorParams* colorAnimParams = (AnimatedMatColorParams*)params;
 	F3DPrimColor* primColor = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColor;
-	int32_t curFrame = sMatAnimStep % colorAnimParams->keyFrameLength;
+	int32_t curFrame = sMatAnimStep % colorAnimParams->durationFrames;
 	
 	primColor += curFrame;
 	envColor = (colorAnimParams->envColors != NULL)
@@ -157,7 +189,7 @@ static void AnimatedMat_DrawColorLerp(int32_t segment, void* params) {
 	F3DPrimColor* primColorMax = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorMax;
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
-	int32_t curFrame = sMatAnimStep % colorAnimParams->keyFrameLength;
+	int32_t curFrame = sMatAnimStep % colorAnimParams->durationFrames;
 	int32_t endFrame;
 	int32_t relativeFrame; // relative to the start frame
 	int32_t startFrame;
@@ -270,7 +302,7 @@ static void AnimatedMat_DrawColorNonLinearInterp(int32_t segment, void* params) 
 	F3DPrimColor* primColorCur = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorCur = Lib_SegmentedToVirtual(colorAnimParams->envColors);
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
-	float curFrame = sMatAnimStep % colorAnimParams->keyFrameLength;
+	float curFrame = sMatAnimStep % colorAnimParams->durationFrames;
 	F3DPrimColor primColorResult;
 	F3DEnvColor envColorResult;
 	float x[50];
@@ -354,7 +386,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	AnimatedMatTexCycleParams* texAnimParams = params;
 	TexturePtr* texList = Lib_SegmentedToVirtual(texAnimParams->textureList);
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
-	int32_t curFrame = sMatAnimStep % texAnimParams->keyFrameLength;
+	int32_t curFrame = sMatAnimStep % texAnimParams->durationFrames;
 	void* tex = n64_segment_get(texList[texId[curFrame]]);
 	
 	OPEN_DISPS();
@@ -390,6 +422,7 @@ static void AnimatedMat_DrawMain(AnimatedMaterial* matAnim, float alphaRatio, ui
 		do {
 			segment = matAnim->segment;
 			segmentAbs = ABS_ALT(segment) + 7;
+			//fprintf(stderr, "populate segment 0x%02x type %d params %p\n", segmentAbs, matAnim->type, matAnim->params);
 			matAnimDrawHandlers[matAnim->type](segmentAbs, Lib_SegmentedToVirtual(matAnim->params));
 			matAnim++;
 		} while (segment >= 0);
@@ -865,4 +898,108 @@ void TexAnimSetupSceneMM(int which, AnimatedMaterial *sceneMaterialAnims)
 	
 	sceneDrawConfigHandlers[which]();
 }
+
+void TexAnimSetGameplayFrames(float frames)
+{
+	sGameplayFrames = frames;
+}
+
+AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
+{
+	sb_array(AnimatedMaterial, result) = 0;
+	AnimatedMaterial64 *matAnim = n64_segment_get(segAddr);
+	
+	#define READY(type) \
+		type##64 *in = data; \
+		type *out = (type*)calloc(1, sizeof(*out)); \
+		mat.params = out;
+	
+	#define READY_ARRAY(type, howmany) \
+		type##64 *in = data; \
+		type *out = (type*)calloc(howmany, sizeof(*out)); \
+		mat.params = out;
+	
+	#define READY_PTR(type, name) \
+		type *name = n64_segment_get(in->name);
+	
+	if ((matAnim != NULL) && (matAnim->segment != 0))
+	{
+		for (int segment = 0; segment >= 0; ++matAnim)
+		{
+			AnimatedMaterial mat = { matAnim->segment, u16r(&matAnim->type) };
+			void *data = n64_segment_get(u32r(&matAnim->params));
+			
+			//fprintf(stderr, "push type %d seg %d\n", mat.type, mat.segment);
+			
+			segment = mat.segment;
+			
+			switch (mat.type)
+			{
+				case 0: // AnimatedMat_DrawTexScroll
+				case 1: // AnimatedMat_DrawTwoTexScroll
+				{
+					READY_ARRAY(AnimatedMatTexScrollParams, mat.type + 1)
+					
+					for (int i = 0; i < mat.type + 1; ++i, ++out, ++in)
+					{
+						out->xStep = in->xStep;
+						out->yStep = in->yStep;
+						out->width = in->width;
+						out->height = in->height;
+					}
+					break;
+				}
+				
+				case 2: // AnimatedMat_DrawColor
+				case 3: // AnimatedMat_DrawColorLerp
+				case 4: // AnimatedMat_DrawColorNonLinearInterp
+				{
+					READY(AnimatedMatColorParams)
+					READY_PTR(F3DPrimColor, primColors)
+					READY_PTR(F3DEnvColor, envColors)
+					READY_PTR(uint16_t, keyFrames)
+					
+					out->durationFrames = u16r(&in->durationFrames);
+					out->keyFrameCount = u16r(&in->keyFrameCount);
+					if (primColors)
+						for (int i = 0; i < out->keyFrameCount; ++i)
+							sb_push(out->primColors, primColors[i]);
+					if (envColors)
+						for (int i = 0; i < out->keyFrameCount; ++i)
+							sb_push(out->envColors, envColors[i]);
+					if (keyFrames)
+						for (int i = 0; i < out->keyFrameCount; ++i)
+							sb_push(out->keyFrames, u16r(&keyFrames[i]));
+					break;
+				}
+				
+				case 5: // AnimatedMat_DrawTexCycle
+				{
+					READY(AnimatedMatTexCycleParams)
+					READY_PTR(uint32_t, textureList)
+					READY_PTR(uint8_t, textureIndexList)
+					int textureIndexMax = 0;
+					
+					out->durationFrames = u16r(&in->durationFrames);
+					if (textureIndexList) {
+						for (int i = 0; i < out->durationFrames; ++i) {
+							int textureIndex = textureIndexList[i];
+							if (textureIndex > textureIndexMax)
+								textureIndexMax = textureIndex + 1;
+							sb_push(out->textureIndexList, textureIndex);
+						}
+					}
+					for (int i = 0; i < textureIndexMax; ++i)
+						sb_push(out->textureList, u32r(&textureList[i]));
+					break;
+				}
+			}
+			
+			sb_push(result, mat);
+		}
+	}
+	
+	return result;
+}
+
 #endif // endregion
