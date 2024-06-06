@@ -783,6 +783,54 @@ Vec2f WindowGetLocalScreenPos(Vec3f point)
 	);
 }
 
+GbiGfx* Gfx_TwoTexScroll(s32 tile1, u32 x1, u32 y1, s32 width1, s32 height1, s32 tile2, u32 x2, u32 y2, s32 width2, s32 height2)
+{
+	GbiGfx* displayList = n64_graph_alloc(5 * sizeof(*displayList));
+	
+	x1 %= 512 << 2;
+	y1 %= 512 << 2;
+	x2 %= 512 << 2;
+	y2 %= 512 << 2;
+	
+	gDPTileSync(displayList);
+	gDPSetTileSize(displayList + 1, tile1, x1, y1, x1 + ((width1 - 1) << 2), y1 + ((height1 - 1) << 2));
+	gDPTileSync(displayList + 2);
+	gDPSetTileSize(displayList + 3, tile2, x2, y2, x2 + ((width2 - 1) << 2), y2 + ((height2 - 1) << 2));
+	gSPEndDisplayList(displayList + 4);
+
+	return displayList;
+}
+
+static void AnimateTheWater(void)
+{
+	static float sGameplayFrames = 0;
+	int32_t gameplayFrames = sGameplayFrames;
+	sGameplayFrames += 0.1; // supports scrolling in reverse as well
+	
+	// pond
+	gSPSegment(POLY_XLU_DISP++, 0x09,
+		Gfx_TwoTexScroll(G_TX_RENDERTILE, 127 - gameplayFrames % 128,
+			(gameplayFrames * 1) % 128, 32, 32, 1, gameplayFrames % 128, (gameplayFrames * 1) % 128,
+			32, 32
+		)
+	);
+	// waterfall
+	gSPSegment(POLY_XLU_DISP++, 0x08,
+		Gfx_TwoTexScroll(G_TX_RENDERTILE, 127 - gameplayFrames % 128,
+			(gameplayFrames * 10) % 128, 32, 32, 1, gameplayFrames % 128,
+			(gameplayFrames * 10) % 128, 32, 32
+		)
+	);
+	
+	// this controls the blending on the multi textures
+	// grass
+	gDPPipeSync(POLY_OPA_DISP++);
+	gDPSetEnvColor(POLY_OPA_DISP++, 128, 128, 128, 128);
+	// water
+	gDPPipeSync(POLY_XLU_DISP++);
+	gDPSetEnvColor(POLY_XLU_DISP++, 128, 128, 128, 128);
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
@@ -1043,6 +1091,10 @@ void WindowMainLoop(struct Scene *scene)
 			gSPSegment(POLY_XLU_DISP++, 3, roomSegment);
 			gDPSetEnvColor(POLY_XLU_DISP++, 0x80, 0x80, 0x80, 0x80);
 			//gSPMatrix(POLY_XLU_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
+			
+			// animate water in forest test scene
+			if (scene->file->size == 0x11240)
+				AnimateTheWater();
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
 			sb_foreach(dls, {
