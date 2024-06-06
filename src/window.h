@@ -50,6 +50,8 @@ struct Input
 		int a;
 		int s;
 		int d;
+		int q;
+		int e;
 		int g;
 		int lshift;
 		int lctrl;

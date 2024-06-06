@@ -187,12 +187,24 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			gInput.key.d = pressed;
 			break;
 		
+		case GLFW_KEY_Q:
+			gInput.key.q = pressed;
+			break;
+		
+		case GLFW_KEY_E:
+			gInput.key.e = pressed;
+			break;
+		
 		case GLFW_KEY_G:
 			gInput.key.g = pressed;
 			break;
 		
 		case GLFW_KEY_LEFT_CONTROL:
 			gInput.key.lctrl = pressed;
+			break;
+		
+		case GLFW_KEY_LEFT_SHIFT:
+			gInput.key.lshift = pressed;
 			break;
 		
 		case GLFW_KEY_ENTER:
@@ -294,7 +306,7 @@ static inline void *camera_flythrough(Matrix *m)
 	flythrough_camera_update(
 		pos, look, up, (void*)m
 		, gInput.delta_time_sec
-		, speed * (gInput.key.lshift ? 2.0f : 1.0f)
+		, speed * (gInput.key.lshift ? 3.0f : 1.0f)
 		, 0.5f * activated
 		, 80.0f
 		, cursor.x - oldcursor.x, cursor.y - oldcursor.y
@@ -302,8 +314,8 @@ static inline void *camera_flythrough(Matrix *m)
 		, gInput.key.a
 		, gInput.key.s
 		, gInput.key.d
-		, 0//gInput.key.space
-		, 0//gInput.key.lctrl
+		, gInput.key.q // up
+		, gInput.key.e // down
 		, 0
 	);
 	
