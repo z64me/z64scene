@@ -27,7 +27,7 @@
 #define CLAMP_MAX(x, max) ((x) > (max) ? (max) : (x))
 #define CLAMP_MIN(x, min) ((x) < (min) ? (min) : (x))
 
-static uint32_t sGameplayFrames;
+static texAnimStep_t sGameplayFrames;
 
 #if 1 // region: private types
 
@@ -62,7 +62,7 @@ typedef struct {
 
 #if 1 // region: mm, animatedmat, private
 
-static int32_t sMatAnimStep;
+static texAnimStep_t sMatAnimStep;
 static uint32_t sMatAnimFlags;
 static float sMatAnimAlphaRatio;
 static AnimatedMaterial *sSceneMaterialAnims;
@@ -162,7 +162,7 @@ static void AnimatedMat_DrawColor(int32_t segment, void* params) {
 	AnimatedMatColorParams* colorAnimParams = (AnimatedMatColorParams*)params;
 	F3DPrimColor* primColor = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColor;
-	int32_t curFrame = sMatAnimStep % colorAnimParams->durationFrames;
+	int32_t curFrame = (uint32_t)sMatAnimStep % colorAnimParams->durationFrames;
 	
 	primColor += curFrame;
 	envColor = (colorAnimParams->envColors != NULL)
@@ -189,7 +189,7 @@ static void AnimatedMat_DrawColorLerp(int32_t segment, void* params) {
 	F3DPrimColor* primColorMax = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorMax;
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
-	int32_t curFrame = sMatAnimStep % colorAnimParams->durationFrames;
+	int32_t curFrame = (uint32_t)sMatAnimStep % colorAnimParams->durationFrames;
 	int32_t endFrame;
 	int32_t relativeFrame; // relative to the start frame
 	int32_t startFrame;
@@ -302,7 +302,7 @@ static void AnimatedMat_DrawColorNonLinearInterp(int32_t segment, void* params) 
 	F3DPrimColor* primColorCur = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorCur = Lib_SegmentedToVirtual(colorAnimParams->envColors);
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
-	float curFrame = sMatAnimStep % colorAnimParams->durationFrames;
+	float curFrame = (uint32_t)sMatAnimStep % colorAnimParams->durationFrames;
 	F3DPrimColor primColorResult;
 	F3DEnvColor envColorResult;
 	float x[50];
@@ -386,7 +386,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	AnimatedMatTexCycleParams* texAnimParams = params;
 	TexturePtr* texList = Lib_SegmentedToVirtual(texAnimParams->textureList);
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
-	int32_t curFrame = sMatAnimStep % texAnimParams->durationFrames;
+	int32_t curFrame = (uint32_t)sMatAnimStep % texAnimParams->durationFrames;
 	void* tex = n64_segment_get(texList[texId[curFrame]]);
 	
 	OPEN_DISPS();
@@ -406,7 +406,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
  * This is the main function that handles the animated material system.
  * There are six different animated material types, which should be set in the provided `AnimatedMaterial`.
  */
-static void AnimatedMat_DrawMain(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step, uint32_t flags) {
+static void AnimatedMat_DrawMain(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step, uint32_t flags) {
 	static void (*matAnimDrawHandlers[])(int32_t segment, void* params) = {
 		AnimatedMat_DrawTexScroll, AnimatedMat_DrawTwoTexScroll, AnimatedMat_DrawColor,
 		AnimatedMat_DrawColorLerp, AnimatedMat_DrawColorNonLinearInterp, AnimatedMat_DrawTexCycle,
@@ -837,42 +837,42 @@ void AnimatedMat_DrawAlphaXlu(AnimatedMaterial* matAnim, float alphaRatio) {
 /**
  * Draws an animated material with a step to both the OPA and XLU buffers.
  */
-void AnimatedMat_DrawStep(AnimatedMaterial* matAnim, uint32_t step) {
+void AnimatedMat_DrawStep(AnimatedMaterial* matAnim, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, 1, step, 3);
 }
 
 /**
  * Draws an animated material with a step to only the OPA buffer.
  */
-void AnimatedMat_DrawStepOpa(AnimatedMaterial* matAnim, uint32_t step) {
+void AnimatedMat_DrawStepOpa(AnimatedMaterial* matAnim, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, 1, step, 1);
 }
 
 /**
  * Draws an animated material with a step to only the XLU buffer.
  */
-void AnimatedMat_DrawStepXlu(AnimatedMaterial* matAnim, uint32_t step) {
+void AnimatedMat_DrawStepXlu(AnimatedMaterial* matAnim, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, 1, step, 2);
 }
 
 /**
  * Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to both the OPA and XLU buffers.
  */
-void AnimatedMat_DrawAlphaStep(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step) {
+void AnimatedMat_DrawAlphaStep(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, alphaRatio, step, 3);
 }
 
 /**
  * Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to only the OPA buffer.
  */
-void AnimatedMat_DrawAlphaStepOpa(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step) {
+void AnimatedMat_DrawAlphaStepOpa(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, alphaRatio, step, 1);
 }
 
 /**
  * Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to only the XLU buffer.
  */
-void AnimatedMat_DrawAlphaStepXlu(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step) {
+void AnimatedMat_DrawAlphaStepXlu(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step) {
 	AnimatedMat_DrawMain(matAnim, alphaRatio, step, 2);
 }
 #endif // endregion

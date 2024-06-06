@@ -15,6 +15,8 @@ typedef void GbiGfx;
 #define Gfx GbiGfx
 #endif
 
+typedef float texAnimStep_t;
+
 #include "stretchy_buffer.h"
 
 #if 1 // region: types
@@ -94,22 +96,22 @@ void AnimatedMat_DrawAlphaOpa(AnimatedMaterial* matAnim, float alphaRatio);
 void AnimatedMat_DrawAlphaXlu(AnimatedMaterial* matAnim, float alphaRatio);
 
 // Draws an animated material with a step to both the OPA and XLU buffers.
-void AnimatedMat_DrawStep(AnimatedMaterial* matAnim, uint32_t step);
+void AnimatedMat_DrawStep(AnimatedMaterial* matAnim, texAnimStep_t step);
 
 // Draws an animated material with a step to only the OPA buffer.
-void AnimatedMat_DrawStepOpa(AnimatedMaterial* matAnim, uint32_t step);
+void AnimatedMat_DrawStepOpa(AnimatedMaterial* matAnim, texAnimStep_t step);
 
 // Draws an animated material with a step to only the XLU buffer.
-void AnimatedMat_DrawStepXlu(AnimatedMaterial* matAnim, uint32_t step);
+void AnimatedMat_DrawStepXlu(AnimatedMaterial* matAnim, texAnimStep_t step);
 
 // Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to both the OPA and XLU buffers.
-void AnimatedMat_DrawAlphaStep(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step);
+void AnimatedMat_DrawAlphaStep(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step);
 
 // Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to only the OPA buffer.
-void AnimatedMat_DrawAlphaStepOpa(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step);
+void AnimatedMat_DrawAlphaStepOpa(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step);
 
 // Draws an animated material with an alpha ratio (0.0 - 1.0) and a step to only the XLU buffer.
-void AnimatedMat_DrawAlphaStepXlu(AnimatedMaterial* matAnim, float alphaRatio, uint32_t step);
+void AnimatedMat_DrawAlphaStepXlu(AnimatedMaterial* matAnim, float alphaRatio, texAnimStep_t step);
 
 #endif // endregion
 
