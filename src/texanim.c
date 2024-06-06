@@ -920,7 +920,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 		mat.params = out;
 	
 	#define READY_PTR(type, name) \
-		type *name = n64_segment_get(in->name);
+		type *name = n64_segment_get(u32r(&in->name));
 	
 	if ((matAnim != NULL) && (matAnim->segment != 0))
 	{
