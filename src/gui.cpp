@@ -806,6 +806,7 @@ static void DrawMenuBar(void)
 			
 			ImGui::EndMenu();
 		}
+		ImGui::Text("%.02f fps", ImGui::GetIO().Framerate);
 		ImGui::EndMainMenuBar();
 	}
 }
