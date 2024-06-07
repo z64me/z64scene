@@ -990,7 +990,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					if (textureIndexList) {
 						for (int i = 0; i < out->durationFrames; ++i) {
 							int textureIndex = textureIndexList[i];
-							if (textureIndex > textureIndexMax)
+							if (textureIndex >= textureIndexMax)
 								textureIndexMax = textureIndex + 1;
 							sb_push(out->textureIndexList, textureIndex);
 						}
