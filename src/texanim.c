@@ -961,13 +961,19 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					
 					out->durationFrames = u16r(&in->durationFrames);
 					out->keyFrameCount = u16r(&in->keyFrameCount);
+					// safety
+					if (!out->keyFrameCount) {
+						out->keyFrameCount = out->durationFrames;
+						for (int i = 0; i < out->durationFrames; ++i)
+							sb_push(out->keyFrames, i + 1);
+					}
 					if (primColors)
 						for (int i = 0; i < out->keyFrameCount; ++i)
 							sb_push(out->primColors, primColors[i]);
 					if (envColors)
 						for (int i = 0; i < out->keyFrameCount; ++i)
 							sb_push(out->envColors, envColors[i]);
-					if (keyFrames)
+					if (keyFrames && !out->keyFrames)
 						for (int i = 0; i < out->keyFrameCount; ++i)
 							sb_push(out->keyFrames, u16r(&keyFrames[i]));
 					break;
