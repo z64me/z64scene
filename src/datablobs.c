@@ -505,6 +505,17 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 	uint8_t history[8] = { G_NOOP };
 	const void *realAddr;
 	
+	realAddr = DataBlobSegmentAddressToRealAddress(segAddr);
+	
+	if (!realAddr)
+		return;
+	
+	struct DataBlob *dlBlob = DataBlobSegmentPush(realAddr, 0, segAddr, DATA_BLOB_TYPE_MESH);
+	
+	// already processed
+	if (dlBlob->sizeBytes)
+		return;
+	
 #define HISTORY_GET(n) \
 	history[(i - 1 - (n) < 0) ? (i - 1 - (n) + ARRLEN(history)) : (i - 1 - (n))]
 	
@@ -782,7 +793,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 	}
 	
 	bool exit = false;
-	for (const uint8_t *data = DataBlobSegmentAddressToRealAddress(segAddr); !exit; )
+	for (const uint8_t *data = dlBlob->refData; !exit; dlBlob->sizeBytes += 8)
 	{
 		size_t cmdlen = SIZEOF_GFX;
 		uint32_t w0 = READ_32_BE(data, 0);
@@ -1081,7 +1092,10 @@ void DataBlobPrint(struct DataBlob *blob)
 	
 	switch (blob->type)
 	{
-		case DATA_BLOB_TYPE_MESH: typeName = "mesh"; break;
+		case DATA_BLOB_TYPE_MESH:
+			typeName = "mesh";
+			sprintf(extraInfo, "sizeBytes = 0x%08x", blob->sizeBytes);
+			break;
 		case DATA_BLOB_TYPE_VERTEX: typeName = "vertex"; break;
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
 		case DATA_BLOB_TYPE_TEXTURE:
@@ -1099,6 +1113,9 @@ void DataBlobPrint(struct DataBlob *blob)
 		case DATA_BLOB_TYPE_GENERIC: typeName = "generic"; break;
 		default: typeName = "unknown"; break;
 	}
+	
+	if (blob->type != DATA_BLOB_TYPE_MESH)
+		typeName = 0;
 	
 	if (typeName)
 		fprintf(stderr, "%s %08x%s%s\n"

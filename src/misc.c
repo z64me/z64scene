@@ -281,6 +281,28 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		});
 	}
 	
+	// test: create files w/ all data blobs zeroed
+	if (false)
+	{
+		sb_foreach(scene->rooms, {
+			
+			for (struct DataBlob *blob = each->blobs; blob; blob = blob->next)
+				memset((void*)blob->refData, 0, blob->sizeBytes);
+			
+			char tmp[1024];
+			struct File *file = each->file;
+			
+			sprintf(tmp, "%s.test", file->filename);
+			
+			FILE *fp = fopen(tmp, "wb");
+			if (!fp) continue;
+			fwrite(file->data, 1, file->size, fp);
+			fclose(fp);
+		});
+		
+		exit(0);
+	}
+	
 	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
 }
 
