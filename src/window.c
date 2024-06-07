@@ -85,7 +85,6 @@ static struct State
 	Matrix viewMtx;
 	Matrix projMtx;
 	Matrix projViewMtx;
-	Matrix viewProjMtx;
 	int winWidth;
 	int winHeight;
 	struct CameraFly cameraFly;
@@ -915,10 +914,9 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 	RoomShapeCullableEntryLinked* insert = linkedEntriesBuffer;
 	float entryBoundsNearZ;
 
-	// Matrix_MtxToMtxF(&this->view.projection, &this->viewProjectionMtxF);
-	Matrix viewProjectionMtxF = gState.projViewMtx;//viewProjMtx;
+	Matrix viewProjectionMtxF = gState.projViewMtx;
 	Vec3f projectionMtxFDiagonal = {
-		viewProjectionMtxF.xx, viewProjectionMtxF.yy, viewProjectionMtxF.zz
+		gState.projMtx.xx, gState.projMtx.yy, -gState.projMtx.zz
 	};
 
 	// Pick and sort entries by depth
@@ -932,14 +930,30 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 		
 		SkinMatrix_Vec3fMtxFMultXYZ(&viewProjectionMtxF, &pos, &projectedPos);
 		
-		//projectedPos.z *= 1.0f / projectionMtxFDiagonal.z; // original math
-		// commented it out, using camera position hack for now
+		projectedPos.z *= 1.0f / projectionMtxFDiagonal.z; // original math
 		
 		//Vec4f test = WindowGetLocalScreenVec(pos);
 		//fprintf(stderr, "test %f %f\n", test.z, test.w);
 		//fprintf(stderr, " -> %f\n", projectedPos.z);
 		
 		float var_fv1 = ABS_ALT(cullable->radius);
+		
+		/*
+		if (cullable->xlu == 0x03004CD0 // back dl
+			|| cullable->xlu == 0x03004760 // front dl
+		)
+		{
+			fprintf(stderr, "%08x:\n", cullable->xlu);
+			fprintf(stderr, " { %.f %.f %.f }\n", projectedPos.x, projectedPos.y, projectedPos.z);
+			fprintf(stderr, " { %.f %.f %.f }\n", pos.x, pos.y, pos.z);
+			fprintf(stderr, " %.f -> %.f\n", projectedPos.z, projectedPos.z - var_fv1);
+			fprintf(stderr, " recip %f\n", 1.0f / projectionMtxFDiagonal.z);
+			
+			float testA = projectedPos.z - var_fv1;
+			float testB = Vec3f_DistXYZ(pos, gState.cameraFly.eye); // also try lookAt
+			fprintf(stderr, " %.f vs %.f \n", testA, testB);
+		}
+		*/
 		
 		// If the entry bounding sphere isn't fully before the rendered depth range
 		if (-var_fv1 < projectedPos.z)
@@ -1343,17 +1357,6 @@ void WindowMainLoop(struct Scene *scene)
 			// billboard matrices live in segment 0x01
 			gSPSegment(POLY_OPA_DISP++, 0x1, billboards);
 			gSPSegment(POLY_XLU_DISP++, 0x1, billboards);
-			
-			// FIXME viewProjMtx test for culling
-			Matrix_Push(); {
-				//Matrix_MtxToMtxF(&this->view.projection, &this->viewProjectionMtxF);
-				Matrix_Mult(&gState.projMtx, MTXMODE_NEW);
-				// The billboard is still a viewing matrix at this stage
-				Matrix billboardF;
-				Matrix_MtxToMtxF((void*)billboards, &billboardF);
-				Matrix_Mult(&billboardF, MTXMODE_APPLY);
-				Matrix_Get(&gState.viewProjMtx);
-			} Matrix_Pop();
 		}
 		
 		sb_foreach(scene->rooms, {
@@ -1380,6 +1383,7 @@ void WindowMainLoop(struct Scene *scene)
 				TexAnimSetupSceneMM(sceneHeader->mm.sceneSetupType, sceneHeader->mm.sceneSetupData);
 			
 			DrawRoomCullable(&each->headers[0], result->fog_far, ROOM_DRAW_OPA | ROOM_DRAW_XLU);
+			//break; // process only room[0] for now
 			continue;
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
