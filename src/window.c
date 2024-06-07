@@ -1382,9 +1382,12 @@ void WindowMainLoop(struct Scene *scene)
 			else if (sceneHeader->mm.sceneSetupType != -1)
 				TexAnimSetupSceneMM(sceneHeader->mm.sceneSetupType, sceneHeader->mm.sceneSetupData);
 			
-			DrawRoomCullable(&each->headers[0], result->fog_far, ROOM_DRAW_OPA | ROOM_DRAW_XLU);
-			//break; // process only room[0] for now
-			continue;
+			if (each->headers[0].meshFormat == 2)
+			{
+				DrawRoomCullable(&each->headers[0], result->fog_far, ROOM_DRAW_OPA | ROOM_DRAW_XLU);
+				//break; // process only room[0] for now
+				continue;
+			}
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
 			sb_foreach(dls, {

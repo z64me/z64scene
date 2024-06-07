@@ -112,6 +112,7 @@ struct RoomHeader
 	sb_array(uint16_t, objects);
 	sb_array(struct RoomMeshSimple, displayLists);
 	uint32_t addr;
+	uint8_t meshFormat;
 };
 
 struct Room

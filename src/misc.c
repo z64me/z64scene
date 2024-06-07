@@ -646,6 +646,8 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 			case 0x0A: { // mesh header
 				uint8_t *d = data8 + (u32r(walk + 4) & 0x00ffffff);
 				
+				result->meshFormat = d[0];
+				
 				if (d[0] == 2)
 				{
 					int num = d[1];
