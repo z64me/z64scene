@@ -935,10 +935,9 @@ void WindowMainLoop(struct Scene *scene)
 	{
 		//fprintf(stderr, "-- loop ----\n");
 		
-		// TODO use deltaTime
 		{
-			static float sGameplayFrames = 0;
-			sGameplayFrames += 0.1; // supports scrolling in reverse as well
+			static double sGameplayFrames = 0;
+			sGameplayFrames += gInput.delta_time_sec * (20.0);
 			
 			TexAnimSetGameplayFrames(sGameplayFrames);
 		}
