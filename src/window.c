@@ -921,6 +921,14 @@ void WindowMainLoop(struct Scene *scene)
 	GuiInit(window);
 	Matrix_Init();
 	
+	struct File *test = 0;
+	if (true) {
+		const char *testFn = "bin/test.bin";
+		testFn = "bin/test1.bin";
+		if (FileExists(testFn))
+			test = FileFromFilename(testFn);
+	}
+	
 	// render loop
 	// -----------
 	while (!glfwWindowShouldClose(window))
@@ -1158,6 +1166,16 @@ void WindowMainLoop(struct Scene *scene)
 		gSPDisplayList(POLY_OPA_DISP++, matBlank);
 		gSPDisplayList(POLY_OPA_DISP++, 0x06000100);
 		*/
+		
+		if (test)
+		{
+			gSPSegment(POLY_OPA_DISP++, 0x06, test->data);
+			
+			if (test->size == 0x37A00 || test->size == 0x37800)
+				gSPDisplayList(POLY_OPA_DISP++, 0x06021F78);
+			else if (test->size == 0x1E250)
+				gSPDisplayList(POLY_OPA_DISP++, 0x06016480);
+		}
 		
 		// if mouse has moved or ctrl key state has changed,
 		// perform raycast against all visual geometry
