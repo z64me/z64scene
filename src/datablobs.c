@@ -541,6 +541,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 	static int CurrentTex;
 	static bool MultiTexCoord; (void)MultiTexCoord;
 	static bool MultiTexture; (void)MultiTexture;
+	static uint32_t gRdpHalf1 = 0;
 	
 	static struct DataBlob *palBlob = 0;
 	static sb_array(struct DataBlob *, needsPalettes); // color-indexed textures w/o palettes
@@ -1008,6 +1009,14 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 				}
 				break;
 			}
+			
+			case G_RDPHALF_1:
+				gRdpHalf1 = w1;
+				break;
+			
+			case G_BRANCH_Z:
+				DataBlobSegmentsPopulateFromMeshNew(gRdpHalf1);
+				break;
 			
 			// game should be ready to draw at this point, so use
 			// this as an opportunity to resolve palette address
