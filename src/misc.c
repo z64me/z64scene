@@ -635,6 +635,10 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						struct RoomMeshSimple tmp = {
 							.opa = u32r(bin + 8)
 							, .xlu = u32r(bin + 12)
+							, .center = {
+								s16r(bin + 0), s16r(bin + 2), s16r(bin + 4)
+							}
+							, .radius = s16r(bin + 6)
 						};
 						
 						sb_push(result->displayLists, tmp);
@@ -651,6 +655,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						struct RoomMeshSimple tmp = {
 							.opa = u32r(bin + 0)
 							, .xlu = u32r(bin + 4)
+							, .radius = -1
 						};
 						
 						sb_push(result->displayLists, tmp);

@@ -26,6 +26,8 @@ extern "C" {
 
 #define UNFOLD_RGB_EXT(v, action)   (v).r action, (v).g action, (v).b action
 
+#define UNFOLD_VEC3_EXT(v, action)   (v).x action, (v).y action, (v).z action
+
 #define UNFOLD_ARRAY_3(TYPE, ADDR) ((TYPE*)ADDR)[0], ((TYPE*)ADDR)[1], ((TYPE*)ADDR)[2]
 
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
@@ -97,6 +99,8 @@ struct Instance
 
 struct RoomMeshSimple
 {
+	Vec3f    center;
+	int16_t  radius;
 	uint32_t opa;
 	uint32_t xlu;
 };

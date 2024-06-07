@@ -85,6 +85,7 @@ static struct State
 	Matrix viewMtx;
 	Matrix projMtx;
 	Matrix projViewMtx;
+	Matrix viewProjMtx;
 	int winWidth;
 	int winHeight;
 	struct CameraFly cameraFly;
@@ -796,6 +797,15 @@ Vec2f WindowGetLocalScreenPos(Vec3f point)
 	);
 }
 
+Vec4f WindowGetLocalScreenVec(Vec3f point)
+{
+	Vec4f pos;
+	
+	Matrix_MultVec3fToVec4f_Ext(&point, &pos, &gState.projViewMtx);
+	
+	return pos;
+}
+
 GbiGfx* Gfx_TexScroll(u32 x, u32 y, s32 width, s32 height)
 {
 	GbiGfx* displayList = n64_graph_alloc(3 * sizeof(*displayList));
@@ -856,6 +866,223 @@ static void AnimateTheWater(void)
 	// water
 	gDPPipeSync(POLY_XLU_DISP++);
 	gDPSetEnvColor(POLY_XLU_DISP++, 128, 128, 128, 128);
+}
+
+// Multiplies a 4 component row vector [ src , 1 ] by the matrix mf and writes the resulting xyz components to dest.
+static void SkinMatrix_Vec3fMtxFMultXYZ(Matrix* mf, Vec3f* src, Vec3f* dest)
+{
+	float mx = mf->xx;
+	float my = mf->xy;
+	float mz = mf->xz;
+	float mw = mf->xw;
+
+	dest->x = mw + ((src->x * mx) + (src->y * my) + (src->z * mz));
+
+	mx = mf->yx;
+	my = mf->yy;
+	mz = mf->yz;
+	mw = mf->yw;
+	dest->y = mw + ((src->x * mx) + (src->y * my) + (src->z * mz));
+
+	mx = mf->zx;
+	my = mf->zy;
+	mz = mf->zz;
+	mw = mf->zw;
+	dest->z = mw + ((src->x * mx) + (src->y * my) + (src->z * mz));
+}
+
+// FIXME using distance-to-camera as an approximation for now, but is imperfect
+//       (see the code that has been commented out for how it is intended to work)
+static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t flags)
+{
+	typedef struct RoomShapeCullableEntryLinked
+	{
+		struct RoomShapeCullableEntryLinked *prev;
+		struct RoomShapeCullableEntryLinked *next;
+		const struct RoomMeshSimple *entry;
+		float boundsNearZ;
+	} RoomShapeCullableEntryLinked;
+	
+	#define ROOM_SHAPE_CULLABLE_MAX_ENTRIES 128
+	#define ROOM_DRAW_OPA 0b01
+	#define ROOM_DRAW_XLU 0b10
+	#define ABS_ALT(x) ((x) < 0 ? -(x) : (x))
+	
+	static RoomShapeCullableEntryLinked linkedEntriesBuffer[ROOM_SHAPE_CULLABLE_MAX_ENTRIES];
+	RoomShapeCullableEntryLinked* head = NULL;
+	RoomShapeCullableEntryLinked* tail = NULL;
+	RoomShapeCullableEntryLinked* iter;
+	RoomShapeCullableEntryLinked* insert = linkedEntriesBuffer;
+	float entryBoundsNearZ;
+
+	// Matrix_MtxToMtxF(&this->view.projection, &this->viewProjectionMtxF);
+	Matrix viewProjectionMtxF = gState.projViewMtx;//viewProjMtx;
+	Vec3f projectionMtxFDiagonal = {
+		viewProjectionMtxF.xx, viewProjectionMtxF.yy, viewProjectionMtxF.zz
+	};
+
+	// Pick and sort entries by depth
+	const struct RoomMeshSimple *cullable = header->displayLists;
+	const int numEntries = sb_count(header->displayLists);
+	for (int i = 0; i < numEntries; i++, cullable++)
+	{
+		// Project the entry position, to get the depth it is at.
+		Vec3f pos = { UNFOLD_VEC3_EXT(cullable->center, * 1) };
+		Vec3f projectedPos;
+		
+		SkinMatrix_Vec3fMtxFMultXYZ(&viewProjectionMtxF, &pos, &projectedPos);
+		
+		//projectedPos.z *= 1.0f / projectionMtxFDiagonal.z; // original math
+		// commented it out, using camera position hack for now
+		
+		//Vec4f test = WindowGetLocalScreenVec(pos);
+		//fprintf(stderr, "test %f %f\n", test.z, test.w);
+		//fprintf(stderr, " -> %f\n", projectedPos.z);
+		
+		float var_fv1 = ABS_ALT(cullable->radius);
+		
+		// If the entry bounding sphere isn't fully before the rendered depth range
+		if (-var_fv1 < projectedPos.z)
+		{
+			// Compute the depth of the nearest point in the entry's bounding sphere
+			entryBoundsNearZ = projectedPos.z - var_fv1;
+			entryBoundsNearZ = Vec3f_DistXYZ(pos, gState.cameraFly.lookAt); // hack
+			
+			// If the entry bounding sphere isn't fully beyond the rendered depth range
+			if (entryBoundsNearZ < zFar)
+			{
+				// This entry will be rendered
+				insert->entry = cullable;
+
+				if (cullable->radius < 0)
+					insert->boundsNearZ = FLT_MAX;
+				else
+					insert->boundsNearZ = entryBoundsNearZ;
+
+				// Insert into the linked list, ordered by ascending
+				// depth of the nearest point in the bounding sphere
+				iter = head;
+				if (iter == NULL)
+				{
+					head = tail = insert;
+					insert->prev = insert->next = NULL;
+				}
+				else
+				{
+					do
+					{
+						if (insert->boundsNearZ < iter->boundsNearZ)
+							break;
+						
+						iter = iter->next;
+					} while (iter != NULL);
+
+					if (iter == NULL)
+					{
+						insert->prev = tail;
+						insert->next = NULL;
+						tail->next = insert;
+						tail = insert;
+					}
+					else
+					{
+						insert->prev = iter->prev;
+						if (insert->prev == NULL)
+							head = insert;
+						else
+							insert->prev->next = insert;
+						
+						iter->prev = insert;
+						insert->next = iter;
+					}
+				}
+
+				insert++;
+			}
+		}
+	}
+	
+	//fprintf(stderr, "draw %d / %d\n", (int)(insert - linkedEntriesBuffer), numEntries);
+
+	//! FAKE: Similar trick used in OoT
+	//R_ROOM_CULL_NUM_ENTRIES = numEntries & 0xFFFF & 0xFFFF & 0xFFFF;
+
+	// Draw entries, from nearest to furthest
+
+	if (flags & ROOM_DRAW_OPA)
+	{
+		for (int i = 1; head != NULL; head = head->next, i++)
+		{
+			cullable = head->entry;
+			
+			uint32_t displayList = cullable->opa;
+			
+			/*
+			// Debug mode drawing
+			if (R_ROOM_CULL_DEBUG_MODE != ROOM_CULL_DEBUG_MODE_OFF)
+			{
+				if (((R_ROOM_CULL_DEBUG_MODE == ROOM_CULL_DEBUG_MODE_UP_TO_TARGET) &&
+					(i <= R_ROOM_CULL_DEBUG_TARGET)) ||
+					((R_ROOM_CULL_DEBUG_MODE == ROOM_CULL_DEBUG_MODE_ONLY_TARGET) &&
+					(i == R_ROOM_CULL_DEBUG_TARGET))
+				)
+				{
+					if (displayList)
+					{
+						gSPDisplayList(POLY_OPA_DISP++, displayList);
+					}
+				}
+			}
+			else
+			*/
+			{
+				if (displayList)
+				{
+					gSPDisplayList(POLY_OPA_DISP++, displayList);
+				}
+			}
+		}
+	}
+	
+	if (flags & ROOM_DRAW_XLU)
+	{
+		for (; tail != NULL; tail = tail->prev)
+		{
+			cullable = tail->entry;
+			
+			uint32_t displayList = cullable->xlu;
+			
+			if (displayList)
+			{
+				// TODO opacity based on distance
+				//      (need to resolve iREG values)
+				/*
+				if (cullable->radius & 1)
+				{
+					float temp_fv0 = tail->boundsNearZ - (float)(iREG(93) + 0xBB8);
+					float temp_fv1 = iREG(94) + 0x7D0;
+
+					if (temp_fv0 < temp_fv1)
+					{
+						int xluOpacity;
+						
+						if (temp_fv0 < 0.0f)
+							xluOpacity = 255;
+						else
+							xluOpacity = 255 - (int32_t)((temp_fv0 / temp_fv1) * 255.0f);
+						
+						gDPSetEnvColor(POLY_XLU_DISP++, 255, 255, 255, xluOpacity);
+						gSPDisplayList(POLY_XLU_DISP++, displayList);
+					}
+				}
+				else
+				*/
+				{
+					gSPDisplayList(POLY_XLU_DISP++, displayList);
+				}
+			}
+		}
+	}
 }
 
 void WindowMainLoop(struct Scene *scene)
@@ -1116,6 +1343,17 @@ void WindowMainLoop(struct Scene *scene)
 			// billboard matrices live in segment 0x01
 			gSPSegment(POLY_OPA_DISP++, 0x1, billboards);
 			gSPSegment(POLY_XLU_DISP++, 0x1, billboards);
+			
+			// FIXME viewProjMtx test for culling
+			Matrix_Push(); {
+				//Matrix_MtxToMtxF(&this->view.projection, &this->viewProjectionMtxF);
+				Matrix_Mult(&gState.projMtx, MTXMODE_NEW);
+				// The billboard is still a viewing matrix at this stage
+				Matrix billboardF;
+				Matrix_MtxToMtxF((void*)billboards, &billboardF);
+				Matrix_Mult(&billboardF, MTXMODE_APPLY);
+				Matrix_Get(&gState.viewProjMtx);
+			} Matrix_Pop();
 		}
 		
 		sb_foreach(scene->rooms, {
@@ -1140,6 +1378,9 @@ void WindowMainLoop(struct Scene *scene)
 				AnimateTheWater();
 			else if (sceneHeader->mm.sceneSetupType != -1)
 				TexAnimSetupSceneMM(sceneHeader->mm.sceneSetupType, sceneHeader->mm.sceneSetupData);
+			
+			DrawRoomCullable(&each->headers[0], result->fog_far, ROOM_DRAW_OPA | ROOM_DRAW_XLU);
+			continue;
 			
 			typeof(each->headers[0].displayLists) dls = each->headers[0].displayLists;
 			sb_foreach(dls, {
