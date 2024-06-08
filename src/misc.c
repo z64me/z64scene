@@ -24,7 +24,15 @@ static struct Room *private_RoomParseAfterLoad(struct Room *room);
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr);
 static struct Instance private_InstanceParse(const void *data);
 
+static int FileSetError(const char *fmt, ...);
+
 #endif /* private function declarations */
+
+#if 1 // region: private data
+
+static char sFileError[2048];
+
+#endif // endregion
 
 void Die(const char *fmt, ...)
 {
@@ -51,6 +59,9 @@ void *Calloc(size_t howMany, size_t sizeEach)
 
 char *StrdupPad(const char *str, int padding)
 {
+	if (!str)
+		return 0;
+	
 	char *result = Calloc(1, strlen(str) + padding + 1);
 	
 	strcpy(result, str);
@@ -60,6 +71,9 @@ char *StrdupPad(const char *str, int padding)
 
 char *Strdup(const char *str)
 {
+	if (!str)
+		return 0;
+	
 	char *result = Calloc(1, strlen(str) + 1);
 	
 	strcpy(result, str);
@@ -67,13 +81,15 @@ char *Strdup(const char *str)
 	return result;
 }
 
-void StrToLower(char *str)
+char *StrToLower(char *str)
 {
 	if (!str)
-		return;
+		return 0;
 	
 	for (char *c = str; *c; ++c)
 		*c = tolower(*c);
+	
+	return str;
 }
 
 void StrRemoveChar(char *charAt)
@@ -94,6 +110,36 @@ void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize
 	
 	dst[end] = codepoint;
 	dst[end + 1] = '\0';
+}
+
+// Find the first occurrence of the byte string s in byte string l.
+// https://opensource.apple.com/source/Libc/Libc-825.25/string/FreeBSD/memmem.c.auto.html
+void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen)
+{
+	register char *cur, *last;
+	const char *cl = (const char *)haystack;
+	const char *cs = (const char *)needle;
+
+	/* we need something to compare */
+	if (haystackLen == 0 || needleLen == 0)
+		return NULL;
+
+	/* "needle" must be smaller or equal to "haystack" */
+	if (haystackLen < needleLen)
+		return NULL;
+
+	/* special case where needleLen == 1 */
+	if (needleLen == 1)
+		return memchr(haystack, (int)*cs, haystackLen);
+
+	/* the last position where its possible to find "needle" in "haystack" */
+	last = (char *)cl + haystackLen - needleLen;
+
+	for (cur = (char *)cl; cur <= last; cur++)
+		if (cur[0] == cs[0] && memcmp(cur, cs, needleLen) == 0)
+			return cur;
+
+	return NULL;
 }
 
 #ifdef _WIN32
@@ -150,6 +196,24 @@ bool FileExists(const char *filename)
 	return true;
 }
 
+struct File *FileNew(const char *filename, size_t size)
+{
+	struct File *result = Calloc(1, sizeof(*result));
+	
+	result->size = size;
+	result->filename = Strdup(filename);
+	if (result->filename)
+		result->shortname = Strdup(MAX3(
+			strrchr(result->filename, '/') + 1
+			, strrchr(result->filename, '\\') + 1
+			, result->filename
+		));
+	result->data = Calloc(1, size);
+	result->dataEnd = ((uint8_t*)result->data) + result->size;
+	
+	return result;
+}
+
 struct File *FileFromFilename(const char *filename)
 {
 	struct File *result = Calloc(1, sizeof(*result));
@@ -173,6 +237,27 @@ struct File *FileFromFilename(const char *filename)
 	));
 	
 	return result;
+}
+
+const char *FileGetError(void)
+{
+	return sFileError;
+}
+
+int FileToFilename(struct File *file, const char *filename)
+{
+	FILE *fp;
+	
+	if (!filename || !*filename) return FileSetError("empty filename");
+	if (!file) return FileSetError("empty error");
+	if (!(fp = fopen(filename, "wb")))
+		return FileSetError("failed to open '%s' for writing", filename);
+	if (fwrite(file->data, 1, file->size, fp) != file->size)
+		return FileSetError("failed to write full contents of '%s'", filename);
+	if (fclose(fp))
+		return FileSetError("error closing file '%s' after writing", filename);
+	
+	return EXIT_SUCCESS;
 }
 
 struct Scene *SceneFromFilename(const char *filename)
@@ -256,9 +341,9 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			
 			sb_foreach(dls, {
 				if (each->opa)
-					DataBlobSegmentsPopulateFromMeshNew(each->opa);
+					DataBlobSegmentsPopulateFromMeshNew(each->opa, &each->opaBEU32);
 				if (each->xlu)
-					DataBlobSegmentsPopulateFromMeshNew(each->xlu);
+					DataBlobSegmentsPopulateFromMeshNew(each->xlu, &each->opaBEU32);
 			});
 		});
 		
@@ -272,6 +357,67 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	
 	fprintf(stderr, "'%s' data blobs:\n", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);
+	
+	// trim blobs that overlap (for smaller-than-predicted palette/texture data)
+	{
+		sb_array(struct DataBlob*, array) = 0;
+		
+		// populate
+		sb_foreach(scene->rooms, {
+			struct DataBlob *blobs = each->blobs;
+			datablob_foreach(blobs, {
+				sb_push(array, each);
+			});
+		});
+		datablob_foreach(scene->blobs, {
+			sb_push(array, each);
+		});
+		
+		// sort
+		{
+			bool swapped;
+			int n = sb_count(array);
+			
+			for (int i = 0; i < n - 1; ++i) {
+				swapped = false;
+				for (int k = 0; k < n - i - 1; k++) {
+					struct DataBlob *a = array[k];
+					struct DataBlob *b = array[k + 1];
+					if (a->refData > b->refData) {
+						array[k] = b;
+						array[k + 1] = a;
+						swapped = true;
+					}
+				}
+				if (swapped == false)
+					break;
+			}
+		}
+		
+		// print
+		//sb_foreach(array, { fprintf(stderr, "%p\n", (*each)->refData); });
+		
+		// trim
+		for (int i = 0; i < sb_count(array) - 1; ++i)
+		{
+			struct DataBlob *a = array[i];
+			struct DataBlob *b = array[i + 1];
+			
+			if (((uint8_t*)a->refData) + a->sizeBytes > ((uint8_t*)b->refData))
+			{
+				a->sizeBytes =
+					((uintptr_t)(b->refData))
+					- ((uintptr_t)(a->refData))
+				;
+				
+				fprintf(stderr, "trimmed blob %08x size to %08x\n"
+					, a->originalSegmentAddress, a->sizeBytes
+				);
+			}
+		}
+		
+		sb_free(array);
+	}
 	
 	// generate texture blob list
 	{
@@ -333,7 +479,7 @@ struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head,
 			const uint8_t *limb = DataBlobSegmentAddressToRealAddress(limbSeg);
 			uint32_t dlist = u32r(limb + 8);
 			
-			DataBlobSegmentsPopulateFromMeshNew(dlist);
+			DataBlobSegmentsPopulateFromMeshNew(dlist, (void*)(limb + 8));
 		}
 	}
 	
@@ -444,6 +590,18 @@ void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 
 
 #if 1 /* region: private function implementations */
+
+static int FileSetError(const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	
+	vsnprintf(sFileError, sizeof(sFileError), fmt, args);
+	
+	va_end(args);
+	
+	return EXIT_FAILURE;
+}
 
 static struct Instance private_InstanceParse(const void *data)
 {

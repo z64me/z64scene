@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 			
 			DataBlobSegmentSetup(6, file->data, file->dataEnd, 0);
 			
-			DataBlobSegmentsPopulateFromMeshNew(0x06000000);
+			DataBlobSegmentsPopulateFromMeshNew(0x06000000, 0);
 			
 			sb_array(struct TextureBlob, texBlobs) = 0;
 			TextureBlobSbArrayFromDataBlobs(file, DataBlobSegmentGetHead(6), &texBlobs);

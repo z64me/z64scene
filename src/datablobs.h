@@ -8,6 +8,19 @@
 #define DATABLOBS_H_INCLUDED
 
 #include <stdint.h>
+#include "stretchy_buffer.h"
+
+#define datablob_foreach(BLOBS, CODE) \
+	for (struct DataBlob *each = BLOBS; each; each = each->next) { \
+		CODE \
+	}
+
+#define datablob_foreach_filter(BLOBS, FILTER, CODE) \
+	for (struct DataBlob *each = BLOBS; each; each = each->next) { \
+		if (each->type FILTER) { \
+			CODE \
+		} \
+	}
 
 enum DataBlobType
 {
@@ -29,6 +42,7 @@ struct DataBlob
 	uint32_t updatedSegmentAddress;
 	uint32_t sizeBytes;
 	enum DataBlobType type;
+	sb_array(void*, refs); // references to this datablob
 	
 	union {
 		struct {
@@ -67,10 +81,12 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEnd, struct DataBlob *head);
 struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex);
 struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
-void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr);
-void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr);
+void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator);
+void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator);
 void DataBlobPrint(struct DataBlob *blob);
 void DataBlobPrintAll(struct DataBlob *blobs);
 const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);
+void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob);
+void DataBlobApplyOriginalSegmentAddresses(struct DataBlob *blob);
 
 #endif

@@ -785,11 +785,13 @@ static void DrawMenuBar(void)
 					gScene = newScene;
 				}
 			}
-			if (ImGui::MenuItem("Save", "Ctrl+S"))
+			if (ImGui::MenuItem("Save", "Ctrl+S", false, !!gScene))
 			{
+				WindowSaveScene();
 			}
-			if (ImGui::MenuItem("Save as..."))
+			if (ImGui::MenuItem("Save as...", "Ctrl+Shift+S", false, !!gScene))
 			{
+				WindowSaveSceneAs();
 			}
 			ImGui::Separator();
 			if (ImGui::MenuItem("Exit", "Ctrl+Q"))

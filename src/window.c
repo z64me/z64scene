@@ -181,7 +181,18 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		
 		case GLFW_KEY_S:
-			gInput.key.s = pressed;
+			// ctrl + s ; Ctrl+S
+			if (pressed && (mods & GLFW_MOD_CONTROL))
+			{
+				// save as
+				if (mods & GLFW_MOD_SHIFT)
+					WindowSaveSceneAs();
+				// save
+				else
+					WindowSaveScene();
+			}
+			else
+				gInput.key.s = pressed;
 			break;
 		
 		case GLFW_KEY_D:
@@ -727,6 +738,33 @@ struct Scene *WindowOpenFile(void)
 	struct Scene *scene = WindowLoadScene(fn);
 	
 	return scene;
+}
+
+void WindowSaveScene(void)
+{
+	if (!*gSceneP)
+		return;
+	
+	SceneToFilename(*gSceneP, "bin/test_scene.zscene");
+	return;
+	
+	// overwrite loaded scene and rooms
+	SceneToFilename(*gSceneP, 0);
+}
+
+void WindowSaveSceneAs(void)
+{
+	if (!*gSceneP)
+		return;
+	
+	const char *fn;
+	
+	fn = noc_file_dialog_open(NOC_FILE_DIALOG_SAVE, "zscene\0*.zscene\0", NULL, NULL);
+	
+	if (!fn)
+		return;
+	
+	SceneToFilename(*gSceneP, fn);
 }
 
 struct Scene *WindowLoadScene(const char *fn)

@@ -103,6 +103,8 @@ struct RoomMeshSimple
 	int16_t  radius;
 	uint32_t opa;
 	uint32_t xlu;
+	uint32_t opaBEU32; // DataBlobApply() updates this
+	uint32_t xluBEU32;
 };
 
 struct RoomHeader
@@ -161,9 +163,13 @@ struct Scene
 #if 1 /* region: function prototypes */
 
 bool FileExists(const char *filename);
+struct File *FileNew(const char *filename, size_t size);
 struct File *FileFromFilename(const char *filename);
+int FileToFilename(struct File *file, const char *filename);
+const char *FileGetError(void);
 struct Scene *SceneFromFilename(const char *filename);
 struct Scene *SceneFromFilenamePredictRooms(const char *filename);
+void SceneToFilename(struct Scene *scene, const char *filename);
 struct Room *RoomFromFilename(const char *filename);
 struct Object *ObjectFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
@@ -180,14 +186,17 @@ void RoomFree(struct Room *room);
 char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
 void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize);
-void StrToLower(char *str);
+char *StrToLower(char *str);
 void StrRemoveChar(char *charAt);
+void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen);
 const char *ExePath(const char *path);
 struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr);
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
+void WindowSaveScene(void);
+void WindowSaveSceneAs(void);
 
 #endif /* function prototypes */
 

@@ -37,6 +37,13 @@ typedef uint16_t qu102_t;
 	(((const uint8_t*)(BYTES))[OFFSET + 3] <<  0) \
 )
 
+#define PUT_32_BE(BYTES, OFFSET, DATA) { \
+	((uint8_t*)(BYTES))[OFFSET + 0] = ((DATA) >> 24) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 1] = ((DATA) >> 16) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 2] = ((DATA) >>  8) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 3] = ((DATA) >>  0) & 0xff; \
+}
+
 #define ARRLEN(X) (sizeof(X) / sizeof(*(X)))
 #define FALLTHROUGH __attribute__((fallthrough))
 #define SIZEOF_GFX 8
@@ -56,6 +63,7 @@ struct DataBlob *DataBlobNew(
 	, uint32_t segmentAddr
 	, enum DataBlobType type
 	, struct DataBlob *next
+	, void *ref
 )
 {
 	struct DataBlob *blob = malloc(sizeof(*blob));
@@ -68,6 +76,9 @@ struct DataBlob *DataBlobNew(
 		, .type = type
 	};
 	
+	if (ref)
+		sb_push(blob->refs, ref);
+	
 	return blob;
 }
 
@@ -78,6 +89,7 @@ struct DataBlob *DataBlobPush(
 	, uint32_t sizeBytes
 	, uint32_t segmentAddr
 	, enum DataBlobType type
+	, void *ref
 )
 {
 	struct DataBlob *prev = listHead;
@@ -90,6 +102,10 @@ struct DataBlob *DataBlobPush(
 			// it's possible for blocks to be coalesced
 			if (sizeBytes > each->sizeBytes)
 				each->sizeBytes = sizeBytes;
+			
+			// keep track of references to ram segment
+			if (ref)
+				sb_push(each->refs, ref);
 			
 			// already at beginning of list
 			if (each == listHead)
@@ -106,7 +122,7 @@ struct DataBlob *DataBlobPush(
 	}
 	
 	// prepend so addresses can later be resolved in reverse order
-	return DataBlobNew(refData, sizeBytes, segmentAddr, type, listHead);
+	return DataBlobNew(refData, sizeBytes, segmentAddr, type, listHead, ref);
 }
 
 struct DataBlob *DataBlobFindBySegAddr(struct DataBlob *listHead, uint32_t segAddr)
@@ -161,6 +177,7 @@ struct DataBlob *DataBlobSegmentPush(
 	, uint32_t sizeBytes
 	, uint32_t segmentAddr
 	, enum DataBlobType type
+	, void *ref
 )
 {
 	struct DataBlobSegment *seg = DataBlobSegmentGet(segmentAddr >> 24);
@@ -168,7 +185,7 @@ struct DataBlob *DataBlobSegmentPush(
 	if (!seg)
 		return 0;
 	
-	seg->head = DataBlobPush(seg->head, refData, sizeBytes, segmentAddr, type);
+	seg->head = DataBlobPush(seg->head, refData, sizeBytes, segmentAddr, type, ref);
 	seg->head->refDataFileEnd = seg->dataEnd;
 	
 	return seg->head;
@@ -201,7 +218,7 @@ const void *DataBlobSegmentAddressBoundsEnd(uint32_t segAddr)
 // adapted from DisplayList_Copy() from Tharo's dlcopy for this
 // https://github.com/Thar0/dlcopy/
 // DisplayList_Copy (ZObj* obj1, segaddr_t segAddr, ZObj* obj2, segaddr_t* newSegAddr)
-void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
+void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator)
 {
 	// skip unpopulated segments
 	if ((segAddr >> 24) >= ARRLEN(gSegments)
@@ -223,6 +240,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 		int siz;
 		uint32_t width;
 		uint32_t dram;
+		void *dramRef;
 	} timg = { 0 };
 	
 	static struct {
@@ -254,6 +272,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 		size_t cmdlen = SIZEOF_GFX;
 		uint32_t w0 = READ_32_BE(data, 0);
 		uint32_t w1 = READ_32_BE(data, 4);
+		void *w1addr = (void*)(data + 4);
 		
 		int cmd = w0 >> 24;
 		switch (cmd)
@@ -264,7 +283,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 			
 			case G_DL:
 				// recursively copy called display lists
-				DataBlobSegmentsPopulateFromMesh(w1);
+				DataBlobSegmentsPopulateFromMesh(w1, w1addr);
 				// if not branchlist, carry on
 				if (SHIFTR(w0, 16, 8) == G_DL_PUSH)
 					break;
@@ -297,7 +316,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 							fprintf(stderr, "Unrecognized Movemem Index %d for data at %08X\n", idx, segAddr);
 							break;
 					}
-					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_MATRIX);
+					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_GENERIC, w1addr);
 					//ret = DisplayList_CopyMovemem(obj1, w1, , , obj2, &w1);
 					//if (ret != 0)
 					//	goto err;
@@ -306,7 +325,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 			
 			case G_MTX:
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1))) {
-					DataBlobSegmentPush(realAddr, SIZEOF_MTX, w1, DATA_BLOB_TYPE_MATRIX);
+					DataBlobSegmentPush(realAddr, SIZEOF_MTX, w1, DATA_BLOB_TYPE_MATRIX, w1addr);
 					//ret = DisplayList_CopyMtx(obj1, w1, obj2, &w1);
 					//if (ret != 0)
 					//	goto err;
@@ -315,7 +334,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 			
 			case G_VTX:
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1))) {
-					DataBlobSegmentPush(realAddr, (SHIFTR(w0, 12, 8)) * SIZEOF_VTX, w1, DATA_BLOB_TYPE_VERTEX);
+					DataBlobSegmentPush(realAddr, (SHIFTR(w0, 12, 8)) * SIZEOF_VTX, w1, DATA_BLOB_TYPE_VERTEX, w1addr);
 					//ret = DisplayList_CopyVtx(obj1, w1, SHIFTR(w0, 12, 8), obj2, &w1);
 					//if (ret != 0)
 					//	goto err;
@@ -331,6 +350,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 				timg.siz =   SHIFTR(w0, 19, 2);
 				timg.width = SHIFTR(w0, 0, 12) + 1;
 				timg.dram =  w1;
+				timg.dramRef = w1addr;
 				break;
 			
 			case G_SETTILE:
@@ -394,7 +414,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 						if (size > 4096)
 							fprintf(stderr, "warning: width height %d x %d\n", width, height);
 						
-						blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
+						blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE, timg.dramRef);
 						blob->data.texture.w = width;
 						blob->data.texture.h = height;
 						blob->data.texture.siz = siz;
@@ -426,7 +446,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 					{
 						size_t size = ALIGN8(G_SIZ_BYTES(G_IM_SIZ_16b) * count);
 						
-						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
+						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE, timg.dramRef);
 						//ret = DisplayList_CopyData(obj1, addr, size, obj2, &newAddr, "TLUT");
 						//if (ret != 0)
 						//	goto err;
@@ -492,7 +512,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr)
 
 // new method, based on cooliscool's uot: https://code.google.com/p/uot
 // TODO nested functions are not standard c99, so refactor this eventually
-void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
+void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 {
 	// skip unpopulated segments
 	if ((segAddr >> 24) >= ARRLEN(gSegments)
@@ -510,7 +530,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 	if (!realAddr)
 		return;
 	
-	struct DataBlob *dlBlob = DataBlobSegmentPush(realAddr, 0, segAddr, DATA_BLOB_TYPE_MESH);
+	struct DataBlob *dlBlob = DataBlobSegmentPush(realAddr, 0, segAddr, DATA_BLOB_TYPE_MESH, originator);
 	
 	// already processed
 	if (dlBlob->sizeBytes)
@@ -521,6 +541,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 	
 	static struct {
 		uint32_t Dram;
+		void *DramRef;
 		int Width;
 		int Height;
 		int RealWidth;
@@ -798,6 +819,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 		size_t cmdlen = SIZEOF_GFX;
 		uint32_t w0 = READ_32_BE(data, 0);
 		uint32_t w1 = READ_32_BE(data, 4);
+		void *w1addr = (void*)(data + 4);
 		
 		int cmd = w0 >> 24;
 		switch (cmd)
@@ -808,7 +830,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 			
 			case G_DL:
 				// recursively copy called display lists
-				DataBlobSegmentsPopulateFromMeshNew(w1);
+				DataBlobSegmentsPopulateFromMeshNew(w1, w1addr);
 				// if not branchlist, carry on
 				if (SHIFTR(w0, 16, 8) == G_DL_PUSH)
 					break;
@@ -841,18 +863,18 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 							fprintf(stderr, "Unrecognized Movemem Index %d for data at %08X\n", idx, segAddr);
 							break;
 					}
-					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_MATRIX);
+					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_GENERIC, w1addr);
 				}
 				break;
 			
 			case G_MTX:
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1)))
-					DataBlobSegmentPush(realAddr, SIZEOF_MTX, w1, DATA_BLOB_TYPE_MATRIX);
+					DataBlobSegmentPush(realAddr, SIZEOF_MTX, w1, DATA_BLOB_TYPE_MATRIX, w1addr);
 				break;
 			
 			case G_VTX:
 				if ((realAddr = DataBlobSegmentAddressToRealAddress(w1)))
-					DataBlobSegmentPush(realAddr, (SHIFTR(w0, 12, 8)) * SIZEOF_VTX, w1, DATA_BLOB_TYPE_VERTEX);
+					DataBlobSegmentPush(realAddr, (SHIFTR(w0, 12, 8)) * SIZEOF_VTX, w1, DATA_BLOB_TYPE_VERTEX, w1addr);
 				break;
 			
 			/*
@@ -877,9 +899,15 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 					MultiTexture = false;
 				}
 				if (palMode)
+				{
 					Textures(0).Dram = w1;
+					Textures(0).DramRef = w1addr;
+				}
 				else
+				{
 					Textures(CurrentTex).Dram = w1;
+					Textures(CurrentTex).DramRef = w1addr;
+				}
 				break;
 			}
 			
@@ -967,7 +995,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 					if (size > 4096)
 						fprintf(stderr, "warning: width height %d x %d\n", trueWidth, trueHeight);
 					
-					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE);
+					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE, Textures(CurrentTex).DramRef);
 					
 					// don't overwrite texture size if size already set
 					if (!blob->data.texture.w)
@@ -998,7 +1026,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 					{
 						size_t size = ALIGN8(G_SIZ_BYTES(G_IM_SIZ_16b) * count);
 						
-						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE);
+						palBlob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_PALETTE, Textures(0).DramRef);
 					}
 				}
 				break;
@@ -1026,7 +1054,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 				break;
 			
 			case G_BRANCH_Z:
-				DataBlobSegmentsPopulateFromMeshNew(gRdpHalf1);
+				DataBlobSegmentsPopulateFromMeshNew(gRdpHalf1, w1addr);
 				break;
 			
 			// game should be ready to draw at this point, so use
@@ -1081,6 +1109,45 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr)
 		history[i] = cmd;
 		i = (i + 1) % ARRLEN(history);
 	}
+}
+
+void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob)
+{
+	if (!blob->refs) fprintf(stderr, "warning: no refs on %08x\n", blob->originalSegmentAddress);
+	
+	/*
+	if (blob->type == DATA_BLOB_TYPE_TEXTURE
+		|| blob->type == DATA_BLOB_TYPE_PALETTE
+	)
+	{
+		fprintf(stderr, "texture/palette %08x -> %08x w/ %d refs\n"
+			, blob->originalSegmentAddress
+			, blob->updatedSegmentAddress
+			, sb_count(blob->refs)
+		);
+		sb_foreach(blob->refs, {
+			fprintf(stderr, " -> %p, %08x %08x %08x\n"
+				, (*each)
+				, READ_32_BE(*each, -4)
+				, READ_32_BE(*each, 0)
+				, READ_32_BE(*each, 4)
+			);
+		});
+	}
+	*/
+	
+	sb_foreach(blob->refs, {
+		if (*each)
+			PUT_32_BE(*each, 0, blob->updatedSegmentAddress);
+	});
+}
+
+void DataBlobApplyOriginalSegmentAddresses(struct DataBlob *blob)
+{
+	sb_foreach(blob->refs, {
+		if (*each)
+			PUT_32_BE(*each, 0, blob->originalSegmentAddress);
+	});
 }
 
 void DataBlobPrint(struct DataBlob *blob)
