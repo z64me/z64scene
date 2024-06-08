@@ -929,6 +929,10 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 		Vec3f projectedPos;
 		
 		SkinMatrix_Vec3fMtxFMultXYZ(&viewProjectionMtxF, &pos, &projectedPos);
+		// testing alternate method
+		//Vec3f step2;
+		//SkinMatrix_Vec3fMtxFMultXYZ(&gState.viewMtx, &pos, &step2);
+		//SkinMatrix_Vec3fMtxFMultXYZ(&gState.projMtx, &step2, &projectedPos);
 		
 		projectedPos.z *= 1.0f / projectionMtxFDiagonal.z; // original math
 		
