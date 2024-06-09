@@ -609,6 +609,132 @@ struct Object *ObjectFromFilename(const char *filename)
 
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 
+CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
+{
+	const uint8_t *data = n64_segment_get(segAddr);
+	const uint8_t *nest;
+	
+	if (!data) return 0;
+	
+	CollisionHeader *result = Calloc(1, sizeof(*result));
+	
+	result->originalSegmentAddress = segAddr;
+	
+	result->minBounds = (Vec3s){ u16r(data + 0), u16r(data + 2), u16r(data +  4) };
+	result->maxBounds = (Vec3s){ u16r(data + 6), u16r(data + 8), u16r(data + 10) };
+	result->numVertices = u16r(data + 12);
+	if ((nest = n64_segment_get(u32r(data + 16))))
+	{
+		result->vtxList = Calloc(result->numVertices, sizeof(*(result->vtxList)));
+		
+		for (int i = 0; i < result->numVertices; ++i)
+		{
+			const uint8_t *elem = nest + i * 6; // 6 bytes per entry
+			
+			result->vtxList[i] = (Vec3s) {
+				u16r(elem + 0), u16r(elem + 2), u16r(elem + 4)
+			};
+		}
+	}
+	result->numPolygons = u16r(data + 20);
+	result->numSurfaceTypes = 0;
+	if ((nest = n64_segment_get(u32r(data + 24))))
+	{
+		result->polyList = Calloc(result->numPolygons, sizeof(*(result->polyList)));
+		
+		for (int i = 0; i < result->numPolygons; ++i)
+		{
+			const uint8_t *elem = nest + i * 16; // 16 bytes per entry
+
+			CollisionPoly poly = {
+				.type = u16r(elem + 0),
+				.vtxData = { u16r(elem + 2), u16r(elem + 4), u16r(elem + 6) },
+				.normal = { u16r(elem + 8), u16r(elem + 10), u16r(elem + 12) },
+				.dist = u16r(elem + 14)
+			};
+			
+			result->polyList[i] = poly;
+			
+			if (poly.type >= result->numSurfaceTypes)
+				result->numSurfaceTypes = poly.type + 1;
+		}
+	}
+	if ((nest = n64_segment_get(u32r(data + 28))))
+	{
+		result->surfaceTypeList = Calloc(result->numSurfaceTypes, sizeof(*(result->surfaceTypeList)));
+		
+		for (int i = 0; i < result->numSurfaceTypes; ++i)
+		{
+			const uint8_t *elem = nest + i * 8; // 8 bytes per entry
+			uint32_t w0 = u32r(elem + 0);
+			uint32_t w1 = u32r(elem + 4);
+			
+			result->surfaceTypeList[i] = (SurfaceType) { w0, w1 };
+			
+			int exitIndex = (w0 & 0x1f00) >> 8;
+			int cameraIndex = w0 & 0xff;
+			
+			// these are 1-indexed
+			if (exitIndex > result->numExits)
+				result->numExits = exitIndex;
+			
+			// these are 1-indexed
+			if (cameraIndex > result->numCameras)
+				result->numCameras = cameraIndex;
+		}
+	}
+	if ((nest = n64_segment_get(u32r(data + 32))))
+	{
+		result->bgCamList = Calloc(result->numCameras, sizeof(*(result->bgCamList)));
+		
+		for (int i = 0; i < result->numCameras; ++i)
+		{
+			const uint8_t *elem = nest + i * 8; // 8 bytes per entry
+			
+			BgCamInfo cam = {
+				.setting = u16r(elem + 0),
+				.count = u16r(elem + 2),
+			};
+			
+			elem = n64_segment_get(u32r(elem + 4)); // bgCamFuncData
+			if (!elem)
+			{
+				break; // seems to be end-of-list indicator?
+				Die("bgCamFuncData empty, at %08x in file", (int)(elem - data));
+			}
+			
+			// crawlspace uses a list of points
+			if (false)//cam.count)//cam.setting == 20)
+			{
+				Vec3s *pos = (void*)(&cam.bgCamFuncData);
+				
+				for (int k = 0; k < cam.count; ++k)
+				{
+					const uint8_t *b = elem + 6 * k; // 6 bytes per entry
+					
+					pos[k] = (Vec3s) { u16r(b + 0), u16r(b + 2), u16r(b + 4) };
+				}
+				
+				fprintf(stderr, "crawlspace uses setting %d\n", cam.setting);
+			}
+			else
+			{
+				cam.bgCamFuncData = (BgCamFuncData) {
+					.pos = { u16r(elem + 0), u16r(elem + 2), u16r(elem +  4) },
+					.rot = { u16r(elem + 6), u16r(elem + 8), u16r(elem + 10) },
+					.fov = u16r(elem + 12),
+					.flags = u16r(elem + 14),
+					.unused = u16r(elem + 16),
+				};
+			}
+			
+			result->bgCamList[i] = cam;
+		}
+	}
+	
+	return result;
+}
+
 
 #if 1 /* region: private function implementations */
 
@@ -750,6 +876,22 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
+			case 0x03: { // collision header
+				uint32_t w1 = u32r(walk + 4);
+				if (scene->collisions && scene->collisions->originalSegmentAddress != w1)
+					Die("multiple collision headers with different segment addresses");
+				scene->collisions = CollisionHeaderNewFromSegment(w1);
+				break;
+			}
+			
+			case 0x13: { // exit list
+				uint32_t w1 = u32r(walk + 4);
+				if (scene->exits && scene->exitsSegAddr != w1)
+					Die("multiple exit lists with different segment addresses");
+				scene->exitsSegAddr = w1;
+				break;
+			}
+			
 			default:
 				break;
 		}
@@ -769,6 +911,24 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			sb_push(result->spawns, tmp);
 		}
+	}
+	
+	// parse exit list after header loop, b/c count is derived from collision data
+	if (scene->exitsSegAddr
+		&& !scene->exits
+		&& scene->collisions
+		&& scene->collisions->numExits
+	)
+	{
+		const uint8_t *exitData = n64_segment_get(scene->exitsSegAddr);
+		
+		for (int i = 0; i < scene->collisions->numExits; ++i)
+			sb_push(scene->exits, u16r(exitData + i * 2));
+		
+		fprintf(stderr, "exits:\n");
+		sb_foreach(scene->exits, {
+			fprintf(stderr, " -> %04x\n", *each);
+		});
 	}
 	
 	// add after parsing

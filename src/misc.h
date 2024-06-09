@@ -74,6 +74,87 @@ typedef struct {
 	/* 0x14 */ int16_t fogFar;
 } EnvLightSettings; // size = 0x16
 
+#if 1 // region: collision types
+typedef struct {
+	uint32_t w0;
+	uint32_t w1;
+} SurfaceType;
+
+// The structure used for all instances of int16_t data from `BgCamInfo` with the exception of crawlspaces.
+// See `Camera_Subj4` for Vec3s data usage in crawlspaces
+/**
+ * Crawlspaces
+ * Moves the camera from third person to first person when entering a crawlspace
+ * While in the crawlspace, link remains fixed in a single direction
+ * The camera is what swings up and down while crawling forward or backwards
+ *
+ * Note:
+ * Subject 4 uses bgCamFuncData.data differently than other functions:
+ * All Vec3s data are points along the crawlspace
+ * The second point represents the entrance, and the second to last point represents the exit
+ * All other points are unused
+ * All instances of crawlspaces have 6 points, except for the Testroom scene which has 9 points
+ */
+typedef struct {
+	Vec3s pos;
+	Vec3s rot;
+	int16_t fov;
+	union {
+		int16_t roomImageOverrideBgCamIndex;
+		int16_t timer;
+		int16_t flags;
+	};
+	int16_t unused;
+} BgCamFuncData; // size = 0x12
+
+typedef struct {
+	uint16_t setting; // camera setting described by CameraSettingType enum
+	int16_t count; // only used when `bgCamFuncData` is a list of points used for crawlspaces
+	BgCamFuncData bgCamFuncData; // if crawlspace, is array of Vec3s
+	// XXX bgCamFuncData was originally a pointer, made it not-one for easier array resize later
+} BgCamInfo; // size = 0x8
+
+typedef struct
+{
+	uint16_t type;
+	uint16_t vtxData[3];
+		///* vtxData[0] */ uint16_t flags_vIA; // 0xE000 is poly exclusion flags (xpFlags), 0x1FFF is vtxId
+		///* vtxData[1] */ uint16_t flags_vIB; // 0xE000 is flags, 0x1FFF is vtxId
+		///////////////////////////////////////// 0x2000 = poly IsFloorConveyor surface
+		///* vtxData[2] */ uint16_t vIC;
+	Vec3s normal; // Unit normal vector
+	//////////////// Value ranges from -0x7FFF to 0x7FFF, representing -1.0 to 1.0; 0x8000 is invalid
+	int16_t dist; // Plane distance from origin along the normal
+} CollisionPoly; // size = 0x10
+
+typedef struct {
+	/* 0x00 */ int16_t xMin;
+	/* 0x02 */ int16_t ySurface;
+	/* 0x04 */ int16_t zMin;
+	/* 0x06 */ int16_t xLength;
+	/* 0x08 */ int16_t zLength;
+	/* 0x0C */ uint32_t properties;
+} WaterBox; // size = 0x10
+
+typedef struct {
+	/* 0x00 */ Vec3s minBounds; // minimum coordinates of poly bounding box
+	/* 0x06 */ Vec3s maxBounds; // maximum coordinates of poly bounding box
+	/* 0x0C */ uint16_t numVertices;
+	/* 0x10 */ Vec3s* vtxList;
+	/* 0x14 */ uint16_t numPolygons;
+	/* 0x18 */ CollisionPoly* polyList;
+	/* 0x1C */ SurfaceType* surfaceTypeList;
+	/* 0x20 */ BgCamInfo* bgCamList; // TODO make sb_array later so it can be resized
+	/* 0x24 */ uint16_t numWaterBoxes;
+	/* 0x28 */ WaterBox* waterBoxes; // TODO make sb_array later so it can be resized
+	
+	uint32_t originalSegmentAddress;
+	int numSurfaceTypes;
+	int numExits;
+	int numCameras;
+} CollisionHeader; // original name: BGDataInfo
+#endif // endregion
+
 struct File
 {
 	void *data;
@@ -156,6 +237,10 @@ struct Scene
 	sb_array(struct TextureBlob, textureBlobs);
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
+	sb_array(uint16_t, exits);
+	CollisionHeader *collisions;
+	
+	uint32_t exitsSegAddr;
 	int test;
 };
 #endif /* types */
@@ -197,6 +282,8 @@ struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
 void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
+
+CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
 
 #endif /* function prototypes */
 
