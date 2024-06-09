@@ -138,6 +138,7 @@ static uint32_t WorkblobPop(void)
 	
 	gWorkblobAddr = WorkAppendDatablob(gWorkblob);
 	gWorkblobAddrEnd = gWorkblobAddr + gWorkblob->sizeBytes;
+	if (!gWorkblob->sizeBytes) gWorkblobAddr = 0;
 	gWorkblob -= 1;
 	
 	return gWorkblobAddr;
@@ -343,6 +344,23 @@ static uint32_t WorkAppendSceneHeader(struct SceneHeader *header, uint32_t alter
 			WorkblobPut16(each->fog_far);
 		});
 		WorkblobPop();
+		
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// animated materials
+	if (header->mm.sceneSetupData)
+	{
+		WorkblobPut32(0x1A000000);
+		
+		AnimatedMaterialToWorkblob(
+			header->mm.sceneSetupData
+			, WorkblobPush
+			, WorkblobPop
+			, WorkblobPut8
+			, WorkblobPut16
+			, WorkblobPut32
+		);
 		
 		WorkblobPut32(gWorkblobAddr);
 	}

@@ -1005,7 +1005,118 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 		}
 	}
 	
+	#undef READY
+	#undef READY_ARRAY
+	#undef READY_PTR
+	
 	return result;
+}
+
+void AnimatedMaterialToWorkblob(
+	AnimatedMaterial *matAnim
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+)
+{
+	WorkblobPush(4);
+	
+	if ((matAnim != NULL) && (matAnim->segment != 0))
+	{
+		for (int segment = 0; segment >= 0; ++matAnim)
+		{
+			uint32_t params;
+			
+			WorkblobPush(4);
+			
+			segment = matAnim->segment;
+			
+			switch (matAnim->type)
+			{
+				case 0: // AnimatedMat_DrawTexScroll
+				case 1: // AnimatedMat_DrawTwoTexScroll
+				{
+					AnimatedMatTexScrollParams *p = matAnim->params;
+					
+					for (int i = 0; i < matAnim->type + 1; ++i, ++p)
+					{
+						WorkblobPut8(p->xStep);
+						WorkblobPut8(p->yStep);
+						WorkblobPut8(p->width);
+						WorkblobPut8(p->height);
+					}
+					break;
+				}
+				
+				case 2: // AnimatedMat_DrawColor
+				case 3: // AnimatedMat_DrawColorLerp
+				case 4: // AnimatedMat_DrawColorNonLinearInterp
+				{
+					AnimatedMatColorParams *p = matAnim->params;
+					
+					WorkblobPut16(p->durationFrames);
+					WorkblobPut16(p->keyFrameCount);
+					
+					// primColors
+					WorkblobPush(4);
+					sb_foreach(p->primColors, {
+						WorkblobPut8(each->r);
+						WorkblobPut8(each->g);
+						WorkblobPut8(each->b);
+						WorkblobPut8(each->a);
+						WorkblobPut8(each->lodFrac);
+					});
+					WorkblobPut32(WorkblobPop());
+					
+					// envColors
+					WorkblobPush(4);
+					sb_foreach(p->envColors, {
+						WorkblobPut8(each->r);
+						WorkblobPut8(each->g);
+						WorkblobPut8(each->b);
+						WorkblobPut8(each->a);
+					});
+					WorkblobPut32(WorkblobPop());
+					
+					// keyFrames
+					WorkblobPush(4);
+					sb_foreach(p->keyFrames, { WorkblobPut16(*each); });
+					WorkblobPut32(WorkblobPop());
+					
+					break;
+				}
+				
+				case 5: // AnimatedMat_DrawTexCycle
+				{
+					AnimatedMatTexCycleParams *p = matAnim->params;
+					
+					WorkblobPut16(p->durationFrames);
+					
+					// textureList
+					WorkblobPush(4);
+					sb_foreach(p->textureList, { WorkblobPut32(*each); });
+					WorkblobPut32(WorkblobPop());
+					
+					// textureIndexList
+					WorkblobPush(4);
+					sb_foreach(p->textureIndexList, { WorkblobPut8(*each); });
+					WorkblobPut32(WorkblobPop());
+					
+					break;
+				}
+			}
+			
+			params = WorkblobPop();
+			
+			WorkblobPut8(matAnim->segment);
+			WorkblobPut16(matAnim->type);
+			WorkblobPut32(params);
+		}
+	}
+	
+	WorkblobPop();
 }
 
 #endif // endregion

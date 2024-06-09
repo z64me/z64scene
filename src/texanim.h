@@ -74,6 +74,15 @@ GbiGfx* Gfx_TwoTexScroll(int32_t tile1, uint32_t x1, uint32_t y1, int32_t width1
 AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr);
 void TexAnimSetGameplayFrames(float frames);
 
+void AnimatedMaterialToWorkblob(
+	AnimatedMaterial *matAnim
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+);
+
 // Executes the current scene draw config handler.
 void TexAnimSetupSceneMM(int which, AnimatedMaterial *sceneMaterialAnims);
 
