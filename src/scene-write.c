@@ -76,6 +76,9 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	uint8_t *dest = ((uint8_t*)gWork->data) + gWork->size;
 	uint32_t addr;
 	
+	if (!blob->sizeBytes)
+		return 0;
+	
 	while (gWorkblob->alignBytes
 		&& (gWork->size % gWorkblob->alignBytes)
 	)

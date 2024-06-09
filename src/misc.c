@@ -328,6 +328,8 @@ void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 
 void SceneReadyDataBlobs(struct Scene *scene)
 {
+	static uint32_t eofRef = 0; // used so eof blobs have one ref each
+	
 	DataBlobSegmentSetup(2, scene->file->data, scene->file->dataEnd, scene->blobs);
 	
 	sb_foreach(scene->rooms, {
@@ -349,11 +351,17 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		
 		each->blobs = DataBlobSegmentGetHead(3);
 		
+		// add eof marker
+		each->blobs = DataBlobPush(each->blobs, each->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
+		
 		fprintf(stderr, "'%s' data blobs:\n", each->file->filename);
 		DataBlobPrintAll(each->blobs);
 	});
 	
 	scene->blobs = DataBlobSegmentGetHead(2);
+	
+	// add eof marker
+	scene->blobs = DataBlobPush(scene->blobs, scene->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
 	
 	fprintf(stderr, "'%s' data blobs:\n", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);
@@ -373,7 +381,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			sb_push(array, each);
 		});
 		
-		// sort
+		// sort using bubblesort
 		{
 			bool swapped;
 			int n = sb_count(array);

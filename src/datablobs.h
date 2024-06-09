@@ -30,6 +30,7 @@ enum DataBlobType
 	DATA_BLOB_TYPE_TEXTURE,
 	DATA_BLOB_TYPE_PALETTE,
 	DATA_BLOB_TYPE_GENERIC,
+	DATA_BLOB_TYPE_EOF, // end-of-file marker
 	DATA_BLOB_TYPE_COUNT,
 };
 
@@ -73,6 +74,14 @@ struct TextureBlob
 #define TextureBlobStack(DATA, FILE) (struct TextureBlob){ DATA, FILE }
 
 // functions
+struct DataBlob *DataBlobPush(
+	struct DataBlob *listHead
+	, const void *refData
+	, uint32_t sizeBytes
+	, uint32_t segmentAddr
+	, enum DataBlobType type
+	, void *ref
+);
 void DataBlobSegmentsPopulateFromRoomMesh(
 	struct DataBlob **seg2head
 	, struct DataBlob **seg3head
