@@ -19,6 +19,7 @@ static uint8_t *gWorkblobData = 0;
 #define FIRST_HEADER_SIZE 0x100 // sizeBytes of first header in file
 #define FIRST_HEADER &(struct DataBlob){ .sizeBytes = FIRST_HEADER_SIZE }
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
+void CollisionHeaderToWorkblob(CollisionHeader *header);
 
 static uint32_t Swap32(const uint32_t b)
 {
@@ -283,7 +284,7 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	return WorkblobPop();
 }
 
-static uint32_t WorkAppendSceneHeader(struct SceneHeader *header, uint32_t alternateHeaders)
+static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders)
 {
 	WorkblobSegment(0x02);
 	
@@ -391,6 +392,28 @@ static uint32_t WorkAppendSceneHeader(struct SceneHeader *header, uint32_t alter
 			WorkblobPut8(each->room);
 		});
 		WorkblobPop();
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// collision
+	if (scene->collisions)
+	{
+		WorkblobPut32(0x03000000);
+		
+		CollisionHeaderToWorkblob(scene->collisions);
+		
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// exits
+	if (scene->exits)
+	{
+		WorkblobPut32(0x13000000);
+		
+		WorkblobPush(4);
+		sb_foreach(scene->exits, { WorkblobPut16(*each); });
+		WorkblobPop();
+		
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
@@ -520,7 +543,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		sb_array(uint32_t, alternateHeaders) = 0;
 		sb_foreach(scene->headers, {
 			if (eachIndex)
-				sb_push(alternateHeaders, WorkAppendSceneHeader(each, 0));
+				sb_push(alternateHeaders, WorkAppendSceneHeader(scene, each, 0));
 		});
 		if (sb_count(alternateHeaders))
 		{
@@ -530,7 +553,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		}
 		
 		// main header
-		WorkAppendSceneHeader(&scene->headers[0], alternateHeadersAddr);
+		WorkAppendSceneHeader(scene, &scene->headers[0], alternateHeadersAddr);
 		WorkFirstHeader();
 	}
 	
@@ -576,4 +599,81 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	datablob_foreach(scene->blobs, {
 		DataBlobApplyOriginalSegmentAddresses(each);
 	});
+}
+
+void CollisionHeaderToWorkblob(CollisionHeader *header)
+{
+	WorkblobPush(4);
+	
+	WorkblobPut16(header->minBounds.x);
+	WorkblobPut16(header->minBounds.y);
+	WorkblobPut16(header->minBounds.z);
+	
+	WorkblobPut16(header->maxBounds.x);
+	WorkblobPut16(header->maxBounds.y);
+	WorkblobPut16(header->maxBounds.z);
+	
+	WorkblobPut16(header->numVertices);
+	WorkblobPush(4);
+	for (int i = 0; i < header->numVertices; ++i) {
+		Vec3s vtx = header->vtxList[i];
+		WorkblobPut16(vtx.x);
+		WorkblobPut16(vtx.y);
+		WorkblobPut16(vtx.z);
+	} WorkblobPut32(WorkblobPop());
+	
+	WorkblobPut16(header->numPolygons);
+	WorkblobPush(4);
+	for (int i = 0; i < header->numPolygons; ++i) {
+		CollisionPoly poly = header->polyList[i];
+		WorkblobPut16(poly.type);
+		WorkblobPut16(poly.vtxData[0]);
+		WorkblobPut16(poly.vtxData[1]);
+		WorkblobPut16(poly.vtxData[2]);
+		WorkblobPut16(poly.normal.x);
+		WorkblobPut16(poly.normal.y);
+		WorkblobPut16(poly.normal.z);
+		WorkblobPut16(poly.dist);
+	} WorkblobPut32(WorkblobPop());
+	
+	WorkblobPush(4);
+	for (int i = 0; i < header->numSurfaceTypes; ++i) {
+		SurfaceType type = header->surfaceTypeList[i];
+		WorkblobPut32(type.w0);
+		WorkblobPut32(type.w1);
+	} WorkblobPut32(WorkblobPop());
+	
+	WorkblobPush(4);
+	for (int i = 0; i < header->numCameras; ++i) {
+		BgCamInfo cam = header->bgCamList[i];
+		WorkblobPut16(cam.setting);
+		WorkblobPut32(cam.count);
+		WorkblobPush(4); {
+			BgCamFuncData data = cam.bgCamFuncData;
+			WorkblobPut16(data.pos.x);
+			WorkblobPut16(data.pos.y);
+			WorkblobPut16(data.pos.z);
+			WorkblobPut16(data.rot.x);
+			WorkblobPut16(data.rot.y);
+			WorkblobPut16(data.rot.z);
+			WorkblobPut16(data.fov);
+			WorkblobPut16(data.flags);
+			WorkblobPut16(data.unused);
+		} WorkblobPut32(WorkblobPop());
+	} WorkblobPut32(WorkblobPop());
+	
+	WorkblobPut16(header->numWaterBoxes);
+	WorkblobPush(4);
+	for (int i = 0; i < header->numWaterBoxes; ++i) {
+		WaterBox waterbox = header->waterBoxes[i];
+		WorkblobPut16(waterbox.xMin);
+		WorkblobPut16(waterbox.ySurface);
+		WorkblobPut16(waterbox.zMin);
+		WorkblobPut16(waterbox.xLength);
+		WorkblobPut16(waterbox.zLength);
+		WorkblobPut16(waterbox.unused);
+		WorkblobPut32(waterbox.properties);
+	} WorkblobPut32(WorkblobPop());
+	
+	WorkblobPop();
 }
