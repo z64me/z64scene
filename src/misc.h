@@ -133,6 +133,7 @@ typedef struct {
 	/* 0x04 */ int16_t zMin;
 	/* 0x06 */ int16_t xLength;
 	/* 0x08 */ int16_t zLength;
+	/* 0x0A */ uint16_t unused; // these bytes are sometimes non-zero in MM
 	/* 0x0C */ uint32_t properties;
 } WaterBox; // size = 0x10
 

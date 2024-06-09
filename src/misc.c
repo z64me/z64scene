@@ -731,6 +731,26 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			result->bgCamList[i] = cam;
 		}
 	}
+	result->numWaterBoxes = u16r(data + 36);
+	if ((nest = n64_segment_get(u32r(data + 32))))
+	{
+		result->waterBoxes = Calloc(result->numWaterBoxes, sizeof(*(result->waterBoxes)));
+		
+		for (int i = 0; i < result->numWaterBoxes; ++i)
+		{
+			const uint8_t *elem = nest + i * 16; // 16 bytes per entry
+			
+			result->waterBoxes[i] = (WaterBox) {
+				.xMin = u16r(elem + 0),
+				.ySurface = u16r(elem + 2),
+				.zMin = u16r(elem + 4),
+				.xLength = u16r(elem + 6),
+				.zLength = u16r(elem + 8),
+				.unused = u16r(elem + 10),
+				.properties = u32r(elem + 12)
+			};
+		}
+	}
 	
 	return result;
 }
