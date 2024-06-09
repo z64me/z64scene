@@ -110,8 +110,9 @@ typedef struct {
 typedef struct {
 	uint16_t setting; // camera setting described by CameraSettingType enum
 	int16_t count; // only used when `bgCamFuncData` is a list of points used for crawlspaces
-	BgCamFuncData bgCamFuncData; // if crawlspace, is array of Vec3s
-	// XXX bgCamFuncData was originally a pointer, made it not-one for easier array resize later
+	BgCamFuncData *data; // if crawlspace, is array of Vec3s
+	uint32_t dataAddr;
+	const void *dataAddrResolved;
 } BgCamInfo; // size = 0x8
 
 typedef struct
@@ -195,6 +196,7 @@ struct RoomHeader
 	sb_array(struct Instance, instances);
 	sb_array(uint16_t, objects);
 	sb_array(struct RoomMeshSimple, displayLists);
+	sb_array(uint32_t, unhandledCommands);
 	uint32_t addr;
 	uint8_t meshFormat;
 };
@@ -223,6 +225,7 @@ struct SceneHeader
 	struct Scene *scene;
 	sb_array(struct SpawnPoint, spawns);
 	sb_array(ZeldaLight, lights);
+	sb_array(uint32_t, unhandledCommands);
 	uint32_t addr;
 	int numRooms;
 	struct {

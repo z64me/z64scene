@@ -14,6 +14,7 @@ static uint32_t gWorkblobAddr = 0;
 static uint32_t gWorkblobAddrEnd = 0;
 static uint32_t gWorkblobSegment = 0;
 static uint8_t *gWorkblobData = 0;
+static bool gWorkblobAllowDuplicates = false;
 #define WORKBUF_SIZE (1024 * 1024 * 4) // 4mib is generous
 #define WORKBLOB_STACK_SIZE 32
 #define FIRST_HEADER_SIZE 0x100 // sizeBytes of first header in file
@@ -51,6 +52,9 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 {
 	const uint8_t *needle = blob->refData;
 	const uint8_t *haystack = gWork->data;
+	
+	if (gWorkblobAllowDuplicates)
+		return 0;
 	
 	if (!needle || gWork->size <= FIRST_HEADER_SIZE)
 		return 0;
@@ -189,6 +193,11 @@ static void WorkblobPutString(const char *data)
 	WorkblobPutByteArray((void*)data, strlen(data));
 }
 
+static void WorkblobAllowDuplicates(bool allow)
+{
+	gWorkblobAllowDuplicates = allow;
+}
+
 static void WorkFirstHeader(void)
 {
 	gWorkblob += 1;
@@ -276,6 +285,9 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		
 		WorkblobPut32(gWorkblobAddr);
 	}
+	
+	// unhandled commands
+	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// end header command
 	WorkblobPut32(0x14000000);
@@ -369,6 +381,16 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	// spawn points
 	if (header->spawns)
 	{
+		// NOTE: 0x06 command must precede 0x00 command
+		WorkblobPut32(0x06000000);
+		WorkblobPush(4);
+		sb_foreach(header->spawns, {
+			WorkblobPut8(eachIndex);
+			WorkblobPut8(each->room);
+		});
+		WorkblobPop();
+		WorkblobPut32(gWorkblobAddr);
+		
 		WorkblobPut32(0x00000000 | (sb_count(header->spawns) << 16));
 		WorkblobPush(4);
 		sb_foreach(header->spawns, {
@@ -381,15 +403,6 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			WorkblobPut16(inst.yrot);
 			WorkblobPut16(inst.zrot);
 			WorkblobPut16(inst.params);
-		});
-		WorkblobPop();
-		WorkblobPut32(gWorkblobAddr);
-		
-		WorkblobPut32(0x06000000);
-		WorkblobPush(4);
-		sb_foreach(header->spawns, {
-			WorkblobPut8(eachIndex);
-			WorkblobPut8(each->room);
 		});
 		WorkblobPop();
 		WorkblobPut32(gWorkblobAddr);
@@ -416,6 +429,9 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		WorkblobPut32(gWorkblobAddr);
 	}
+	
+	// unhandled commands
+	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// end header command
 	WorkblobPut32(0x14000000);
@@ -647,19 +663,31 @@ void CollisionHeaderToWorkblob(CollisionHeader *header)
 	for (int i = 0; i < header->numCameras; ++i) {
 		BgCamInfo cam = header->bgCamList[i];
 		WorkblobPut16(cam.setting);
-		WorkblobPut32(cam.count);
-		WorkblobPush(4); {
-			BgCamFuncData data = cam.bgCamFuncData;
-			WorkblobPut16(data.pos.x);
-			WorkblobPut16(data.pos.y);
-			WorkblobPut16(data.pos.z);
-			WorkblobPut16(data.rot.x);
-			WorkblobPut16(data.rot.y);
-			WorkblobPut16(data.rot.z);
-			WorkblobPut16(data.fov);
-			WorkblobPut16(data.flags);
-			WorkblobPut16(data.unused);
-		} WorkblobPut32(WorkblobPop());
+		WorkblobPut16(cam.count);
+		if (cam.dataAddrResolved) {
+			WorkblobPush(2); {
+				/*
+				BgCamFuncData data = cam.bgCamFuncData;
+				WorkblobPut16(data.pos.x);
+				WorkblobPut16(data.pos.y);
+				WorkblobPut16(data.pos.z);
+				WorkblobPut16(data.rot.x);
+				WorkblobPut16(data.rot.y);
+				WorkblobPut16(data.rot.z);
+				WorkblobPut16(data.fov);
+				WorkblobPut16(data.flags);
+				WorkblobPut16(data.unused);
+				*/
+				Vec3s *data = (void*)cam.data;
+				for (int k = 0; k < cam.count; ++k, ++data)
+				{
+					WorkblobPut16(data->x);
+					WorkblobPut16(data->y);
+					WorkblobPut16(data->z);
+				}
+			} WorkblobPut32(WorkblobPop());
+		} else
+			WorkblobPut32(cam.dataAddr);
 	} WorkblobPut32(WorkblobPop());
 	
 	WorkblobPut16(header->numWaterBoxes);

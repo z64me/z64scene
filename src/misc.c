@@ -678,9 +678,8 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			if (exitIndex > result->numExits)
 				result->numExits = exitIndex;
 			
-			// these are 1-indexed
-			if (cameraIndex > result->numCameras)
-				result->numCameras = cameraIndex;
+			if (cameraIndex >= result->numCameras)
+				result->numCameras = cameraIndex + 1;
 		}
 	}
 	if ((nest = n64_segment_get(u32r(data + 32))))
@@ -694,17 +693,29 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			BgCamInfo cam = {
 				.setting = u16r(elem + 0),
 				.count = u16r(elem + 2),
+				.dataAddr = u32r(elem + 4)
 			};
 			
-			elem = n64_segment_get(u32r(elem + 4)); // bgCamFuncData
-			if (!elem)
+			elem = n64_segment_get(cam.dataAddr); // bgCamFuncData
+			if (!(cam.dataAddrResolved = elem))
 			{
-				break; // seems to be end-of-list indicator?
-				Die("bgCamFuncData empty, at %08x in file", (int)(elem - data));
+				result->bgCamList[i] = cam;
+				continue;
+				//Die("bgCamFuncData empty, at %08x in file", (int)(elem - data));
 			}
 			
+			cam.data = Calloc(cam.count, sizeof(*cam.data));
+			Vec3s *dataV3 = (void*)cam.data;
+			for (int k = 0; k < cam.count; ++k, ++dataV3)
+			{
+				const uint8_t *b = elem + 6 * k; // 6 bytes per entry
+				
+				*dataV3 = (Vec3s) { u16r(b + 0), u16r(b + 2), u16r(b + 4) };
+			}
+			
+			/*
 			// crawlspace uses a list of points
-			if (false)//cam.count)//cam.setting == 20)
+			if (cam.setting == 0x1e)
 			{
 				Vec3s *pos = (void*)(&cam.bgCamFuncData);
 				
@@ -727,12 +738,13 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 					.unused = u16r(elem + 16),
 				};
 			}
+			*/
 			
 			result->bgCamList[i] = cam;
 		}
 	}
 	result->numWaterBoxes = u16r(data + 36);
-	if ((nest = n64_segment_get(u32r(data + 32))))
+	if ((nest = n64_segment_get(u32r(data + 40))))
 	{
 		result->waterBoxes = Calloc(result->numWaterBoxes, sizeof(*(result->waterBoxes)));
 		
@@ -904,6 +916,12 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
+			case 0x17: // TODO cutscenes
+			case 0x0C: // TODO unused light settings
+			case 0x0D: // TODO paths
+			case 0x0E: // TODO doorways
+				break;
+			
 			case 0x13: { // exit list
 				uint32_t w1 = u32r(walk + 4);
 				if (scene->exits && scene->exitsSegAddr != w1)
@@ -912,7 +930,17 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
+			// MM only
+			case 0x02: // TODO cameras used by 1B
+			case 0x1B: // TODO cameras and cutscenes used by actors
+			case 0x1C: // TODO mini maps
+			case 0x1E: // TODO treasure chest positions on mini-map
+			case 0x1D: // unused
+				break;
+			
 			default:
+				sb_push(result->unhandledCommands, u32r(walk));
+				sb_push(result->unhandledCommands, u32r(walk + 4));
 				break;
 		}
 	}
@@ -1091,7 +1119,12 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				break;
 			}
 			
+			case 0x0C: // TODO unused light settings
+				break;
+			
 			default:
+				sb_push(result->unhandledCommands, u32r(walk));
+				sb_push(result->unhandledCommands, u32r(walk + 4));
 				break;
 		}
 	}
