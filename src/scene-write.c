@@ -365,6 +365,35 @@ static uint32_t WorkAppendSceneHeader(struct SceneHeader *header, uint32_t alter
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
+	// spawn points
+	if (header->spawns)
+	{
+		WorkblobPut32(0x00000000 | (sb_count(header->spawns) << 16));
+		WorkblobPush(4);
+		sb_foreach(header->spawns, {
+			struct Instance inst = each->inst;
+			WorkblobPut16(inst.id);
+			WorkblobPut16(inst.x);
+			WorkblobPut16(inst.y);
+			WorkblobPut16(inst.z);
+			WorkblobPut16(inst.xrot);
+			WorkblobPut16(inst.yrot);
+			WorkblobPut16(inst.zrot);
+			WorkblobPut16(inst.params);
+		});
+		WorkblobPop();
+		WorkblobPut32(gWorkblobAddr);
+		
+		WorkblobPut32(0x06000000);
+		WorkblobPush(4);
+		sb_foreach(header->spawns, {
+			WorkblobPut8(eachIndex);
+			WorkblobPut8(each->room);
+		});
+		WorkblobPop();
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
 	// end header command
 	WorkblobPut32(0x14000000);
 	WorkblobPut32(0x00000000);
