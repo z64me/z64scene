@@ -41,6 +41,7 @@ struct DataBlob
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;
 	uint32_t sizeBytes;
+	uint8_t alignBytes;
 	enum DataBlobType type;
 	sb_array(void*, refs); // references to this datablob
 	

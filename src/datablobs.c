@@ -574,6 +574,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 	static bool MultiTexCoord; (void)MultiTexCoord;
 	static bool MultiTexture; (void)MultiTexture;
 	static uint32_t gRdpHalf1 = 0;
+	static void *gRdpHalf1w1addr = 0;
 	
 	static struct DataBlob *palBlob = 0;
 	static sb_array(struct DataBlob *, needsPalettes); // color-indexed textures w/o palettes
@@ -971,6 +972,9 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 					int trueWidth = (Textures(CurrentTex).Width >> 2) + 1; // width of tex within file
 					int trueHeight = (Textures(CurrentTex).Height >> 2) + 1; // height of tex within file
 					
+					if (trueWidth < 0) trueWidth = width;
+					if (trueHeight < 0) trueHeight = height;
+					
 					// override for embedded textures with non-standard dimensions
 					if (trueWidth % 4) {
 						if (siz == G_IM_SIZ_4b)
@@ -1051,10 +1055,11 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			
 			case G_RDPHALF_1:
 				gRdpHalf1 = w1;
+				gRdpHalf1w1addr = w1addr;
 				break;
 			
 			case G_BRANCH_Z:
-				DataBlobSegmentsPopulateFromMeshNew(gRdpHalf1, w1addr);
+				DataBlobSegmentsPopulateFromMeshNew(gRdpHalf1, gRdpHalf1w1addr);
 				break;
 			
 			// game should be ready to draw at this point, so use
@@ -1167,13 +1172,14 @@ void DataBlobPrint(struct DataBlob *blob)
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
 		case DATA_BLOB_TYPE_TEXTURE:
 			typeName = "texture";
-			sprintf(extraInfo, "w/h/siz/fmt/linesize/pal = %d/%d/%d/%d/%d/%08x"
+			sprintf(extraInfo, "w/h/siz/fmt/linesize/pal/bytes = %d/%d/%d/%d/%d/%08x/%08x"
 				, blob->data.texture.w
 				, blob->data.texture.h
 				, blob->data.texture.siz
 				, blob->data.texture.fmt
 				, blob->data.texture.lineSize
 				, blob->data.texture.pal ? blob->data.texture.pal->originalSegmentAddress : 0
+				, blob->sizeBytes
 			);
 			break;
 		case DATA_BLOB_TYPE_PALETTE: typeName = "palette"; break;
@@ -1181,7 +1187,7 @@ void DataBlobPrint(struct DataBlob *blob)
 		default: typeName = "unknown"; break;
 	}
 	
-	if (blob->type != DATA_BLOB_TYPE_MESH)
+	if (blob->type != DATA_BLOB_TYPE_TEXTURE)
 		typeName = 0;
 	
 	if (typeName)

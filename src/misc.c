@@ -343,7 +343,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 				if (each->opa)
 					DataBlobSegmentsPopulateFromMeshNew(each->opa, &each->opaBEU32);
 				if (each->xlu)
-					DataBlobSegmentsPopulateFromMeshNew(each->xlu, &each->opaBEU32);
+					DataBlobSegmentsPopulateFromMeshNew(each->xlu, &each->xluBEU32);
 			});
 		});
 		
@@ -414,6 +414,19 @@ void SceneReadyDataBlobs(struct Scene *scene)
 					, a->originalSegmentAddress, a->sizeBytes
 				);
 			}
+		}
+		
+		// assert data blob sizes
+		for (int i = 0; i < sb_count(array) - 1; ++i)
+		{
+			struct DataBlob *blob = array[i];
+			
+			if (blob->sizeBytes > 0xffffff)
+				Die("data blob type %d %08x bad sizeBytes = %08x"
+					, blob->type
+					, blob->originalSegmentAddress
+					, blob->sizeBytes
+				);
 		}
 		
 		sb_free(array);
@@ -672,13 +685,20 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	// don't parse blank headers
 	if (!(result->addr = addr))
 	{
-		SceneAddHeader(scene, result);
+		free(result);//SceneAddHeader(scene, result);
 		return;
 	}
 	
 	// walk the header
 	for (walk += addr & 0x00ffffff; (void*)walk < file->dataEnd; walk += 8)
 	{
+		// not a header
+		if ((addr & 0xffffff) && *walk > 0x1f)
+		{
+			free(result);
+			return;
+		}
+		
 		switch (*walk)
 		{
 			case 0x14: // end header
@@ -749,7 +769,8 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	// handler alternate headers
 	if (altHeadersArray)
 		for (int i = 0; i < 4; ++i)
-			private_SceneParseAddHeader(scene, u32r(altHeadersArray + i * 4));
+			if (altHeadersArray + i * 4 + 4 > (uint8_t*)file->dataEnd)
+				private_SceneParseAddHeader(scene, u32r(altHeadersArray + i * 4));
 			
 }
 
@@ -768,13 +789,20 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	// don't parse blank headers
 	if (!(result->addr = addr))
 	{
-		RoomAddHeader(room, result);
+		free(result);//RoomAddHeader(room, result);
 		return;
 	}
 	
 	// walk the header
 	for (walk += addr & 0x00ffffff; (void*)walk < file->dataEnd; walk += 8)
 	{
+		// not a header
+		if ((addr & 0xffffff) && *walk > 0x1f)
+		{
+			free(result);
+			return;
+		}
+		
 		switch (*walk)
 		{
 			case 0x14: // end header
@@ -886,7 +914,8 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	// handler alternate headers
 	if (altHeadersArray)
 		for (int i = 0; i < 4; ++i)
-			private_RoomParseAddHeader(room, u32r(altHeadersArray + i * 4));
+			if (altHeadersArray + i * 4 + 4 > (uint8_t*)file->dataEnd)
+				private_RoomParseAddHeader(room, u32r(altHeadersArray + i * 4));
 }
 
 static struct Scene *private_SceneParseAfterLoad(struct Scene *scene)
