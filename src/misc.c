@@ -16,6 +16,23 @@
 #include <inttypes.h>
 #include <bigendian.h>
 
+#define TRY_ALTERNATE_HEADERS(FUNC, PARAM, SEGMENT, FIRST) \
+if (altHeadersArray) { \
+	const uint8_t *headers = altHeadersArray; \
+	const uint8_t *dataEnd = file->dataEnd; \
+	dataEnd -= 4; \
+	while (headers < dataEnd) { \
+		uint32_t w = u32r(headers); \
+		if (w == 0 && (headers += 4)) continue; \
+		if ((w >> 24) != SEGMENT) break; \
+		if ((w & 0x00ffffff) >= file->size - 8) break; \
+		if (w & 0x7) break; \
+		if (data8[w & 0x00ffffff] != FIRST) break; \
+		FUNC(PARAM, w); \
+		headers += 4; \
+	} \
+}
+
 #if 1 /* region: private function declarations */
 
 static struct Scene *private_SceneParseAfterLoad(struct Scene *scene);
@@ -944,7 +961,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					sb_push(result->paths, path);
 				}
 				
-				fprintf(stderr, "%08x has %d paths\n", u32r(walk + 4), sb_count(result->paths));
+				fprintf(stderr, "%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
+				sb_foreach(result->paths, { fprintf(stderr, " %d,", sb_count(each->points)); } );
+				fprintf(stderr, " }\n");
 				break;
 			}
 			
@@ -956,8 +975,31 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			case 0x13: { // exit list
 				uint32_t w1 = u32r(walk + 4);
 				if (scene->exits && scene->exitsSegAddr != w1)
-					Die("multiple exit lists with different segment addresses");
-				scene->exitsSegAddr = w1;
+				{
+					const uint8_t *ref = n64_segment_get(w1);
+					bool isEqual = true;
+					
+					sb_foreach(scene->exits, {
+						if (*each != u16r(ref + eachIndex * 2))
+							isEqual = false;
+					});
+					
+					// TODO optional alternate exist list for each scene header?
+					if (isEqual == false)
+					{
+						fprintf(stderr, "unique exit list\n");
+						sb_foreach(scene->exits, {
+							fprintf(stderr, " [%d] %04x vs %04x\n"
+								, eachIndex, *each, u16r(ref + eachIndex * 2)
+							);
+						});
+						//Die("multiple non-matching exit lists at different segment addresses");
+					}
+				}
+				else
+				{
+					scene->exitsSegAddr = w1;
+				}
 				break;
 			}
 			
@@ -1013,12 +1055,8 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	// add after parsing
 	SceneAddHeader(scene, result);
 	
-	// handler alternate headers
-	if (altHeadersArray)
-		for (int i = 0; i < 4; ++i)
-			if (altHeadersArray + i * 4 + 4 > (uint8_t*)file->dataEnd)
-				private_SceneParseAddHeader(scene, u32r(altHeadersArray + i * 4));
-			
+	// handle alternate headers
+	TRY_ALTERNATE_HEADERS(private_SceneParseAddHeader, scene, 0x02, 0x15)
 }
 
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
@@ -1163,11 +1201,8 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	// add after parsing
 	RoomAddHeader(room, result);
 	
-	// handler alternate headers
-	if (altHeadersArray)
-		for (int i = 0; i < 4; ++i)
-			if (altHeadersArray + i * 4 + 4 > (uint8_t*)file->dataEnd)
-				private_RoomParseAddHeader(room, u32r(altHeadersArray + i * 4));
+	// handle alternate headers
+	TRY_ALTERNATE_HEADERS(private_RoomParseAddHeader, room, 0x03, 0x16)
 }
 
 static struct Scene *private_SceneParseAfterLoad(struct Scene *scene)

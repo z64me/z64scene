@@ -213,7 +213,7 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	WorkblobSegment(0x03);
 	
 	// the header
-	WorkblobPush(8);
+	WorkblobPush(16);
 	
 	// alternate headers command
 	if (alternateHeaders)
@@ -221,6 +221,9 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		WorkblobPut32(0x18000000);
 		WorkblobPut32(alternateHeaders);
 	}
+	
+	// unhandled commands
+	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// mesh header command
 	if (header->displayLists)
@@ -321,9 +324,6 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		WorkblobPut32(WorkblobPop());
 	}
 	
-	// unhandled commands
-	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
-	
 	// end header command
 	WorkblobPut32(0x14000000);
 	WorkblobPut32(0x00000000);
@@ -336,7 +336,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	WorkblobSegment(0x02);
 	
 	// the header
-	WorkblobPush(8);
+	WorkblobPush(16);
 	
 	// alternate headers command
 	if (alternateHeaders)
@@ -344,6 +344,9 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(0x18000000);
 		WorkblobPut32(alternateHeaders);
 	}
+	
+	// unhandled commands
+	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// room list command
 	if (header->numRooms)
@@ -486,9 +489,6 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		WorkblobPut32(gWorkblobAddr);
 	}
-	
-	// unhandled commands
-	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// end header command
 	WorkblobPut32(0x14000000);
