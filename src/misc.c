@@ -492,6 +492,11 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	}
 	
 	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
+	
+	fprintf(stderr, "header counts\n - %s: %d headers\n", scene->file->shortname, sb_count(scene->headers));
+	sb_foreach(scene->rooms, {
+		fprintf(stderr, " - %s: %d headers\n", each->file->shortname, sb_count(each->headers));
+	});
 }
 
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs)
