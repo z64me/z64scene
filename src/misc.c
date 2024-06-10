@@ -37,6 +37,22 @@ if (altHeadersArray) { \
 	} \
 }
 
+// trim alternate headers off the end
+#define TRIM_ALTERNATE_HEADERS(PARAM) \
+	if (PARAM && sb_count(PARAM) > 1) \
+		sb_foreach_backwards(PARAM, { \
+			if (each->isBlank) \
+				sb_pop(PARAM); \
+		})
+
+// pad blank alternate headers onto the end
+#define PAD_ALTERNATE_HEADERS(PARAM, HOWMANY) \
+	if (PARAM && sb_count(PARAM) > 1) \
+		while (sb_count(PARAM) < HOWMANY) { \
+			typeof(*PARAM) blank = { .isBlank = true }; \
+			sb_push(PARAM, blank); \
+		}
+
 #if 1 /* region: private function declarations */
 
 static struct Scene *private_SceneParseAfterLoad(struct Scene *scene);
@@ -493,6 +509,25 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	}
 	
 	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
+	
+	// trim blank headers off the end
+	sb_foreach(scene->rooms, {
+		typeof(each->headers) headers = each->headers;
+		TRIM_ALTERNATE_HEADERS(headers);
+	})
+	TRIM_ALTERNATE_HEADERS(scene->headers);
+	
+	// if there are alternate headers, guarantee at least 4, as OoT requires it
+	// (moving this logic into the scene writer, b/c user could still delete these)
+	/*
+	int minHeaders = 1 + 3;
+	sb_foreach(scene->rooms, {
+		typeof(each->headers) headers = each->headers;
+		PAD_ALTERNATE_HEADERS(headers, minHeaders);
+		each->headers = headers; // in case it got reallocated
+	})
+	PAD_ALTERNATE_HEADERS(scene->headers, minHeaders);
+	*/
 	
 	fprintf(stderr, "header counts\n - %s: %d headers\n", scene->file->shortname, sb_count(scene->headers));
 	sb_foreach(scene->rooms, {

@@ -22,6 +22,12 @@ static bool gWorkblobAllowDuplicates = false;
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
 
+// guarantee a minimum number of alternate headers are written
+#define PAD_ALTERNATE_HEADERS(PARAM, HOWMANY) \
+	while (sb_count(PARAM) < HOWMANY) \
+		WorkblobPut32(0);
+#define MIN_ALTERNATE_HEADERS 3
+
 static uint32_t Swap32(const uint32_t b)
 {
 	uint32_t result = 0;
@@ -569,12 +575,14 @@ void RoomToFilename(struct Room *room, const char *filename)
 		{
 			WorkblobPush(4);
 			sb_foreach(alternateHeaders, { WorkblobPut32(*each); });
+			PAD_ALTERNATE_HEADERS(alternateHeaders, MIN_ALTERNATE_HEADERS)
 			alternateHeadersAddr = WorkblobPop();
 		}
 		
 		// main header
 		WorkAppendRoomHeader(&room->headers[0], alternateHeadersAddr);
 		WorkFirstHeader();
+		sb_free(alternateHeaders);
 	}
 	
 	// write output file
@@ -651,12 +659,14 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		{
 			WorkblobPush(4);
 			sb_foreach(alternateHeaders, { WorkblobPut32(*each); });
+			PAD_ALTERNATE_HEADERS(alternateHeaders, MIN_ALTERNATE_HEADERS)
 			alternateHeadersAddr = WorkblobPop();
 		}
 		
 		// main header
 		WorkAppendSceneHeader(scene, &scene->headers[0], alternateHeadersAddr);
 		WorkFirstHeader();
+		sb_free(alternateHeaders);
 	}
 	
 	// write output file
