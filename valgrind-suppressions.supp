@@ -1,0 +1,94 @@
+{
+   ignore_extern_leak
+   Memcheck:Leak
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_leak_versioned
+   Memcheck:Leak
+   ...
+   obj:*.so.*
+}
+{
+   ignore_extern_param
+   Memcheck:Param
+   ioctl(generic)
+   obj:*.so
+}
+{
+   ignore_extern_param_versioned
+   Memcheck:Param
+   ioctl(generic)
+   obj:*.so.*
+}
+{
+   ignore_extern_cond
+   Memcheck:Cond
+   obj:*.so
+}
+{
+   ignore_extern_cond_versioned
+   Memcheck:Cond
+   obj:*.so.*
+}
+{
+   ignore_extern_addr1
+   Memcheck:Addr1
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_addr1_versioned
+   Memcheck:Addr1
+   ...
+   obj:*.so.*
+}
+{
+   ignore_extern_addr2
+   Memcheck:Addr2
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_addr2_versioned
+   Memcheck:Addr2
+   ...
+   obj:*.so.*
+}
+{
+   ignore_extern_addr4
+   Memcheck:Addr4
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_addr4_versioned
+   Memcheck:Addr4
+   ...
+   obj:*.so.*
+}
+{
+   ignore_extern_addr8
+   Memcheck:Addr8
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_addr8_versioned
+   Memcheck:Addr8
+   ...
+   obj:*.so.*
+}
+{
+   ignore_extern_addr16
+   Memcheck:Addr16
+   ...
+   obj:*.so
+}
+{
+   ignore_extern_addr16_versioned
+   Memcheck:Addr16
+   ...
+   obj:*.so.*
+}

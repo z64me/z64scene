@@ -1,0 +1,88 @@
+{
+   ignore_unversioned_libs
+   Memcheck:Leak
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs
+   Memcheck:Leak
+   ...
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_swrast_dri
+   Memcheck:Leak
+   ...
+   obj:*swrast_dri*
+}
+{
+   ignore_unversioned_libs_param
+   Memcheck:Param
+   ioctl(generic)
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_param
+   Memcheck:Param
+   ioctl(generic)
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_unversioned_libs_cond
+   Memcheck:Cond
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_cond
+   Memcheck:Cond
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_unversioned_libs_addr2
+   Memcheck:Addr2
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_addr2
+   Memcheck:Addr2
+   ...
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_unversioned_libs_addr4
+   Memcheck:Addr4
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_addr4
+   Memcheck:Addr4
+   ...
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_unversioned_libs_addr8
+   Memcheck:Addr8
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_addr8
+   Memcheck:Addr8
+   ...
+   obj:*/lib*/lib*.so.*
+}
+{
+   ignore_unversioned_libs_addr16
+   Memcheck:Addr16
+   ...
+   obj:*/lib*/lib*.so
+}
+{
+   ignore_versioned_libs_addr16
+   Memcheck:Addr16
+   ...
+   obj:*/lib*/lib*.so.*
+}
