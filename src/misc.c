@@ -185,6 +185,7 @@ const char *ExePath(const char *path)
 		ssize_t count = readlink("/proc/self/exe", basePath, PATH_MAX);
 		if (count == -1)
 			Die("readlink() fatal error");
+		basePath[count] = '\0'; // thanks valgrind -- readlink() does not null-terminate
 	#else
 		#error please implement ExePath() for this platform
 	#endif

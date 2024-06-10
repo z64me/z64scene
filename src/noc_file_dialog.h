@@ -90,6 +90,8 @@ const char *noc_file_dialog_open(int flags,
     gint res;
     char buf[128], *patterns;
 
+    memset(buf, 0, sizeof(buf)); // thanks valgrind
+
     action = flags & NOC_FILE_DIALOG_SAVE ? GTK_FILE_CHOOSER_ACTION_SAVE :
                                             GTK_FILE_CHOOSER_ACTION_OPEN;
     if (flags & NOC_FILE_DIALOG_DIR)
@@ -208,6 +210,8 @@ const char *noc_file_dialog_open(int flags,
     // XXX: I don't know about memory management with cococa, need to check
     // if I leak memory here.
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+
+    memset(buf, 0, sizeof(buf)); // thanks valgrind
 
     if (flags & NOC_FILE_DIALOG_OPEN) {
         panel = open_panel = [NSOpenPanel openPanel];
