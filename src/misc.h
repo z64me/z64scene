@@ -225,6 +225,22 @@ struct ActorPath
 	sb_array(Vec3f, points);
 };
 
+struct Doorway
+{
+	uint8_t   frontRoom;
+	uint8_t   frontCamera;
+	uint8_t   backRoom;
+	uint8_t   backCamera;
+	uint16_t  id;
+	int16_t   x;
+	int16_t   y;
+	int16_t   z;
+	uint16_t  rot;
+	uint16_t  params;
+	
+	Vec3f     pos;
+};
+
 struct SceneHeader
 {
 	struct Scene *scene;
@@ -232,6 +248,7 @@ struct SceneHeader
 	sb_array(ZeldaLight, lights);
 	sb_array(uint32_t, unhandledCommands);
 	sb_array(struct ActorPath, paths);
+	sb_array(struct Doorway, doorways);
 	uint32_t addr;
 	int numRooms;
 	struct {

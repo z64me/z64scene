@@ -416,7 +416,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
-	// past list
+	// path list
 	if (header->paths)
 	{
 		WorkblobPut32(0x0D000000 | (sb_count(header->paths) << 16));
@@ -485,6 +485,29 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		WorkblobPush(4);
 		sb_foreach(scene->exits, { WorkblobPut16(*each); });
+		WorkblobPop();
+		
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// doorways
+	if (header->doorways)
+	{
+		WorkblobPut32(0x0E000000 | (sb_count(header->doorways) << 16));
+		
+		WorkblobPush(4);
+		sb_foreach(header->doorways, {
+			WorkblobPut8(each->frontRoom);
+			WorkblobPut8(each->frontCamera);
+			WorkblobPut8(each->backRoom);
+			WorkblobPut8(each->backCamera);
+			WorkblobPut16(each->id);
+			WorkblobPut16(each->x);
+			WorkblobPut16(each->y);
+			WorkblobPut16(each->z);
+			WorkblobPut16(each->rot);
+			WorkblobPut16(each->params);
+		});
 		WorkblobPop();
 		
 		WorkblobPut32(gWorkblobAddr);

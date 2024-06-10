@@ -967,9 +967,34 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
+			case 0x0E: { // doorways
+				int numPaths = walk[1];
+				const uint8_t *arr = n64_segment_get(u32r(walk + 4));
+				
+				for (int i = 0; i < numPaths; ++i, arr += 16)
+				{
+					struct Doorway doorway = {
+						.frontRoom = arr[0],
+						.frontCamera = arr[1],
+						.backRoom = arr[2],
+						.backCamera = arr[3],
+						.id = u16r(arr + 4),
+						.x = u16r(arr + 6),
+						.y = u16r(arr + 8),
+						.z = u16r(arr + 10),
+						.rot = u16r(arr + 12),
+						.params = u16r(arr + 14),
+					};
+					
+					doorway.pos = (Vec3f) { UNFOLD_VEC3(doorway) };
+					
+					sb_push(result->doorways, doorway);
+				}
+				break;
+			}
+			
 			case 0x17: // TODO cutscenes
 			case 0x0C: // TODO unused light settings
-			case 0x0E: // TODO doorways
 				break;
 			
 			case 0x13: { // exit list
