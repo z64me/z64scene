@@ -10,3 +10,6 @@
 [submodule "toml11"]
 	path = toml11
 	url = https://github.com/ToruNiina/toml11.git
+[submodule "stb"]
+	path = stb
+	url = https://github.com/nothings/stb
