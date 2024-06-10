@@ -13,6 +13,8 @@
 
 extern "C" {
 #include <n64texconv.h>
+#include <stb_image_write.h>
+#include "noc_file_dialog.h"
 }
 
 #if 1 // region: helper macros
@@ -668,10 +670,41 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			if (isBadTexture)
 				ImGui::Text("Bad texture");
 			else if (imageTexture)
+			{
 				ImGui::Image((void*)(intptr_t)imageTexture
 					, ImVec2(imageWidth * (scale + 1)
 					, imageHeight * (scale + 1))
 				);
+				if (ImGui::Button("Export to PNG##Textures"))
+				{
+					const char *fn;
+					char name[128];
+					const char *fmt[] = { "rgba", "yuv", "ci", "ia", "i" };
+					const char *bpp[] = { "4", "8", "16", "32" };
+					struct DataBlob *blob = textureBlob->data;
+					struct DataBlob *palBlob = blob->data.texture.pal;
+					
+					snprintf(name, sizeof(name), "%08x.%s%s.png", segAddr, fmt[imageFmt], bpp[imageSiz]);
+					
+					fn = noc_file_dialog_open(NOC_FILE_DIALOG_SAVE, "png\0*.png\0", NULL, name);
+					
+					if (fn)
+					{
+						n64texconv_to_rgba8888(
+							imageData
+							, (unsigned char*)blob->refData // TODO const correctness
+							, (unsigned char*)(palBlob ? palBlob->refData : 0)
+							, (n64texconv_fmt)imageFmt
+							, (n64texconv_bpp)imageSiz
+							, imageWidth
+							, imageHeight
+							, blob->data.texture.lineSize
+						);
+						
+						stbi_write_png(fn, imageWidth, imageHeight, 4, imageData, 0);
+					}
+				}
+			}
 			
 			if (textureBlobIndex != gGuiSettings.combos.textureBlobIndex)
 			{
