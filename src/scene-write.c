@@ -286,6 +286,41 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
+	// object list
+	if (header->objects)
+	{
+		WorkblobPut32(0x0B000000 | (sb_count(header->objects) << 16));
+		
+		WorkblobPush(4);
+		
+		sb_foreach(header->objects, {
+			WorkblobPut16(*each);
+		});
+		
+		WorkblobPut32(WorkblobPop());
+	}
+	
+	// actor list
+	if (header->instances)
+	{
+		WorkblobPut32(0x01000000 | (sb_count(header->instances) << 16));
+		
+		WorkblobPush(4);
+		
+		sb_foreach(header->instances, {
+			WorkblobPut16(each->id);
+			WorkblobPut16(each->x);
+			WorkblobPut16(each->y);
+			WorkblobPut16(each->z);
+			WorkblobPut16(each->xrot);
+			WorkblobPut16(each->yrot);
+			WorkblobPut16(each->zrot);
+			WorkblobPut16(each->params);
+		});
+		
+		WorkblobPut32(WorkblobPop());
+	}
+	
 	// unhandled commands
 	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
@@ -376,6 +411,28 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		);
 		
 		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// past list
+	if (header->paths)
+	{
+		WorkblobPut32(0x0D000000 | (sb_count(header->paths) << 16));
+		
+		WorkblobPush(4);
+		
+		sb_foreach(header->paths, {
+			WorkblobPut8(sb_count(each->points));
+			typeof(each->points) points = each->points;
+			WorkblobPush(2);
+			sb_foreach(points, {
+				WorkblobPut16(each->x);
+				WorkblobPut16(each->y);
+				WorkblobPut16(each->z);
+			});
+			WorkblobPut32(WorkblobPop());
+		});
+		
+		WorkblobPut32(WorkblobPop());
 	}
 	
 	// spawn points

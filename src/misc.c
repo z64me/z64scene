@@ -916,9 +916,40 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
+			case 0x0D: { // paths
+				int numPaths = walk[1];
+				const uint8_t *arr = n64_segment_get(u32r(walk + 4));
+				
+				for (int i = 0; i < numPaths || !numPaths; ++i, arr += 8)
+				{
+					const uint8_t *elem;
+					int numPoints = arr[0];
+					uint32_t pathStart = u32r(arr + 4);
+					struct ActorPath path = { 0 };
+					
+					if (numPoints == 0
+						|| (u32r(arr) & 0x00ffffff)
+						|| (data8 + (pathStart & 0x00ffffff)) >= (uint8_t*)file->dataEnd
+						|| !(elem = n64_segment_get(pathStart))
+					)
+						break;
+					
+					for (int k = 0; k < numPoints; ++k, elem += 6)
+					{
+						Vec3f tmp = { u16r(elem + 0), u16r(elem + 2), u16r(elem + 4) };
+						
+						sb_push(path.points, tmp);
+					}
+					
+					sb_push(result->paths, path);
+				}
+				
+				fprintf(stderr, "%08x has %d paths\n", u32r(walk + 4), sb_count(result->paths));
+				break;
+			}
+			
 			case 0x17: // TODO cutscenes
 			case 0x0C: // TODO unused light settings
-			case 0x0D: // TODO paths
 			case 0x0E: // TODO doorways
 				break;
 			

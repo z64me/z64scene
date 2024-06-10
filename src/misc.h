@@ -220,12 +220,18 @@ struct SpawnPoint
 	uint8_t room;
 };
 
+struct ActorPath
+{
+	sb_array(Vec3f, points);
+};
+
 struct SceneHeader
 {
 	struct Scene *scene;
 	sb_array(struct SpawnPoint, spawns);
 	sb_array(ZeldaLight, lights);
 	sb_array(uint32_t, unhandledCommands);
+	sb_array(struct ActorPath, paths);
 	uint32_t addr;
 	int numRooms;
 	struct {
