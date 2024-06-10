@@ -43,6 +43,8 @@ if (altHeadersArray) { \
 		sb_foreach_backwards(PARAM, { \
 			if (each->isBlank) \
 				sb_pop(PARAM); \
+			else \
+				break; \
 		})
 
 // pad blank alternate headers onto the end
