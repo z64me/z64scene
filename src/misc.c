@@ -23,7 +23,11 @@ if (altHeadersArray) { \
 	dataEnd -= 4; \
 	while (headers < dataEnd) { \
 		uint32_t w = u32r(headers); \
-		if (w == 0 && (headers += 4)) continue; \
+		if (w == 0 && (headers += 4)) { \
+			typeof(*result) blank = { .isBlank = true }; \
+			sb_push(PARAM->headers, blank); \
+			continue; \
+		} \
 		if ((w >> 24) != SEGMENT) break; \
 		if ((w & 0x00ffffff) >= file->size - 8) break; \
 		if (w & 0x7) break; \

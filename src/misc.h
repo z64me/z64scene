@@ -199,6 +199,7 @@ struct RoomHeader
 	sb_array(uint32_t, unhandledCommands);
 	uint32_t addr;
 	uint8_t meshFormat;
+	bool isBlank;
 };
 
 struct Room
@@ -255,6 +256,7 @@ struct SceneHeader
 		int sceneSetupType;
 		sb_array(AnimatedMaterial, sceneSetupData);
 	} mm;
+	bool isBlank;
 };
 
 struct Scene

@@ -210,6 +210,9 @@ static void WorkFirstHeader(void)
 
 static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders)
 {
+	if (header->isBlank)
+		return 0;
+	
 	WorkblobSegment(0x03);
 	
 	// the header
@@ -333,6 +336,9 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 
 static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders)
 {
+	if (header->isBlank)
+		return 0;
+	
 	WorkblobSegment(0x02);
 	
 	// the header
