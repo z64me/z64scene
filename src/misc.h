@@ -11,6 +11,8 @@
 extern "C" {
 #endif
 
+struct CutsceneOot;
+
 #include "texanim.h"
 #include "stretchy_buffer.h"
 #include "datablobs.h"
@@ -33,7 +35,48 @@ extern "C" {
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
 #define MAX3(A, B, C) MAX(A, MAX(B, C))
 
+#define for_in(index, count) for (int index = 0; index < count; ++index)
+
+#define u16r3(X) { u16r(X), u16r(((const uint8_t*)(X)) + 2), u16r(((const uint8_t*)(X)) + 4) }
+#define u32r3(X) { u32r(X), u32r(((const uint8_t*)(X)) + 4), u32r(((const uint8_t*)(X)) + 8) }
+#define f32r3(X) { f32r(X), f32r(((const uint8_t*)(X)) + 4), f32r(((const uint8_t*)(X)) + 8) }
+float f32r(const void *data);
+uint32_t f32tou32(float v);
+
 #endif /* macros */
+
+#if 1 // region: enum strings
+
+// https://gist.github.com/linneman/99ff9ff86d7b4c69604b012bfcc4c258
+
+#define ENUM_BODY(name, value) \
+	name value,
+
+#define AS_STRING_CASE(name, value) \
+	case name: return #name;
+
+#define DEFINE_ENUM(name, list) \
+	typedef enum { \
+		list(ENUM_BODY) \
+	}name;
+
+#define AS_STRING_DEC(name, list) \
+	const char* name##AsString(name n);
+
+#define AS_STRING_FUNC(name, list) \
+	const char* name##AsString(name n) { \
+		switch (n) { \
+			list(AS_STRING_CASE) \
+			default: \
+			{ \
+				static char int_as_string[8];\
+				snprintf( int_as_string, sizeof(int_as_string), "%d", n ); \
+				return int_as_string; \
+			} \
+		} \
+	}
+
+#endif // endregion
 
 #if 1 /* region: types */
 
@@ -250,6 +293,7 @@ struct SceneHeader
 	sb_array(uint32_t, unhandledCommands);
 	sb_array(struct ActorPath, paths);
 	sb_array(struct Doorway, doorways);
+	struct CutsceneOot *cutsceneOot;
 	uint32_t addr;
 	int numRooms;
 	struct {

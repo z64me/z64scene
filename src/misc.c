@@ -6,6 +6,7 @@
 
 #include "misc.h"
 #include "stretchy_buffer.h"
+#include "cutscene.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -179,6 +180,21 @@ void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_
 			return cur;
 
 	return NULL;
+}
+
+float f32r(const void *data)
+{
+	const uint8_t *d = data;
+	
+	// TODO do it without pointer casting
+	uint32_t tmp = u32r(d);
+	return *((float*)&tmp);
+}
+
+uint32_t f32tou32(float v)
+{
+	// TODO do it without pointer casting
+	return *((uint32_t*)&v);
 }
 
 #ifdef _WIN32
@@ -1040,7 +1056,13 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			}
 			
-			case 0x17: // TODO cutscenes
+			case 0x17: { // cutscenes
+				uint32_t w1 = u32r(walk + 4);
+				fprintf(stderr, "cutscene header %08x\n", w1);
+				result->cutsceneOot = CutsceneOotNewFromData(n64_segment_get(w1));
+				break;
+			}
+			
 			case 0x0C: // TODO unused light settings
 				break;
 			

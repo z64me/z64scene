@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "misc.h"
+#include "cutscene.h"
 
 static struct File *gWork = 0;
 static struct DataBlob *gWorkblob = 0;
@@ -15,6 +16,8 @@ static uint32_t gWorkblobAddrEnd = 0;
 static uint32_t gWorkblobSegment = 0;
 static uint8_t *gWorkblobData = 0;
 static bool gWorkblobAllowDuplicates = false;
+static uint32_t gWorkblobExactlyThisSize = 0;
+static uint32_t gWorkblobExactlyThisSizeStartSize = 0;
 #define WORKBUF_SIZE (1024 * 1024 * 4) // 4mib is generous
 #define WORKBLOB_STACK_SIZE 32
 #define FIRST_HEADER_SIZE 0x100 // sizeBytes of first header in file
@@ -202,6 +205,23 @@ static void WorkblobPutString(const char *data)
 static void WorkblobAllowDuplicates(bool allow)
 {
 	gWorkblobAllowDuplicates = allow;
+}
+
+static void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+{
+	gWorkblobExactlyThisSize = wantThisSize;
+	gWorkblobExactlyThisSizeStartSize = gWorkblob->sizeBytes;
+}
+
+static void WorkblobThisExactlyEnd(void)
+{
+	while (gWorkblob->sizeBytes
+		- gWorkblobExactlyThisSizeStartSize
+		< gWorkblobExactlyThisSize
+	)
+		WorkblobPut8(0);
+	
+	gWorkblobExactlyThisSize = 0;
 }
 
 static void WorkFirstHeader(void)
@@ -521,6 +541,25 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			WorkblobPut16(each->params);
 		});
 		WorkblobPop();
+		
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
+	// cutscenes
+	if (header->cutsceneOot)
+	{
+		WorkblobPut32(0x17000000);
+		
+		CutsceneOotToWorkblob(
+			header->cutsceneOot
+			, WorkblobPush
+			, WorkblobPop
+			, WorkblobPut8
+			, WorkblobPut16
+			, WorkblobPut32
+			, WorkblobThisExactlyBegin
+			, WorkblobThisExactlyEnd
+		);
 		
 		WorkblobPut32(gWorkblobAddr);
 	}

@@ -1,0 +1,507 @@
+//
+// cutscene.c
+//
+// cutscene stuff
+//
+
+#include "cutscene.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#if 1 // region: oot
+
+struct CutsceneOot *CutsceneOotNew(void)
+{
+	struct CutsceneOot *cs = calloc(1, sizeof(*cs));
+	
+	return cs;
+}
+
+void CutsceneOotFree(struct CutsceneOot *cs)
+{
+	if (!cs)
+		return;
+	
+	sb_free(cs->commands);
+	free(cs);
+}
+
+struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
+{
+	const uint8_t *dataStart = data;
+	struct CutsceneOot *cs = CutsceneOotNew();
+	int totalEntries = u32r(data); data += 4;
+	cs->frameCount = u32r(data); data += 4;
+	
+	fprintf(stderr, "totalEntries = %08x\n", totalEntries);
+	fprintf(stderr, "frameCount = %08x\n", cs->frameCount);
+	
+	for (int i = 0; i < totalEntries; i++)
+	{
+		int cmdType = u32r(data); data += 4;
+		const char *cmdName = CutsceneCmdAsString(cmdType);
+		CsCmdOot cmd = { .type = cmdType };
+		int cmdEntries = 0;
+		bool hasOneCameraPoint = false;
+		
+		fprintf(stderr, "cmdName = %s, %08x\n", cmdName, (uint32_t)((data - 4) - dataStart));
+		
+		if (!strstr(cmdName, "_CAM_")) { cmdEntries = u32r(data); data += 4; }
+		
+		if (cmdType == CS_CAM_STOP)
+			i = totalEntries;
+		else if (strstr(cmdName, "ACTOR_CUE")
+			|| cmdType == CS_CMD_OOT_PLAYER_CUE
+		)
+		{
+			for_in(i, cmdEntries)
+			{
+				CsCmdOotActorCue entry = {
+					.id = u16r(data + 0),
+					.startFrame = u16r(data + 2),
+					.endFrame =  u16r(data + 4),
+					.rot = u16r3(data + 6),
+					.startPos = u32r3(data + 12),
+					.endPos = u32r3(data + 24),
+					.maybeUnused = f32r3(data + 36),
+				};
+				data += sizeof(entry);
+				
+				sb_push(cmd.actorCue, entry);
+			}
+		}
+		else switch (cmdType)
+		{
+			case CS_CMD_OOT_MISC:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotMisc entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.misc, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_LIGHT_SETTING:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotLightSetting entry = {
+						.unused0 = u8r(data),
+						.settingPlusOne = u8r(data + 1),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.lightSetting, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_START_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotStartSeq entry = {
+						.unused0 = u8r(data),
+						.seqIdPlusOne = u8r(data + 1),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.startSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_STOP_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotStopSeq entry = {
+						.unused0 = u8r(data),
+						.seqIdPlusOne = u8r(data + 1),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.stopSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_FADE_OUT_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotFadeOutSeq entry = {
+						.seqPlayer = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.fadeOutSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_RUMBLE_CONTROLLER:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotRumble entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.sourceStrength = u8r(data + 6),
+						.duration = u8r(data + 7),
+						.decreaseRate = u8r(data + 8),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.rumble, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_TIME:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotTime entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.hour = u8r(data + 6),
+						.minute = u8r(data + 7),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.time, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_TEXT:
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotText entry = {
+						.textId = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.type = u16r(data + 6),
+						.altTextId1 = u16r(data + 8),
+						.altTextId2 = u16r(data + 10),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.text, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_DESTINATION:
+				// cmdEntries is unused
+				{
+					CsCmdOotDestination entry = {
+						.destination = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.destination, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_TRANSITION:
+				// cmdEntries is unused
+				{
+					CsCmdOotTransition entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.transition, entry);
+				}
+				break;
+			
+			case CS_CMD_OOT_CAM_EYE: //CutsceneCmd_SetCamEye()
+			case CS_CMD_OOT_CAM_AT: //CutsceneCmd_SetCamAt()
+				hasOneCameraPoint = true;
+			case CS_CMD_OOT_CAM_EYE_SPLINE:
+			case CS_CMD_OOT_CAM_EYE_SPLINE_REL_TO_PLAYER:
+				//CutsceneCmd_UpdateCamEyeSpline()
+			case CS_CMD_OOT_CAM_AT_SPLINE:
+			case CS_CMD_OOT_CAM_AT_SPLINE_REL_TO_PLAYER:
+				//CutsceneCmd_UpdateCamAtSpline()
+				// cmdEntries is unused
+				{
+					CsCmdOotCam entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += 8; // not sizeof b/c added data
+					
+					for (bool shouldContinue = true; shouldContinue; )
+					{
+						CutsceneCameraPoint point = {
+							.continueFlag = u8r(data),
+							.cameraRoll = u8r(data + 1),
+							.nextPointFrame = u16r(data + 2),
+							.viewAngle = f32r(data + 4),
+							.pos = u16r3(data + 8),
+						};
+						
+						if (point.continueFlag == CS_CAM_STOP
+							|| hasOneCameraPoint
+						)
+							shouldContinue = false;
+						
+						data += sizeof(point);
+						sb_push(entry.points, point);
+					}
+					
+					sb_push(cmd.cam, entry);
+				}
+				break;
+			
+			default:
+				fprintf(stderr, "unhandled cutscene command '%s'\n", cmdName);
+				for_in(i, cmdEntries)
+				{
+					CsCmdOotUnimplemented entry = {0};
+					
+					memcpy(&entry, data, sizeof(entry));
+					data += sizeof(entry);
+					
+					sb_push(cmd.unimplemented, entry);
+				}
+				break;
+		}
+		
+		sb_push(cs->commands, cmd);
+	}
+	
+	return cs;
+}
+
+void CutsceneOotToWorkblob(
+	struct CutsceneOot *cs
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+	, void WorkblobThisExactlyEnd(void)
+)
+{
+	WorkblobPush(4);
+	
+	int totalEntries = sb_count(cs->commands); WorkblobPut32(totalEntries);
+	WorkblobPut32(cs->frameCount);
+	
+	for (int i = 0; i < totalEntries; i++)
+	{
+		CsCmdOot cmd = cs->commands[i];
+		int cmdType = cmd.type; WorkblobPut32(cmdType);
+		const char *cmdName = CutsceneCmdAsString(cmdType);
+		int cmdEntries = 0;
+		//bool hasOneCameraPoint = false; // shouldn't be necessary when writing
+		
+		if (!strstr(cmdName, "_CAM_")) {
+			cmdEntries = sb_count(cmd.misc); // it's a union, so this works for all types
+			WorkblobPut32(cmdEntries);
+		}
+		
+		fprintf(stderr, "write cmdName = %s\n", cmdName);
+		
+		if (cmdType == CS_CAM_STOP)
+			i = totalEntries;
+		else if (strstr(cmdName, "ACTOR_CUE")
+			|| cmdType == CS_CMD_OOT_PLAYER_CUE
+		)
+		{
+			sb_foreach(cmd.actorCue, {
+				WorkblobThisExactlyBegin(sizeof(*each));
+					WorkblobPut16(each->id);
+					WorkblobPut16(each->startFrame);
+					WorkblobPut16(each->endFrame);
+					WorkblobPut16(each->rot.x);
+					WorkblobPut16(each->rot.y);
+					WorkblobPut16(each->rot.z);
+					WorkblobPut32(each->startPos.x);
+					WorkblobPut32(each->startPos.y);
+					WorkblobPut32(each->startPos.z);
+					WorkblobPut32(each->endPos.x);
+					WorkblobPut32(each->endPos.y);
+					WorkblobPut32(each->endPos.z);
+					WorkblobPut32(f32tou32(each->maybeUnused.x));
+					WorkblobPut32(f32tou32(each->maybeUnused.y));
+					WorkblobPut32(f32tou32(each->maybeUnused.z));
+				WorkblobThisExactlyEnd();
+			})
+		}
+		else switch (cmdType)
+		{
+			case CS_CMD_OOT_MISC:
+				sb_foreach(cmd.misc, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_LIGHT_SETTING:
+				sb_foreach(cmd.lightSetting, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut8(each->unused0);
+						WorkblobPut8(each->settingPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_START_SEQ:
+				sb_foreach(cmd.startSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut8(each->unused0);
+						WorkblobPut8(each->seqIdPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_STOP_SEQ:
+				sb_foreach(cmd.stopSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut8(each->unused0);
+						WorkblobPut8(each->seqIdPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_FADE_OUT_SEQ:
+				sb_foreach(cmd.fadeOutSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->seqPlayer);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_RUMBLE_CONTROLLER:
+				sb_foreach(cmd.rumble, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut8(each->sourceStrength);
+						WorkblobPut8(each->duration);
+						WorkblobPut8(each->decreaseRate);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_TIME:
+				sb_foreach(cmd.time, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut8(each->hour);
+						WorkblobPut8(each->minute);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_TEXT:
+				sb_foreach(cmd.text, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->textId);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->altTextId1);
+						WorkblobPut16(each->altTextId2);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_DESTINATION:
+				// cmdEntries is unused
+				sb_foreach(cmd.destination, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->destination);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_TRANSITION:
+				// cmdEntries is unused
+				sb_foreach(cmd.transition, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_OOT_CAM_EYE: //CutsceneCmd_SetCamEye()
+			case CS_CMD_OOT_CAM_AT: //CutsceneCmd_SetCamAt()
+				//hasOneCameraPoint = true;
+			case CS_CMD_OOT_CAM_EYE_SPLINE:
+			case CS_CMD_OOT_CAM_EYE_SPLINE_REL_TO_PLAYER:
+				//CutsceneCmd_UpdateCamEyeSpline()
+			case CS_CMD_OOT_CAM_AT_SPLINE:
+			case CS_CMD_OOT_CAM_AT_SPLINE_REL_TO_PLAYER:
+				//CutsceneCmd_UpdateCamAtSpline()
+				// cmdEntries is unused
+				sb_foreach(cmd.cam, {
+					WorkblobThisExactlyBegin(8); // not sizeof b/c added data
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+					
+					typeof(each->points) points = each->points;
+					sb_foreach(points, {
+						// TODO handle continueFlag here, or in editor?
+						WorkblobThisExactlyBegin(sizeof(*each));
+							WorkblobPut8(each->continueFlag);
+							WorkblobPut8(each->cameraRoll);
+							WorkblobPut16(each->nextPointFrame);
+							WorkblobPut32(f32tou32(each->viewAngle));
+							WorkblobPut16(each->pos.x);
+							WorkblobPut16(each->pos.y);
+							WorkblobPut16(each->pos.z);
+						WorkblobThisExactlyEnd();
+					})
+				})
+				break;
+			
+			default:
+				//fprintf(stderr, "write unhandled cutscene command '%s'\n", cmdName);
+				sb_foreach(cmd.unimplemented, {
+					for (int i = 0; i < sizeof(each->_bytes); ++i)
+						WorkblobPut8(each->_bytes[i]);
+				})
+				break;
+		}
+	}
+	
+	WorkblobPop();
+}
+
+AS_STRING_FUNC(CutsceneCmd, ENUM_CS_CMD_OOT)
+
+#endif // endregion
