@@ -172,6 +172,19 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex)
 	return segment->head;
 }
 
+bool DataBlobSegmentContainsSegAddr(int segmentIndex, uint32_t originalSegmentAddress)
+{
+	struct DataBlob *blobs = DataBlobSegmentGetHead(segmentIndex);
+	
+	if (blobs)
+		datablob_foreach(blobs, {
+			if (each->originalSegmentAddress == originalSegmentAddress)
+				return true;
+		})
+	
+	return false;
+}
+
 struct DataBlob *DataBlobSegmentPush(
 	const void *refData
 	, uint32_t sizeBytes
@@ -532,9 +545,14 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 	
 	struct DataBlob *dlBlob = DataBlobSegmentPush(realAddr, 0, segAddr, DATA_BLOB_TYPE_MESH, originator);
 	
+	// XXX
+	// process it again, so that DL's ref'd by these DL's ref'd by multiple
+	// room mesh headers also get moved to the list head again and are thus
+	// refreshed/prioritized (so most deeply nested DL's are updated first)
+	// (leaving original code commented out below as a reminder not to do this)
 	// already processed
-	if (dlBlob->sizeBytes)
-		return;
+	//if (dlBlob->sizeBytes)
+	//	return;
 	
 #define HISTORY_GET(n) \
 	history[(i - 1 - (n) < 0) ? (i - 1 - (n) + ARRLEN(history)) : (i - 1 - (n))]
@@ -1166,7 +1184,7 @@ void DataBlobPrint(struct DataBlob *blob)
 	{
 		case DATA_BLOB_TYPE_MESH:
 			typeName = "mesh";
-			sprintf(extraInfo, "sizeBytes = 0x%08x", blob->sizeBytes);
+			sprintf(extraInfo, "sizeBytes = 0x%08x, has %d refs", blob->sizeBytes, sb_count(blob->refs));
 			break;
 		case DATA_BLOB_TYPE_VERTEX: typeName = "vertex"; break;
 		case DATA_BLOB_TYPE_MATRIX: typeName = "matrix"; break;
@@ -1187,7 +1205,7 @@ void DataBlobPrint(struct DataBlob *blob)
 		default: typeName = "unknown"; break;
 	}
 	
-	if (blob->type != DATA_BLOB_TYPE_TEXTURE)
+	if (blob->type != DATA_BLOB_TYPE_MESH)
 		typeName = 0;
 	
 	if (typeName)

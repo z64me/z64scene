@@ -91,6 +91,7 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEnd, struct DataBlob *head);
 struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex);
 struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
+bool DataBlobSegmentContainsSegAddr(int segmentIndex, uint32_t originalSegmentAddress);
 void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator);
 void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator);
 void DataBlobPrint(struct DataBlob *blob);
