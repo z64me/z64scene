@@ -27,7 +27,7 @@ void CollisionHeaderToWorkblob(CollisionHeader *header);
 
 // guarantee a minimum number of alternate headers are written
 #define PAD_ALTERNATE_HEADERS(PARAM, HOWMANY) \
-	while (sb_count(PARAM) < HOWMANY) \
+	while (gWorkblob->sizeBytes < (HOWMANY * 4)) \
 		WorkblobPut32(0);
 #define MIN_ALTERNATE_HEADERS 3
 
