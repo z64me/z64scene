@@ -280,7 +280,7 @@ struct File *FileFromFilename(const char *filename)
 	if (fseek(fp, 0, SEEK_END)) Die("error moving read head '%s'", filename);
 	if (!(result->size = ftell(fp))) Die("error reading '%s', empty?", filename);
 	if (fseek(fp, 0, SEEK_SET)) Die("error moving read head '%s'", filename);
-	result->data = Calloc(1, result->size);
+	result->data = Calloc(1, result->size + 1); // zero terminator on strings
 	result->dataEnd = ((uint8_t*)result->data) + result->size;
 	if (fread(result->data, 1, result->size, fp) != result->size)
 		Die("error reading contents of '%s'", filename);

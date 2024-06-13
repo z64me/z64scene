@@ -17,6 +17,44 @@ int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
 	
+	// test: open and re-export a single scene (argv[1] -> bin/test_scene.zscene)
+#if 0
+	if (argc == 2)
+	{
+		scene = SceneFromFilenamePredictRooms(argv[1]);
+		SceneToFilename(scene, "bin/test_scene.zscene");
+		SceneFree(scene);
+		fprintf(stderr, "successfully wrote test scene\n");
+	}
+	return 0;
+#endif
+
+	// test: open and re-export a list of scenes
+	// one filename per line, e.g.
+	// bin/exhaustive/oot/scenes/0 - Dungeon/scene.zscene
+	// bin/exhaustive/oot/scenes/1 - House/scene.zscene
+	// bin/exhaustive/oot/scenes/2 - Town/scene.zscene
+#if 1
+	{
+		const char *fn = "bin/exhaustive-oot.txt";
+		struct File *file = FileFromFilename(fn);
+		char *src = file->data;
+		char *tok;
+		for (;;) {
+			tok = strtok(src, "\r\n");
+			if (!tok) break;
+			src = 0;
+			fprintf(stderr, "'%s'\n", tok);
+			scene = SceneFromFilenamePredictRooms(tok);
+			SceneToFilename(scene, 0);
+			SceneFree(scene);
+		}
+		FileFree(file);
+		fprintf(stderr, "successfully wrote everything\n");
+		return 0;
+	}
+#endif
+	
 	ExePath(argv[0]);
 	
 	if (argc == 2)
