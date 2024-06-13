@@ -745,9 +745,6 @@ void WindowSaveScene(void)
 	if (!*gSceneP)
 		return;
 	
-	SceneToFilename(*gSceneP, "bin/test_scene.zscene");
-	return;
-	
 	// overwrite loaded scene and rooms
 	SceneToFilename(*gSceneP, 0);
 }
