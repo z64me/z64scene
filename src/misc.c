@@ -1302,7 +1302,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						sb_push(result->displayLists, tmp);
 					}
 				}
-				// TODO prerender format, only grabs DL's (for viewing) and nothing else for now
+				// maps that use prerendered backgrounds
 				else if (d[0] == 1)
 				{
 					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);

@@ -234,6 +234,19 @@ static void WorkFirstHeader(void)
 	gWorkblob -= 1;
 }
 
+static void WorkAppendRoomShapeImage(RoomShapeImage image)
+{
+	WorkblobPut32(Swap32(image.sourceBEU32));
+	WorkblobPut32(image.unk_0C);
+	WorkblobPut32(Swap32(image.tlutBEU32));
+	WorkblobPut16(image.width);
+	WorkblobPut16(image.height);
+	WorkblobPut8(image.fmt);
+	WorkblobPut8(image.siz);
+	WorkblobPut16(image.tlutMode);
+	WorkblobPut16(image.tlutCount);
+}
+
 static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders)
 {
 	if (header->isBlank)
@@ -285,9 +298,50 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 					WorkblobPut32(gWorkblobAddrEnd);
 					break;
 				
+				// maps that use prerendered backgrounds
 				case 1:
-					Die("unsupported mesh format %d\n", header->meshFormat);
+				{
+					int amountType = header->image.base.amountType;
+					
+					WorkblobPut8(amountType);
+					
+					// display list entries
+					{
+						WorkblobPush(4);
+						
+						sb_foreach(header->displayLists, {
+							WorkblobPut32(Swap32(each->opaBEU32));
+							WorkblobPut32(Swap32(each->xluBEU32));
+						});
+						WorkblobPut32(0);
+						WorkblobPut32(0);
+						
+						WorkblobPut32(WorkblobPop());
+					}
+					
+					if (amountType == ROOM_SHAPE_IMAGE_AMOUNT_SINGLE)
+					{
+						WorkAppendRoomShapeImage(header->image.single.image);
+					}
+					else if (amountType == ROOM_SHAPE_IMAGE_AMOUNT_MULTI)
+					{
+						sb_array(RoomShapeImageMultiBgEntry, backgrounds) = header->image.multi.backgrounds;
+						
+						WorkblobPut8(sb_count(backgrounds));
+						WorkblobPush(4);
+						sb_foreach(backgrounds, {
+							WorkblobThisExactlyBegin(0x1C);
+							fprintf(stderr, "     unk00 = %04x\n", each->unk_00);
+							fprintf(stderr, "bgCamIndex = %04x\n", each->bgCamIndex);
+							WorkblobPut16(each->unk_00);
+							WorkblobPut8(each->bgCamIndex);
+							WorkAppendRoomShapeImage(each->image);
+							WorkblobThisExactlyEnd();
+						})
+						WorkblobPut32(WorkblobPop());
+					}
 					break;
+				}
 				
 				case 2:
 					// display list entries
