@@ -689,20 +689,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					fn = noc_file_dialog_open(NOC_FILE_DIALOG_SAVE, "png\0*.png\0", NULL, name);
 					
 					if (fn)
-					{
-						n64texconv_to_rgba8888(
-							imageData
-							, (unsigned char*)blob->refData // TODO const correctness
-							, (unsigned char*)(palBlob ? palBlob->refData : 0)
-							, (n64texconv_fmt)imageFmt
-							, (n64texconv_bpp)imageSiz
-							, imageWidth
-							, imageHeight
-							, blob->data.texture.lineSize
-						);
-						
 						stbi_write_png(fn, imageWidth, imageHeight, 4, imageData, 0);
-					}
 				}
 			}
 			
