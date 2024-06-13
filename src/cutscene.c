@@ -7,6 +7,16 @@
 #include "cutscene.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <ctype.h>
+
+// debugging helper when testing exhaustively
+//#define DEBUG_CUTSCENES_STRICT
+
+#ifdef DEBUG_CUTSCENES_STRICT
+	#define DATA_ASSERT(SIZE) { if (data + SIZE > dataEnd) Die("ran past eof, not a cutscene"); }
+#else
+	#define DATA_ASSERT(SIZE) { if (data + SIZE > dataEnd) goto L_fail; }
+#endif
 
 #if 1 // region: oot
 
@@ -22,11 +32,13 @@ void CutsceneOotFree(struct CutsceneOot *cs)
 	if (!cs)
 		return;
 	
+	// TODO free nested data
+	
 	sb_free(cs->commands);
 	free(cs);
 }
 
-struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
+struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 {
 	const uint8_t *dataStart = data;
 	struct CutsceneOot *cs = CutsceneOotNew();
@@ -38,6 +50,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 	
 	for (int i = 0; i < totalEntries; i++)
 	{
+		DATA_ASSERT(4)
+		
 		int cmdType = u32r(data); data += 4;
 		const char *cmdName = CutsceneCmdAsString(cmdType);
 		CsCmdOot cmd = { .type = cmdType };
@@ -46,7 +60,16 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 		
 		fprintf(stderr, "cmdName = %s, %08x\n", cmdName, (uint32_t)((data - 4) - dataStart));
 		
-		if (!strstr(cmdName, "_CAM_")) { cmdEntries = u32r(data); data += 4; }
+		if (!strstr(cmdName, "_CAM_")) { DATA_ASSERT(4) cmdEntries = u32r(data); data += 4; }
+		
+		// safety
+		if (cmdEntries > 255 || cmdEntries < 0)
+		{
+			#ifdef DEBUG_CUTSCENES_STRICT
+			Die("cmdEntries = %d, suspicious\n", cmdEntries);
+			#endif
+			goto L_fail;
+		}
 		
 		if (cmdType == CS_CAM_STOP)
 			i = totalEntries;
@@ -56,6 +79,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 		{
 			for_in(i, cmdEntries)
 			{
+				DATA_ASSERT(sizeof(CsCmdOotActorCue))
+				
 				CsCmdOotActorCue entry = {
 					.id = u16r(data + 0),
 					.startFrame = u16r(data + 2),
@@ -75,6 +100,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_MISC:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotMisc))
+					
 					CsCmdOotMisc entry = {
 						.type = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -89,6 +116,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_LIGHT_SETTING:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotLightSetting))
+					
 					CsCmdOotLightSetting entry = {
 						.unused0 = u8r(data),
 						.settingPlusOne = u8r(data + 1),
@@ -104,6 +133,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_START_SEQ:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotStartSeq))
+					
 					CsCmdOotStartSeq entry = {
 						.unused0 = u8r(data),
 						.seqIdPlusOne = u8r(data + 1),
@@ -119,6 +150,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_STOP_SEQ:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotStopSeq))
+					
 					CsCmdOotStopSeq entry = {
 						.unused0 = u8r(data),
 						.seqIdPlusOne = u8r(data + 1),
@@ -134,6 +167,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_FADE_OUT_SEQ:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotFadeOutSeq))
+					
 					CsCmdOotFadeOutSeq entry = {
 						.seqPlayer = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -148,6 +183,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_RUMBLE_CONTROLLER:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotRumble))
+					
 					CsCmdOotRumble entry = {
 						.unused0 = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -165,6 +202,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_TIME:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotTime))
+					
 					CsCmdOotTime entry = {
 						.unused0 = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -181,6 +220,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_TEXT:
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotText))
+					
 					CsCmdOotText entry = {
 						.textId = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -198,6 +239,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_DESTINATION:
 				// cmdEntries is unused
 				{
+					DATA_ASSERT(sizeof(CsCmdOotDestination))
+					
 					CsCmdOotDestination entry = {
 						.destination = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -212,6 +255,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			case CS_CMD_OOT_TRANSITION:
 				// cmdEntries is unused
 				{
+					DATA_ASSERT(sizeof(CsCmdOotTransition))
+					
 					CsCmdOotTransition entry = {
 						.type = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -234,6 +279,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 				//CutsceneCmd_UpdateCamAtSpline()
 				// cmdEntries is unused
 				{
+					DATA_ASSERT(sizeof(CsCmdOotCam))
+					
 					CsCmdOotCam entry = {
 						.unused0 = u16r(data),
 						.startFrame = u16r(data + 2),
@@ -243,6 +290,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 					
 					for (bool shouldContinue = true; shouldContinue; )
 					{
+						DATA_ASSERT(sizeof(CutsceneCameraPoint))
+						
 						CutsceneCameraPoint point = {
 							.continueFlag = u8r(data),
 							.cameraRoll = u8r(data + 1),
@@ -266,8 +315,21 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 			
 			default:
 				fprintf(stderr, "unhandled cutscene command '%s'\n", cmdName);
+				
+				// doesn't have a text-based name, so not in the enum
+				// (most likely not a cutscene command)
+				if (isdigit(*cmdName))
+				{
+					#ifdef DEBUG_CUTSCENES_STRICT
+					Die("not an oot cutscene");
+					#endif
+					goto L_fail;
+				}
+				
 				for_in(i, cmdEntries)
 				{
+					DATA_ASSERT(sizeof(CsCmdOotUnimplemented))
+					
 					CsCmdOotUnimplemented entry = {0};
 					
 					memcpy(&entry, data, sizeof(entry));
@@ -282,6 +344,9 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data)
 	}
 	
 	return cs;
+L_fail:
+	CutsceneOotFree(cs);
+	return 0;
 }
 
 void CutsceneOotToWorkblob(

@@ -72,6 +72,7 @@ typedef struct {
 	/* 0x0017 */ _(CS_CMD_OOT_ACTOR_CUE_0_3, ) \
 	/* 0x0018 */ _(CS_CMD_OOT_ACTOR_CUE_1_2, ) \
 	/* 0x0019 */ _(CS_CMD_OOT_ACTOR_CUE_2_0, ) \
+	/* 0x001A */ _(CS_CMD_OOT_UNIMPLEMENTED_1A, = 0x1A) \
 	/* 0x001B */ _(CS_CMD_OOT_UNIMPLEMENTED_1B, = 0x1B) \
 	/* 0x001C */ _(CS_CMD_OOT_UNIMPLEMENTED_1C, ) \
 	/* 0x001D */ _(CS_CMD_OOT_ACTOR_CUE_3_0, ) \
@@ -346,7 +347,7 @@ typedef struct CutsceneOot
 #if 1 // region: function prototypes
 
 struct CutsceneOot *CutsceneOotNew(void);
-struct CutsceneOot *CutsceneOotNewFromData(const u8 *data);
+struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd);
 void CutsceneOotFree(struct CutsceneOot *cs);
 const char *CsCmdOotNameString(CutsceneCmd cmd);
 void CutsceneOotToWorkblob(
