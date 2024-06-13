@@ -85,6 +85,7 @@ struct Room;
 struct Object;
 struct SceneHeader;
 struct Scene;
+struct RoomMeshSimple;
 
 typedef struct ZeldaRGB {
 	uint8_t r, g, b;
@@ -200,6 +201,53 @@ typedef struct {
 } CollisionHeader; // original name: BGDataInfo
 #endif // endregion
 
+#if 1 // region: prerendered background types
+
+typedef struct {
+	/* 0x04 */ u32   source;
+	/* 0x08 */ u32   unk_0C;
+	/* 0x0C */ u32   tlut;
+	/* 0x10 */ u16   width;
+	/* 0x12 */ u16   height;
+	/* 0x14 */ u8    fmt;
+	/* 0x15 */ u8    siz;
+	/* 0x16 */ u16   tlutMode;
+	/* 0x18 */ u16   tlutCount;
+	// extras
+	uint32_t sourceBEU32;
+	uint32_t tlutBEU32;
+} RoomShapeImage;
+
+typedef struct {
+	/* 0x00 */ u16   unk_00;
+	/* 0x02 */ u8    bgCamIndex; // for which bg cam index is this entry for
+	RoomShapeImage   image;
+} RoomShapeImageMultiBgEntry; // size = 0x1C
+
+typedef enum {
+	/* 1 */ ROOM_SHAPE_IMAGE_AMOUNT_SINGLE = 1,
+	/* 2 */ ROOM_SHAPE_IMAGE_AMOUNT_MULTI
+} RoomShapeImageAmountType;
+
+typedef struct {
+	///* 0x00 */ RoomShapeBase base; // handled elsewhere
+	/* 0x01 */ u8 amountType; // RoomShapeImageAmountType
+	///* 0x04 */ sb_array(struct RoomMeshSimple, entry); // handled elsewhere
+} RoomShapeImageBase; // size = 0x08
+
+typedef struct {
+	/* 0x00 */ RoomShapeImageBase base;
+	RoomShapeImage   image;
+} RoomShapeImageSingle; // size = 0x20
+
+typedef struct {
+	/* 0x00 */ RoomShapeImageBase base;
+	/* 0x08 */ u8 numBackgrounds;
+	/* 0x0C */ sb_array(RoomShapeImageMultiBgEntry, backgrounds);
+} RoomShapeImageMulti; // size = 0x10
+
+#endif // endregion
+
 struct File
 {
 	void *data;
@@ -243,6 +291,11 @@ struct RoomHeader
 	uint32_t addr;
 	uint8_t meshFormat;
 	bool isBlank;
+	union {
+		RoomShapeImageBase    base;
+		RoomShapeImageSingle  single;
+		RoomShapeImageMulti   multi;
+	} image;
 };
 
 struct Room

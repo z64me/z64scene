@@ -17,7 +17,7 @@
 
 void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 
-#define Min(A, B) ((A) < (B) ? (A) : (B))
+#include "misc.h" // for RoomShapeImage
 
 // gbi extras
 /* dl push flag */
@@ -1134,6 +1134,73 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 	}
 }
 
+void DataBlobSegmentsPopulateFromRoomShapeImage(void *roomShapeImage)
+{
+	RoomShapeImage *image = roomShapeImage;
+	struct DataBlob *blob;
+	int siz = image->siz;
+	int fmt = image->fmt;
+	int width = image->width;
+	int height = image->height;
+	size_t size = G_SIZ_BYTES(siz) * width * height;
+	uint32_t segAddr = image->source;
+	const void *thisData = DataBlobSegmentAddressToRealAddress(segAddr);
+	
+	if (!segAddr)
+		return;
+	
+	if (siz == G_IM_SIZ_4b) size = (width * height) / 2;
+	else size = G_SIZ_BYTES(siz) * width * height;
+	
+	if (true) // assume always jfif
+	{
+		//
+		// assuming each one is this big is fine, because
+		// the texture blobs get sorted and trimmed at a
+		// later step anyway
+		//
+		// on a somewhat related note, jfif data blobs
+		// embed a block of blank data immediately after
+		// themselves so the game doesn't have to allocate
+		// a new buffer for decoding; this is accounted for
+		// even with the trimming
+		//
+		size = ((const uint8_t*)DataBlobSegmentGet(segAddr >> 24)->dataEnd)
+			-  ((const uint8_t*)thisData)
+		;
+	}
+	
+	// texture
+	blob = DataBlobSegmentPush(
+		thisData
+		, size
+		, segAddr
+		, DATA_BLOB_TYPE_TEXTURE
+		, &image->sourceBEU32
+	);
+	
+	// don't overwrite texture size if size already set
+	if (!blob->data.texture.w)
+	{
+		blob->data.texture.w = width;
+		blob->data.texture.h = height;
+		blob->data.texture.siz = siz;
+		blob->data.texture.fmt = fmt;
+		blob->data.texture.lineSize = 0;//lineSize; // TODO
+		blob->data.texture.isJfif = true; // TODO assuming always jfif
+	}
+	
+	// palette
+	if (image->tlut)
+		DataBlobSegmentPush(
+			DataBlobSegmentAddressToRealAddress(image->tlut)
+			, 0x200 // TODO consider image->tlutCount
+			, image->tlut
+			, DATA_BLOB_TYPE_PALETTE
+			, &image->tlutBEU32
+		);
+}
+
 void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob)
 {
 	if (!blob->refs) fprintf(stderr, "warning: no refs on %08x\n", blob->originalSegmentAddress);
@@ -1205,7 +1272,9 @@ void DataBlobPrint(struct DataBlob *blob)
 		default: typeName = "unknown"; break;
 	}
 	
-	if (blob->type != DATA_BLOB_TYPE_MESH)
+	if (blob->type != DATA_BLOB_TYPE_TEXTURE
+		&& blob->type != DATA_BLOB_TYPE_PALETTE
+	)
 		typeName = 0;
 	
 	if (typeName)

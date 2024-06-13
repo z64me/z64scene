@@ -13,6 +13,7 @@
 
 extern "C" {
 #include <n64texconv.h>
+#include <stb_image.h>
 #include <stb_image_write.h>
 #include "noc_file_dialog.h"
 }
@@ -533,7 +534,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			{
 				// n64 tmem = 4kib, *4 for 32-bit color conversion
 				// and *2 b/c 4bit textures expand to *2*4x the bytes
-				imageData = (uint8_t*)malloc(4096 * 4 * 2);
+				//imageData = (uint8_t*)malloc(4096 * 4 * 2);
+				imageData = (uint8_t*)calloc(4, 512 * 512); // for prerenders
 				
 				/* test
 				imageWidth = imageHeight = 64;
@@ -586,16 +588,31 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						goto L_textureError;
 					}
 					
-					n64texconv_to_rgba8888(
-						imageData
-						, (unsigned char*)blob->refData // TODO const correctness
-						, (unsigned char*)(palBlob ? palBlob->refData : 0)
-						, (n64texconv_fmt)imageFmt
-						, (n64texconv_bpp)imageSiz
-						, imageWidth
-						, imageHeight
-						, blob->data.texture.lineSize
-					);
+					if (blob->data.texture.isJfif)
+					{
+						int x, y, c;
+						void *test = stbi_load_from_memory(
+							(const stbi_uc*)blob->refData
+							, blob->sizeBytes
+							, &x, &y, &c, 4
+						);
+						//fprintf(stderr, "test = %p %d x %d x %d\n", test, x, y, c);
+						memcpy(imageData, test, x * y * 4);
+						stbi_image_free(test);
+					}
+					else
+					{
+						n64texconv_to_rgba8888(
+							imageData
+							, (unsigned char*)blob->refData // TODO const correctness
+							, (unsigned char*)(palBlob ? palBlob->refData : 0)
+							, (n64texconv_fmt)imageFmt
+							, (n64texconv_bpp)imageSiz
+							, imageWidth
+							, imageHeight
+							, blob->data.texture.lineSize
+						);
+					}
 					
 					// Create a OpenGL texture identifier
 					glGenTextures(1, &imageTexture);
@@ -628,7 +645,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			}
 			const char *fmt[] = { "rgba", "yuv", "  ci", "  ia", "   i" };
 			const char *bpp[] = { "4 ", "8 ", "16", "32" };
-			ImGui::Text("%s-%s", fmt[imageFmt], bpp[imageSiz]);
+			if (textureBlob->data->data.texture.isJfif)
+				ImGui::Text("jfif");
+			else
+				ImGui::Text("%s-%s", fmt[imageFmt], bpp[imageSiz]);
 			ImGui::SameLine();
 			ImGui::Text("%3d x %3d", imageWidth, imageHeight);
 			ImGui::SameLine();
@@ -685,6 +705,9 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					struct DataBlob *palBlob = blob->data.texture.pal;
 					
 					snprintf(name, sizeof(name), "%08x.%s%s.png", segAddr, fmt[imageFmt], bpp[imageSiz]);
+					
+					if (textureBlob->data->data.texture.isJfif)
+						snprintf(name, sizeof(name), "%08x.jfif.png", segAddr);
 					
 					fn = noc_file_dialog_open(NOC_FILE_DIALOG_SAVE, "png\0*.png\0", NULL, name);
 					

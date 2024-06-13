@@ -403,6 +403,29 @@ void SceneReadyDataBlobs(struct Scene *scene)
 				if (each->xlu)
 					DataBlobSegmentsPopulateFromMeshNew(each->xlu, &each->xluBEU32);
 			});
+			
+			// prerenders
+			if (each->meshFormat == 1)
+			{
+				switch (each->image.base.amountType)
+				{
+					case ROOM_SHAPE_IMAGE_AMOUNT_SINGLE:
+						DataBlobSegmentsPopulateFromRoomShapeImage(&each->image.single.image);
+						break;
+					
+					case ROOM_SHAPE_IMAGE_AMOUNT_MULTI: {
+						typeof(each->image.multi.backgrounds) backgrounds = each->image.multi.backgrounds;
+						sb_foreach(backgrounds, {
+							DataBlobSegmentsPopulateFromRoomShapeImage(&each->image);
+						})
+						break;
+					}
+					
+					default:
+						Die("unsupported prerender amountType=%d\n", each->image.base.amountType);
+						break;
+				}
+			}
 		});
 		
 		each->blobs = DataBlobSegmentGetHead(3);
@@ -1153,6 +1176,35 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	TRY_ALTERNATE_HEADERS(private_SceneParseAddHeader, scene, 0x02, 0x15)
 }
 
+static RoomShapeImage RoomShapeImageFromBytes(const void *data)
+{
+	const uint8_t *work = data;
+	
+	RoomShapeImage result = {
+		.source = u32r(work + 0),
+		.unk_0C = u32r(work + 4),
+		.tlut = u32r(work + 8),
+		.width = u16r(work + 12),
+		.height = u16r(work + 14),
+		.fmt = u8r(work + 16),
+		.siz = u8r(work + 17),
+		.tlutMode = u16r(work + 18),
+		.tlutCount = u16r(work + 20),
+	};
+	
+	fprintf(stderr, "RoomShapeImageFromBytes()\n");
+	fprintf(stderr, " - source    = %08x\n", result.source);
+	fprintf(stderr, " - tlut      = %08x\n", result.tlut);
+	fprintf(stderr, " - unk_0C    = %08x\n", result.unk_0C);
+	fprintf(stderr, " - unk_0C    = %08x\n", result.unk_0C);
+	fprintf(stderr, " - fmt       = %02x\n", result.fmt);
+	fprintf(stderr, " - siz       = %02x\n", result.siz);
+	fprintf(stderr, " - tlutMode  = %08x\n", result.tlutMode);
+	fprintf(stderr, " - tlutCount = %08x\n", result.tlutCount);
+	
+	return result;
+}
+
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 {
 	struct RoomHeader *result = Calloc(1, sizeof(*result));
@@ -1255,6 +1307,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				{
 					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
 					
+					// DL's
 					for (int i = 0; ; ++i)
 					{
 						uint8_t *bin = arr + 4 * i;
@@ -1269,6 +1322,41 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						
 						sb_push(result->displayLists, tmp);
 					}
+					
+					// type
+					switch (d[1])
+					{
+						case ROOM_SHAPE_IMAGE_AMOUNT_SINGLE:
+							result->image.single = (RoomShapeImageSingle){
+								.image = (RoomShapeImageFromBytes(d + 8)),
+							};
+							break;
+						
+						case ROOM_SHAPE_IMAGE_AMOUNT_MULTI: {
+							result->image.multi = (RoomShapeImageMulti){
+								.numBackgrounds = u8r(d + 8),
+							};
+							fprintf(stderr, "prerender w/ %d bg's\n", result->image.multi.numBackgrounds);
+							const uint8_t *work = data8 + (u32r(d + 12) & 0x00ffffff);
+							fprintf(stderr, "work = %08x %p\n", (u32r(d + 12) & 0x00ffffff), work);
+							for (int i = 0; i < result->image.multi.numBackgrounds; ++i, work += 28)
+							{
+								sb_push(result->image.multi.backgrounds
+									, ((RoomShapeImageMultiBgEntry){
+										.unk_00 = u16r(work + 0),
+										.bgCamIndex = u8r(work + 2),
+										.image = RoomShapeImageFromBytes(work + 4),
+									})
+								);
+							}
+							break;
+						}
+						
+						default:
+							Die("unknown prerender amountType=%d\n", d[1]);
+							break;
+					}
+					result->image.base.amountType = d[1];
 				}
 				else
 				{

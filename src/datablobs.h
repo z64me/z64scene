@@ -55,6 +55,7 @@ struct DataBlob
 			int lineSize;
 			int sizeBytesClamped;
 			struct DataBlob *pal;
+			bool isJfif;
 		} texture;
 	} data;
 };
@@ -94,6 +95,7 @@ struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);
 bool DataBlobSegmentContainsSegAddr(int segmentIndex, uint32_t originalSegmentAddress);
 void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator);
 void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator);
+void DataBlobSegmentsPopulateFromRoomShapeImage(void *roomShapeImage);
 void DataBlobPrint(struct DataBlob *blob);
 void DataBlobPrintAll(struct DataBlob *blobs);
 const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);

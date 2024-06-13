@@ -17,14 +17,18 @@ int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
 	
-	// test: open and re-export a single scene (argv[1] -> bin/test_scene.zscene)
+	// test: open and re-export a single scene (argv[1] -> argv[2])
 #if 0
-	if (argc == 2)
+	if (argc >= 2)
 	{
 		scene = SceneFromFilenamePredictRooms(argv[1]);
-		SceneToFilename(scene, "bin/test_scene.zscene");
+		if (argc == 3)
+			SceneToFilename(scene, argv[2]);
 		SceneFree(scene);
-		fprintf(stderr, "successfully wrote test scene\n");
+		if (argc == 3)
+			fprintf(stderr, "successfully wrote test scene\n");
+		else
+			fprintf(stderr, "successfully processed input scene\n");
 	}
 	return 0;
 #endif
@@ -34,7 +38,7 @@ int main(int argc, char *argv[])
 	// bin/exhaustive/oot/scenes/0 - Dungeon/scene.zscene
 	// bin/exhaustive/oot/scenes/1 - House/scene.zscene
 	// bin/exhaustive/oot/scenes/2 - Town/scene.zscene
-#if 1
+#if 0
 	{
 		const char *fn = "bin/exhaustive-oot.txt";
 		struct File *file = FileFromFilename(fn);
@@ -46,6 +50,12 @@ int main(int argc, char *argv[])
 			src = 0;
 			fprintf(stderr, "'%s'\n", tok);
 			scene = SceneFromFilenamePredictRooms(tok);
+			/*
+			if (scene->rooms[0].headers[0].meshFormat == 1
+				&& scene->rooms[0].headers[0].image.base.amountType
+					== ROOM_SHAPE_IMAGE_AMOUNT_MULTI
+			) Die("found ROOM_SHAPE_IMAGE_AMOUNT_MULTI");
+			*/
 			SceneToFilename(scene, 0);
 			SceneFree(scene);
 		}

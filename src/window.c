@@ -1205,7 +1205,7 @@ void WindowMainLoop(struct Scene *scene)
 	Matrix_Init();
 	
 	struct File *test = 0;
-	if (true) {
+	if (false) {
 		const char *testFn = "bin/test.bin";
 		testFn = "bin/test1.bin";
 		if (FileExists(testFn))
