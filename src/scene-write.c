@@ -362,6 +362,13 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 
 static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders)
 {
+	// this is a bandaid solution for z64rom, which assumes
+	// the alternate header block ends where the next block
+	// begins; this hack guarantees one small block that is
+	// guaranteed to be referenced by the scene header will
+	// not be optimized away using duplicate detection
+	bool z64romHack = false;
+	
 	if (header->isBlank)
 		return 0;
 	
@@ -375,6 +382,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	{
 		WorkblobPut32(0x18000000);
 		WorkblobPut32(alternateHeaders);
+		z64romHack = true;
 	}
 	
 	// unhandled commands
@@ -388,6 +396,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(0x04000000 | (numRooms << 16));
 		
 		// room list
+		WorkblobAllowDuplicates(z64romHack);
 		{
 			WorkblobPush(4);
 			
@@ -402,6 +411,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			
 			WorkblobPop();
 		}
+		WorkblobAllowDuplicates(false);
 		
 		WorkblobPut32(gWorkblobAddr);
 	}
