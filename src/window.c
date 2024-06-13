@@ -747,6 +747,8 @@ void WindowSaveScene(void)
 	
 	// overwrite loaded scene and rooms
 	SceneToFilename(*gSceneP, 0);
+	
+	GuiPushModal("Saved scene and room files successfully.");
 }
 
 void WindowSaveSceneAs(void)
@@ -762,6 +764,8 @@ void WindowSaveSceneAs(void)
 		return;
 	
 	SceneToFilename(*gSceneP, fn);
+	
+	GuiPushModal("Saved scene and room files successfully.");
 }
 
 struct Scene *WindowLoadScene(const char *fn)

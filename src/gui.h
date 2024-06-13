@@ -46,6 +46,7 @@ int GuiHasFocus(void);
 int GuiHasFocusMouse(void);
 int GuiHasFocusKeyboard(void);
 void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
+void GuiPushModal(const char *message);
 void GuiCallbackActorGrabbed(uint16_t index);
 
 #endif

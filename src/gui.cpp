@@ -56,6 +56,105 @@ struct GuiSettings
 	{
 		memset(&combos, 0, sizeof(combos));
 	}
+
+private:
+	// small status messages that appear in the corner and fade out
+	struct Modal
+	{
+		float timeoutStart;
+		float timeout;
+		char message[256];
+		bool hasDrawn = false;
+		
+		Modal(const char *message, float timeout = 5)
+		{
+			this->timeoutStart = timeout;
+			this->timeout = timeout;
+			this->message[0] = '\0';
+			strncat(this->message, message, sizeof(this->message) - 1);
+		}
+	};
+	std::vector<Modal> modals;
+
+public:
+	void DrawModals(void)
+	{
+		ImGuiWindowFlags window_flags =
+			ImGuiWindowFlags_NoDecoration
+			| ImGuiWindowFlags_AlwaysAutoResize
+			| ImGuiWindowFlags_NoSavedSettings
+			| ImGuiWindowFlags_NoFocusOnAppearing
+			| ImGuiWindowFlags_NoNav
+			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoMouseInputs
+		;
+		const float timeoutFadeStart = 0.5; // start fadeout when timeout reaches this value
+		const float PAD = 10.0f;
+		const ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGuiIO& io = ImGui::GetIO();
+		const int location = 2; // lower left corner
+		ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+		ImVec2 work_size = viewport->WorkSize;
+		ImVec2 window_pos, window_pos_pivot;
+		window_pos.x = (location & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+		window_pos.y = (location & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+		window_pos_pivot.x = (location & 1) ? 1.0f : 0.0f;
+		window_pos_pivot.y = (location & 2) ? 1.0f : 0.0f;
+		char unique[32];
+		int i = 0;
+		
+		for (Modal &modal : modals)
+		{
+			ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+			float windowOpacity = 0.35f;
+			float textOpacity = 1.0f;
+			ImVec2 windowSize = {0, 0};
+			
+			// setup fadeout
+			if (timeoutFadeStart && modal.timeout <= timeoutFadeStart)
+			{
+				float mul = modal.timeout / timeoutFadeStart;
+				
+				windowOpacity *= mul;
+				textOpacity *= mul;
+			}
+			
+			// update style
+			ImGuiStyle* style = &ImGui::GetStyle();
+			ImGui::SetNextWindowBgAlpha(windowOpacity);
+			float textOpaOld = style->Colors[ImGuiCol_Text].w;
+			float borderOpaOld = style->Colors[ImGuiCol_Border].w;
+			style->Colors[ImGuiCol_Text].w *= textOpacity;
+			style->Colors[ImGuiCol_Border].w *= textOpacity;
+			
+			// draw
+			sprintf(unique, "##modal%d\n", ++i);
+			if (ImGui::Begin(unique, 0, window_flags))
+			{
+				ImGui::Text(modal.message);
+				windowSize = ImGui::GetWindowSize();
+			}
+			ImGui::End();
+			
+			// restore style
+			style->Colors[ImGuiCol_Text].w = textOpaOld;
+			style->Colors[ImGuiCol_Border].w = borderOpaOld;
+			
+			// advance
+			if (modal.hasDrawn)
+				modal.timeout -= io.DeltaTime;
+			window_pos.y -= windowSize.y + PAD;
+			modal.hasDrawn = true;
+		}
+		
+		while (!modals.empty() && modals.back().timeout <= 0)
+			modals.pop_back();
+	}
+	
+	void PushModal(const char *message, float timeout = 2)
+	{
+		modals.insert(modals.begin(), Modal(message, timeout));
+	}
 	
 private:
 	struct Line
@@ -894,6 +993,12 @@ extern "C" void GuiInit(GLFWwindow *window)
 	//JsonTest();
 	//TomlTest();
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+	
+	// test modals
+	return;
+	gGuiSettings.PushModal("hello world");
+	gGuiSettings.PushModal("hello world-1");
+	gGuiSettings.PushModal("hello world-2");
 }
 
 // just testing things for now
@@ -933,6 +1038,8 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	if (gGuiSettings.showSidebar)
 		DrawSidebar();
 	
+	gGuiSettings.DrawModals();
+	
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 	if (gGuiSettings.showImGuiDemoWindow)
 		ImGui::ShowDemoWindow(&gGuiSettings.showImGuiDemoWindow);
@@ -971,5 +1078,10 @@ extern "C" void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, floa
 	newcolor |= ((color >> 16) & 0xff) << 8;
 	newcolor |= ((color >> 24) & 0xff) << 0;
 	gGuiSettings.PushLine(x1, y1, x2, y2, newcolor, thickness);
+}
+
+extern "C" void GuiPushModal(const char *message)
+{
+	gGuiSettings.PushModal(message);
 }
 
