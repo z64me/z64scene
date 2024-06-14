@@ -652,7 +652,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	{
 		WorkblobPut32(0x02000000 | (sb_count(header->actorCsCamInfo) << 16));
 		
-		WorkblobPush(2);
+		WorkblobPush(4);
 		sb_foreach(header->actorCsCamInfo, {
 			sb_array(Vec3s, data) = each->actorCsCamFuncData;
 			WorkblobPut16(each->setting);
@@ -664,6 +664,28 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 					WorkblobPut16(each->z);
 				});
 			WorkblobPut32(WorkblobPop());
+		});
+		
+		WorkblobPut32(WorkblobPop());
+	}
+	
+	// actor cutscenes
+	if (sb_count(header->actorCutscenes))
+	{
+		WorkblobPut32(0x1B000000 | (sb_count(header->actorCutscenes) << 16));
+		
+		WorkblobPush(2);
+		sb_foreach(header->actorCutscenes, {
+			WorkblobPut16(each->priority);
+			WorkblobPut16(each->length);
+			WorkblobPut16(each->csCamId);
+			WorkblobPut16(each->scriptIndex);
+			WorkblobPut16(each->additionalCsId);
+			WorkblobPut8(each->endSfx);
+			WorkblobPut8(each->customValue);
+			WorkblobPut16(each->hudVisibility);
+			WorkblobPut8(each->endCam);
+			WorkblobPut8(each->letterboxSize);
 		});
 		
 		WorkblobPut32(WorkblobPop());

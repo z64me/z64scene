@@ -125,6 +125,19 @@ typedef struct {
 	/* 0x4 */ sb_array(Vec3s, actorCsCamFuncData); // s16 data grouped in threes
 } ActorCsCamInfo; // size = 0x8
 
+typedef struct {
+	/* 0x00 */ s16 priority; // Lower means higher priority. -1 means it ignores priority
+	/* 0x02 */ s16 length;
+	/* 0x04 */ s16 csCamId; // Index of CsCameraEntry to use. Negative indices use sGlobalCamDataSettings. Indices 0 and above use CsCameraEntry from a sceneLayer
+	/* 0x06 */ s16 scriptIndex;
+	/* 0x08 */ s16 additionalCsId;
+	/* 0x0A */ u8 endSfx;
+	/* 0x0B */ u8 customValue; // 0 - 99: actor-specific custom value. 100+: spawn. 255: none
+	/* 0x0C */ s16 hudVisibility;
+	/* 0x0E */ u8 endCam;
+	/* 0x0F */ u8 letterboxSize;
+} ActorCutscene; // size = 0x10
+
 #if 1 // region: collision types
 typedef struct {
 	uint32_t w0;
@@ -356,6 +369,7 @@ struct SceneHeader
 	struct CutsceneOot *cutsceneOot;
 	sb_array(struct CutsceneListMm, cutsceneListMm);
 	sb_array(ActorCsCamInfo, actorCsCamInfo);
+	sb_array(ActorCutscene, actorCutscenes);
 	uint32_t addr;
 	int numRooms;
 	struct {

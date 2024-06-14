@@ -1149,7 +1149,32 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				}
 				break;
 			}
-			case 0x1B: // TODO cameras and cutscenes used by actors
+			case 0x1B: { // actor cutscene list
+				uint32_t w1 = u32r(walk + 4);
+				const uint8_t *d = n64_segment_get(w1);
+				
+				if (w1 && d)
+				{
+					for (int i = 0; i < walk[1]; ++i, d += 16)
+					{
+						sb_push(result->actorCutscenes,
+							((ActorCutscene){
+								.priority = u16r(d),
+								.length = u16r(d + 2),
+								.csCamId = u16r(d + 4),
+								.scriptIndex = u16r(d + 6),
+								.additionalCsId = u16r(d + 8),
+								.endSfx = u8r(d + 10),
+								.customValue = u8r(d + 11),
+								.hudVisibility = u16r(d + 12),
+								.endCam = u8r(d + 14),
+								.letterboxSize = u8r(d + 15),
+							})
+						);
+					}
+				}
+				break;
+			}
 			case 0x1C: // TODO mini maps
 			case 0x1E: // TODO treasure chest positions on mini-map
 			case 0x1D: // unused
