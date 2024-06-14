@@ -37,6 +37,7 @@ struct CutsceneOot;
 
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
+#define u8r3(X)  {  u8r(X),  u8r(((const uint8_t*)(X)) + 1),  u8r(((const uint8_t*)(X)) + 1) }
 #define u16r3(X) { u16r(X), u16r(((const uint8_t*)(X)) + 2), u16r(((const uint8_t*)(X)) + 4) }
 #define u32r3(X) { u32r(X), u32r(((const uint8_t*)(X)) + 4), u32r(((const uint8_t*)(X)) + 8) }
 #define f32r3(X) { f32r(X), f32r(((const uint8_t*)(X)) + 4), f32r(((const uint8_t*)(X)) + 8) }

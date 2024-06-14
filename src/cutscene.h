@@ -715,6 +715,8 @@ DEFINE_ENUM(CsMotionBlurTypeMm, ENUM_CsMotionBlurTypeMm)
 DEFINE_ENUM(CutsceneRumbleTypeMm, ENUM_CutsceneRumbleTypeMm)
 DEFINE_ENUM(CutsceneStateMm, ENUM_CutsceneStateMm)
 
+AS_STRING_DEC(CutsceneCmdMm, ENUM_CutsceneCmdMm)
+
 #if 1 // region: command type structs
 
 typedef union {
@@ -946,15 +948,16 @@ typedef struct {
 		sb_array(CsCmdMmTransitionGeneral,   transitionGeneral);
 		sb_array(CsCmdMmGiveTatl,            giveTatl);
 		sb_array(CsCmdMmUnimplemented,       unimplemented);
+		sb_array(u8,                         cameraSplineBytes);
 	};
 } CsCmdMm;
 
-typedef struct {
+typedef struct CutsceneMm {
 	int32_t frameCount;
 	sb_array(CsCmdMm, commands);
 } CutsceneMm;
 
-typedef struct {
+typedef struct CutsceneListMm {
 	/* 0x0 */ CutsceneMm *script;
 	/* 0x4 */ s16 nextEntrance;
 	/* 0x6 */ u8 spawn;

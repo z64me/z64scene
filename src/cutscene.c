@@ -573,9 +573,407 @@ AS_STRING_FUNC(CutsceneCmdOot, ENUM_CS_CMD_OOT)
 
 #if 1 // region: mm
 
-struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num)
+struct CutsceneMm *CutsceneMmNew(void)
 {
+	struct CutsceneMm *cs = calloc(1, sizeof(*cs));
+	
+	return cs;
+}
+
+void CutsceneMmFree(struct CutsceneMm *cs)
+{
+	if (!cs)
+		return;
+	
+	// TODO free nested data
+	
+	sb_free(cs->commands);
+	free(cs);
+}
+
+struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)
+{
+	const uint8_t *dataStart = data;
+	struct CutsceneMm *cs = CutsceneMmNew();
+	int totalEntries = u32r(data); data += 4;
+	cs->frameCount = u32r(data); data += 4;
+	
+	fprintf(stderr, "CutsceneMmNewFromData(%p)\n", data);
+	
+	// Loop over every command list
+	for (int i = 0; i < totalEntries; i++)
+	{
+		int cmdType = u32r(data); data += 4;
+		const char *cmdName = CutsceneCmdMmAsString(cmdType);
+		CsCmdMm cmd = { .type = cmdType };
+		int cmdEntries = 0;
+		
+		fprintf(stderr, "cmdName = %s, %08x\n", cmdName, (uint32_t)((data - 4) - dataStart));
+		
+		// cmdEntries is read by every command in mm
+		if (true || !strstr(cmdName, "_CAMERA_")) { cmdEntries = u32r(data); data += 4; }
+		
+		if (cmdType == CS_CAM_STOP)
+			i = totalEntries;
+		else if (((cmdType >= CS_CMD_MM_ACTOR_CUE_100) && (cmdType <= CS_CMD_MM_ACTOR_CUE_149))
+			 || (cmdType == CS_CMD_MM_ACTOR_CUE_201)
+			 || ((cmdType >= CS_CMD_MM_ACTOR_CUE_450) && (cmdType <= CS_CMD_MM_ACTOR_CUE_599))
+			 || cmdType == CS_CMD_MM_PLAYER_CUE
+		) {
+			for_in(i, cmdEntries)
+			{
+				CsCmdMmActorCue entry = {
+					.id = u16r(data + 0),
+					.startFrame = u16r(data + 2),
+					.endFrame =  u16r(data + 4),
+					.rot = u16r3(data + 6),
+					.startPos = u32r3(data + 12),
+					.endPos = u32r3(data + 24),
+					.normal = f32r3(data + 36),
+				};
+				data += sizeof(entry);
+				
+				sb_push(cmd.actorCue, entry);
+			}
+		}
+		else switch (cmdType) {
+			case CS_CMD_MM_MISC:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmMisc entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.misc, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_LIGHT_SETTING:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmLightSetting entry = {
+						.settingPlusOne = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.lightSetting, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_START_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmStartSeq entry = {
+						.seqIdPlusOne = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.startSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_STOP_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmStopSeq entry = {
+						.seqIdPlusOne = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.stopSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_FADE_OUT_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmFadeOutSeq entry = {
+						.seqPlayer = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.fadeOutSeq, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_START_AMBIENCE:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmStartAmbience entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.startAmbience, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_FADE_OUT_AMBIENCE:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmFadeOutAmbience entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.fadeOutAmbience, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_SFX_REVERB_INDEX_2:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmSfxReverbIndexTo2 entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.sfxReverbIndexTo2, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_SFX_REVERB_INDEX_1:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmSfxReverbIndexTo1 entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.sfxReverbIndexTo1, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_MODIFY_SEQ:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmModifySeq entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.modifySeq, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_RUMBLE:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmRumble entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.intensity = u8r(data + 6),
+						.decayTimer = u8r(data + 7),
+						.decayStep = u8r(data + 8),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.rumble, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_TRANSITION_GENERAL:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmTransitionGeneral entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.color = u8r3(data + 6),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.transitionGeneral, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_TIME:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmTime entry = {
+						.unused0 = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.hour = u8r(data + 6),
+						.minute = u8r(data + 7),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.time, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_CAMERA_SPLINE:
+				// cmdEntries is cmdBytes (size of block in bytes)
+				// TODO parse this into an intermediate format later
+				for_in(i, cmdEntries)
+					sb_push(cmd.cameraSplineBytes, data[i]);
+				data += cmdEntries;
+				break;
+			
+			case CS_CMD_MM_DESTINATION:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmDestination entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.destination, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_CHOOSE_CREDITS_SCENES:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmChooseCreditsScene entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.chooseCreditsScene, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_TEXT:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmText entry = {
+						.textId = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+						.type = u16r(data + 6),
+						.altTextId1 = u16r(data + 8),
+						.altTextId2 = u16r(data + 10),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.text, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_TRANSITION:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmTransition entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.transition, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_MOTION_BLUR:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmMotionBlur entry = {
+						.type = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.motionBlur, entry);
+				}
+				break;
+			
+			case CS_CMD_MM_GIVE_TATL:
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmGiveTatl entry = {
+						.giveTatl = u16r(data),
+						.startFrame = u16r(data + 2),
+						.endFrame = u16r(data + 4),
+					};
+					data += sizeof(entry);
+					
+					sb_push(cmd.giveTatl, entry);
+				}
+				break;
+			
+			default:
+				fprintf(stderr, "unhandled cutscene command '%s'\n", cmdName);
+				
+				// doesn't have a text-based name, so not in the enum
+				// (most likely not a cutscene command)
+				if (isdigit(*cmdName))
+				{
+					#ifdef DEBUG_CUTSCENES_STRICT
+					Die("not an mm cutscene");
+					#endif
+					goto L_fail;
+				}
+				
+				for_in(i, cmdEntries)
+				{
+					CsCmdMmUnimplemented entry = {0};
+					
+					memcpy(&entry, data, sizeof(entry));
+					data += sizeof(entry);
+					
+					sb_push(cmd.unimplemented, entry);
+				}
+				break;
+		}
+		
+		sb_push(cs->commands, cmd);
+	}
+	
+	return cs;
+L_fail:
+	CutsceneMmFree(cs);
 	return 0;
 }
+
+struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num)
+{
+	sb_array(CutsceneListMm, result) = 0;
+	
+	for (u8 i = 0; i < num; ++i, data += 8)
+	{
+		fprintf(stderr, "append cutscene %08x\n", u32r(data));
+		
+		sb_push(result, ((CutsceneListMm) {
+			.script = CutsceneMmNewFromData(n64_segment_get(u32r(data)), dataEnd),
+			.nextEntrance = u16r(data + 4),
+			.spawn = u8r(data + 6),
+			.spawnFlags = u8r(data + 7),
+		}));
+	}
+	
+	return result;
+	return 0;
+}
+
+AS_STRING_FUNC(CutsceneCmdMm, ENUM_CutsceneCmdMm)
 
 #endif // endregion
