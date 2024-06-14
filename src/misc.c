@@ -1031,7 +1031,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					struct ActorPath path = { 0 };
 					
 					if (numPoints == 0
-						|| (u32r(arr) & 0x00ffffff)
+						|| ((u32r(arr) & 0x00ffffff) != 0x00ffffff // mm
+							&& (u32r(arr) & 0x00ffffff) != 0 // oot
+						)
 						|| (data8 + (pathStart & 0x00ffffff)) >= (uint8_t*)file->dataEnd
 						|| !(elem = n64_segment_get(pathStart))
 					)
