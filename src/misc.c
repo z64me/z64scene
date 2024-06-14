@@ -1028,12 +1028,12 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					const uint8_t *elem;
 					int numPoints = arr[0];
 					uint32_t pathStart = u32r(arr + 4);
-					struct ActorPath path = { 0 };
+					struct ActorPath path = {
+						.additionalPathIndex = arr[1], // mm only
+						.customValue = u16r(arr + 2), // mm only
+					};
 					
 					if (numPoints == 0
-						|| ((u32r(arr) & 0x00ffffff) != 0x00ffffff // mm
-							&& (u32r(arr) & 0x00ffffff) != 0 // oot
-						)
 						|| (data8 + (pathStart & 0x00ffffff)) >= (uint8_t*)file->dataEnd
 						|| !(elem = n64_segment_get(pathStart))
 					)

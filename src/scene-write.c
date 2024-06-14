@@ -521,6 +521,8 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		sb_foreach(header->paths, {
 			WorkblobPut8(sb_count(each->points));
+			WorkblobPut8(each->additionalPathIndex);
+			WorkblobPut16(each->customValue);
 			typeof(each->points) points = each->points;
 			WorkblobPush(2);
 			sb_foreach(points, {

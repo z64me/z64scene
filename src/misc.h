@@ -339,6 +339,9 @@ struct SpawnPoint
 
 struct ActorPath
 {
+	//uint8_t numPoints; // unused b/c sb_array() has sb_count()
+	uint8_t additionalPathIndex; // mm only
+	uint16_t customValue; // mm only
 	sb_array(Vec3f, points);
 };
 
