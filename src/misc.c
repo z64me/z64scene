@@ -1082,7 +1082,10 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			case 0x17: { // cutscenes
 				uint32_t w1 = u32r(walk + 4);
 				fprintf(stderr, "cutscene header %08x\n", w1);
-				result->cutsceneOot = CutsceneOotNewFromData(n64_segment_get(w1), file->dataEnd);
+				if (walk[1])
+					result->cutsceneListMm = CutsceneListMmNewFromData(n64_segment_get(w1), file->dataEnd, walk[1]);
+				else
+					result->cutsceneOot = CutsceneOotNewFromData(n64_segment_get(w1), file->dataEnd);
 				break;
 			}
 			

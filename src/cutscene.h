@@ -181,8 +181,8 @@ typedef struct {
 	/* 0xFFFF */ _(CS_CMD_OOT_END, = 0xFFFF)
 #endif // enum macro
 
-DEFINE_ENUM(CutsceneCmd, ENUM_CS_CMD_OOT)
-AS_STRING_DEC(CutsceneCmd, ENUM_CS_CMD_OOT)
+DEFINE_ENUM(CutsceneCmdOot, ENUM_CS_CMD_OOT)
+AS_STRING_DEC(CutsceneCmdOot, ENUM_CS_CMD_OOT)
 
 typedef union {
 	struct {
@@ -317,7 +317,7 @@ typedef union {
 
 typedef struct
 {
-	CutsceneCmd type;
+	CutsceneCmdOot type;
 	union
 	{
 		sb_array(CsCmdOotCam,            cam);
@@ -344,12 +344,19 @@ typedef struct CutsceneOot
 
 #endif // endregion
 
+#if 1 // region: mm
+
+typedef struct CutsceneListMm
+{
+} CutsceneListMm;
+
+#endif // endregion
+
 #if 1 // region: function prototypes
 
 struct CutsceneOot *CutsceneOotNew(void);
 struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd);
 void CutsceneOotFree(struct CutsceneOot *cs);
-const char *CsCmdOotNameString(CutsceneCmd cmd);
 void CutsceneOotToWorkblob(
 	struct CutsceneOot *cs
 	, void WorkblobPush(uint8_t alignBytes)
@@ -360,6 +367,8 @@ void CutsceneOotToWorkblob(
 	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
 	, void WorkblobThisExactlyEnd(void)
 );
+
+struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num);
 
 #endif // endregion
 

@@ -53,7 +53,7 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 		DATA_ASSERT(4)
 		
 		int cmdType = u32r(data); data += 4;
-		const char *cmdName = CutsceneCmdAsString(cmdType);
+		const char *cmdName = CutsceneCmdOotAsString(cmdType);
 		CsCmdOot cmd = { .type = cmdType };
 		int cmdEntries = 0;
 		bool hasOneCameraPoint = false;
@@ -369,7 +369,7 @@ void CutsceneOotToWorkblob(
 	{
 		CsCmdOot cmd = cs->commands[i];
 		int cmdType = cmd.type; WorkblobPut32(cmdType);
-		const char *cmdName = CutsceneCmdAsString(cmdType);
+		const char *cmdName = CutsceneCmdOotAsString(cmdType);
 		int cmdEntries = 0;
 		//bool hasOneCameraPoint = false; // shouldn't be necessary when writing
 		
@@ -567,6 +567,15 @@ void CutsceneOotToWorkblob(
 	WorkblobPop();
 }
 
-AS_STRING_FUNC(CutsceneCmd, ENUM_CS_CMD_OOT)
+AS_STRING_FUNC(CutsceneCmdOot, ENUM_CS_CMD_OOT)
+
+#endif // endregion
+
+#if 1 // region: mm
+
+struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num)
+{
+	return 0;
+}
 
 #endif // endregion

@@ -347,6 +347,7 @@ struct SceneHeader
 	sb_array(struct ActorPath, paths);
 	sb_array(struct Doorway, doorways);
 	struct CutsceneOot *cutsceneOot;
+	sb_array(struct CutsceneListMm, cutsceneListMm);
 	uint32_t addr;
 	int numRooms;
 	struct {
