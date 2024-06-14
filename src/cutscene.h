@@ -919,6 +919,7 @@ typedef union {
 		/* 0x4 */ u16 endFrame; // unused
 	};
 	s32 _words[2];
+	u8 _bytes[0x8];
 } CsCmdMmUnimplemented; // size = 0x8
 
 #endif // endregion: command type structs
@@ -983,6 +984,26 @@ void CutsceneOotToWorkblob(
 );
 
 struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num);
+uint32_t CutsceneMmToWorkblob(
+	struct CutsceneMm *cs
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+	, void WorkblobThisExactlyEnd(void)
+);
+uint32_t CutsceneListMmToWorkblob(
+	struct CutsceneListMm *list
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+	, void WorkblobThisExactlyEnd(void)
+);
 
 #endif // endregion
 

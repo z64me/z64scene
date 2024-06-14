@@ -628,6 +628,25 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
+	// cutscene lists
+	if (sb_count(header->cutsceneListMm))
+	{
+		WorkblobPut32(0x17000000 | (sb_count(header->cutsceneListMm) << 16));
+		
+		CutsceneListMmToWorkblob(
+			header->cutsceneListMm
+			, WorkblobPush
+			, WorkblobPop
+			, WorkblobPut8
+			, WorkblobPut16
+			, WorkblobPut32
+			, WorkblobThisExactlyBegin
+			, WorkblobThisExactlyEnd
+		);
+		
+		WorkblobPut32(gWorkblobAddr);
+	}
+	
 	// end header command
 	WorkblobPut32(0x14000000);
 	WorkblobPut32(0x00000000);

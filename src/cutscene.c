@@ -593,6 +593,9 @@ void CutsceneMmFree(struct CutsceneMm *cs)
 
 struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)
 {
+	if (!data)
+		return 0;
+	
 	const uint8_t *dataStart = data;
 	struct CutsceneMm *cs = CutsceneMmNew();
 	int totalEntries = u32r(data); data += 4;
@@ -954,6 +957,282 @@ L_fail:
 	return 0;
 }
 
+uint32_t CutsceneMmToWorkblob(
+	struct CutsceneMm *cs
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+	, void WorkblobThisExactlyEnd(void)
+)
+{
+	if (!cs)
+		return 0;
+	
+	WorkblobPush(4);
+	
+	int totalEntries = sb_count(cs->commands); WorkblobPut32(totalEntries);
+	WorkblobPut32(cs->frameCount);
+	
+	// Loop over every command list
+	for (int i = 0; i < totalEntries; i++)
+	{
+		CsCmdMm cmd = cs->commands[i];
+		int cmdType = cmd.type; WorkblobPut32(cmdType);
+		const char *cmdName = CutsceneCmdMmAsString(cmdType);
+		int cmdEntries = sb_count(cmd.misc); // it's a union, so this counts all types
+		WorkblobPut32(cmdEntries);
+		
+		fprintf(stderr, "write cmdName = %s\n", cmdName);
+		
+		// cmdEntries is read by every command in mm
+		
+		if (cmdType == CS_CAM_STOP)
+			i = totalEntries;
+		else if (strstr(cmdName, "ACTOR_CUE")
+			|| cmdType == CS_CMD_MM_PLAYER_CUE
+		) {
+			sb_foreach(cmd.actorCue, {
+				WorkblobThisExactlyBegin(sizeof(*each));
+					WorkblobPut16(each->id);
+					WorkblobPut16(each->startFrame);
+					WorkblobPut16(each->endFrame);
+					WorkblobPut16(each->rot.x);
+					WorkblobPut16(each->rot.y);
+					WorkblobPut16(each->rot.z);
+					WorkblobPut32(each->startPos.x);
+					WorkblobPut32(each->startPos.y);
+					WorkblobPut32(each->startPos.z);
+					WorkblobPut32(each->endPos.x);
+					WorkblobPut32(each->endPos.y);
+					WorkblobPut32(each->endPos.z);
+					WorkblobPut32(f32tou32(each->normal.x));
+					WorkblobPut32(f32tou32(each->normal.y));
+					WorkblobPut32(f32tou32(each->normal.z));
+				WorkblobThisExactlyEnd();
+			})
+		}
+		else switch (cmdType) {
+			case CS_CMD_MM_MISC:
+				sb_foreach(cmd.misc, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_LIGHT_SETTING:
+				sb_foreach(cmd.lightSetting, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->settingPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_START_SEQ:
+				sb_foreach(cmd.startSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->seqIdPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_STOP_SEQ:
+				sb_foreach(cmd.stopSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->seqIdPlusOne);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_FADE_OUT_SEQ:
+				sb_foreach(cmd.fadeOutSeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->seqPlayer);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_START_AMBIENCE:
+				sb_foreach(cmd.startAmbience, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_FADE_OUT_AMBIENCE:
+				sb_foreach(cmd.fadeOutAmbience, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_SFX_REVERB_INDEX_2:
+				sb_foreach(cmd.sfxReverbIndexTo2, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_SFX_REVERB_INDEX_1:
+				sb_foreach(cmd.sfxReverbIndexTo1, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_MODIFY_SEQ:
+				sb_foreach(cmd.modifySeq, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_RUMBLE:
+				sb_foreach(cmd.rumble, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut8(each->intensity);
+						WorkblobPut8(each->decayTimer);
+						WorkblobPut8(each->decayStep);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_TRANSITION_GENERAL:
+				sb_foreach(cmd.transitionGeneral, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						for_in(i, 3) WorkblobPut8(each->color[i]);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_TIME:
+				sb_foreach(cmd.time, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->unused0);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut8(each->hour);
+						WorkblobPut8(each->minute);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_CAMERA_SPLINE:
+				sb_foreach(cmd.cameraSplineBytes, {
+					WorkblobPut8(*each);
+				})
+				break;
+			
+			case CS_CMD_MM_DESTINATION:
+				sb_foreach(cmd.destination, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_CHOOSE_CREDITS_SCENES:
+				sb_foreach(cmd.chooseCreditsScene, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_TEXT:
+				sb_foreach(cmd.text, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->textId);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->altTextId1);
+						WorkblobPut16(each->altTextId2);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_TRANSITION:
+				sb_foreach(cmd.transition, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_MOTION_BLUR:
+				sb_foreach(cmd.motionBlur, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->type);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			case CS_CMD_MM_GIVE_TATL:
+				sb_foreach(cmd.giveTatl, {
+					WorkblobThisExactlyBegin(sizeof(*each));
+						WorkblobPut16(each->giveTatl);
+						WorkblobPut16(each->startFrame);
+						WorkblobPut16(each->endFrame);
+					WorkblobThisExactlyEnd();
+				})
+				break;
+			
+			default:
+				//fprintf(stderr, "write unhandled cutscene command '%s'\n", cmdName);
+				sb_foreach(cmd.unimplemented, {
+					for (int i = 0; i < sizeof(each->_bytes); ++i)
+						WorkblobPut8(each->_bytes[i]);
+				})
+				break;
+		}
+	}
+	
+	return WorkblobPop();
+}
+
 struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num)
 {
 	sb_array(CutsceneListMm, result) = 0;
@@ -972,6 +1251,40 @@ struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataE
 	
 	return result;
 	return 0;
+}
+
+uint32_t CutsceneListMmToWorkblob(
+	struct CutsceneListMm *list
+	, void WorkblobPush(uint8_t alignBytes)
+	, uint32_t WorkblobPop(void)
+	, void WorkblobPut8(uint8_t data)
+	, void WorkblobPut16(uint16_t data)
+	, void WorkblobPut32(uint32_t data)
+	, void WorkblobThisExactlyBegin(uint32_t wantThisSize)
+	, void WorkblobThisExactlyEnd(void)
+)
+{
+	WorkblobPush(4);
+	
+	sb_foreach(list, {
+		WorkblobPut32(
+			CutsceneMmToWorkblob(
+				each->script,
+				WorkblobPush,
+				WorkblobPop,
+				WorkblobPut8,
+				WorkblobPut16,
+				WorkblobPut32,
+				WorkblobThisExactlyBegin,
+				WorkblobThisExactlyEnd
+			)
+		);
+		WorkblobPut16(each->nextEntrance);
+		WorkblobPut8(each->spawn);
+		WorkblobPut8(each->spawnFlags);
+	})
+	
+	return WorkblobPop();
 }
 
 AS_STRING_FUNC(CutsceneCmdMm, ENUM_CutsceneCmdMm)
