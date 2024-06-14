@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
 	// bin/exhaustive/oot/scenes/2 - Town/scene.zscene
 #if 0
 	{
-		const char *fn = "bin/exhaustive-oot.txt";
+		//const char *fn = "bin/exhaustive-oot.txt";
+		const char *fn = "bin/exhaustive-mm.txt";
 		struct File *file = FileFromFilename(fn);
 		char *src = file->data;
 		char *tok;
