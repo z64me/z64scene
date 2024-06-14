@@ -1126,7 +1126,29 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			}
 			
 			// MM only
-			case 0x02: // TODO cameras used by 1B
+			case 0x02: { // actor cutscene camera data
+				uint32_t w1 = u32r(walk + 4);
+				const uint8_t *d = n64_segment_get(w1);
+				
+				if (w1 && d)
+				{
+					for (int i = 0; i < walk[1]; ++i, d += 8)
+					{
+						ActorCsCamInfo tmp = { .setting = u16r(d) };
+						const uint8_t *arr = n64_segment_get(u32r(d + 4));
+						
+						for (int num = u16r(d + 2); num; --num, arr += 6)
+						{
+							sb_push(tmp.actorCsCamFuncData
+								, ((Vec3s){ u16r3(arr) })
+							);
+						}
+						
+						sb_push(result->actorCsCamInfo, tmp);
+					}
+				}
+				break;
+			}
 			case 0x1B: // TODO cameras and cutscenes used by actors
 			case 0x1C: // TODO mini maps
 			case 0x1E: // TODO treasure chest positions on mini-map

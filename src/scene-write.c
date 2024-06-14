@@ -647,6 +647,28 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
+	// actor cutscene camera data
+	if (sb_count(header->actorCsCamInfo))
+	{
+		WorkblobPut32(0x02000000 | (sb_count(header->actorCsCamInfo) << 16));
+		
+		WorkblobPush(2);
+		sb_foreach(header->actorCsCamInfo, {
+			sb_array(Vec3s, data) = each->actorCsCamFuncData;
+			WorkblobPut16(each->setting);
+			WorkblobPut16(sb_count(data));
+			WorkblobPush(2);
+				sb_foreach(data, {
+					WorkblobPut16(each->x);
+					WorkblobPut16(each->y);
+					WorkblobPut16(each->z);
+				});
+			WorkblobPut32(WorkblobPop());
+		});
+		
+		WorkblobPut32(WorkblobPop());
+	}
+	
 	// end header command
 	WorkblobPut32(0x14000000);
 	WorkblobPut32(0x00000000);

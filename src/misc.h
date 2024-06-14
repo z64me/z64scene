@@ -119,6 +119,12 @@ typedef struct {
 	/* 0x14 */ int16_t fogFar;
 } EnvLightSettings; // size = 0x16
 
+typedef struct {
+	/* 0x0 */ s16 setting; // camera setting described by CameraSettingType enum
+	///* 0x2 */ s16 count; // sb_count() the array
+	/* 0x4 */ sb_array(Vec3s, actorCsCamFuncData); // s16 data grouped in threes
+} ActorCsCamInfo; // size = 0x8
+
 #if 1 // region: collision types
 typedef struct {
 	uint32_t w0;
@@ -349,6 +355,7 @@ struct SceneHeader
 	sb_array(struct Doorway, doorways);
 	struct CutsceneOot *cutsceneOot;
 	sb_array(struct CutsceneListMm, cutsceneListMm);
+	sb_array(ActorCsCamInfo, actorCsCamInfo);
 	uint32_t addr;
 	int numRooms;
 	struct {
