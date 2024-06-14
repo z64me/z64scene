@@ -425,6 +425,7 @@ char *StrdupPad(const char *str, int padding);
 void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize);
 char *StrToLower(char *str);
 void StrRemoveChar(char *charAt);
+void *MemmemAligned(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen, size_t byteAlignment);
 void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen);
 const char *ExePath(const char *path);
 struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr);

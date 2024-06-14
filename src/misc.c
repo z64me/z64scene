@@ -154,11 +154,14 @@ void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize
 
 // Find the first occurrence of the byte string s in byte string l.
 // https://opensource.apple.com/source/Libc/Libc-825.25/string/FreeBSD/memmem.c.auto.html
-void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen)
+void *MemmemAligned(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen, size_t byteAlignment)
 {
 	register char *cur, *last;
 	const char *cl = (const char *)haystack;
 	const char *cs = (const char *)needle;
+
+	if (!byteAlignment)
+		byteAlignment = 1;
 
 	/* we need something to compare */
 	if (haystackLen == 0 || needleLen == 0)
@@ -175,11 +178,15 @@ void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_
 	/* the last position where its possible to find "needle" in "haystack" */
 	last = (char *)cl + haystackLen - needleLen;
 
-	for (cur = (char *)cl; cur <= last; cur++)
+	for (cur = (char *)cl; cur <= last; cur += byteAlignment)
 		if (cur[0] == cs[0] && memcmp(cur, cs, needleLen) == 0)
 			return cur;
 
 	return NULL;
+}
+void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_t needleLen)
+{
+	return MemmemAligned(haystack, haystackLen, needle, needleLen, 1);
 }
 
 float f32r(const void *data)

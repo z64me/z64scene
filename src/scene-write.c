@@ -18,6 +18,7 @@ static uint8_t *gWorkblobData = 0;
 static bool gWorkblobAllowDuplicates = false;
 static uint32_t gWorkblobExactlyThisSize = 0;
 static uint32_t gWorkblobExactlyThisSizeStartSize = 0;
+static uint32_t gWorkFindAlignment = 0;
 #define WORKBUF_SIZE (1024 * 1024 * 4) // 4mib is generous
 #define WORKBLOB_STACK_SIZE 32
 #define FIRST_HEADER_SIZE 0x100 // sizeBytes of first header in file
@@ -45,6 +46,9 @@ static uint32_t Swap32(const uint32_t b)
 
 static void WorkReady(void)
 {
+	// big alignment for meshes and textures etc
+	gWorkFindAlignment = 8;
+	
 	if (!gWork)
 		gWork = FileNew("work", WORKBUF_SIZE);
 	
@@ -68,11 +72,12 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 	if (!needle || gWork->size <= FIRST_HEADER_SIZE)
 		return 0;
 	
-	const uint8_t *match = Memmem(
+	const uint8_t *match = MemmemAligned(
 		haystack + FIRST_HEADER_SIZE
 		, gWork->size - FIRST_HEADER_SIZE
 		, needle
 		, blob->sizeBytes
+		, gWorkFindAlignment
 	);
 	
 	if (match)
@@ -730,6 +735,8 @@ void RoomToFilename(struct Room *room, const char *filename)
 		DataBlobApplyUpdatedSegmentAddresses(each);
 	});
 	
+	gWorkFindAlignment = 4; // more lenient alignment after meshes written
+	
 	// append room headers
 	{
 		// alternate headers
@@ -813,6 +820,8 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		//fprintf(stderr, "mesh appended %08x -> %08x\n", each->originalSegmentAddress, each->updatedSegmentAddress);
 		DataBlobApplyUpdatedSegmentAddresses(each);
 	});
+	
+	gWorkFindAlignment = 4; // more lenient alignment after meshes written
 	
 	// append scene headers
 	{
