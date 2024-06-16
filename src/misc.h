@@ -13,6 +13,7 @@ extern "C" {
 
 struct CutsceneOot;
 
+#include "file.h"
 #include "texanim.h"
 #include "stretchy_buffer.h"
 #include "datablobs.h"
@@ -268,15 +269,6 @@ typedef struct {
 
 #endif // endregion
 
-struct File
-{
-	void *data;
-	void *dataEnd;
-	char *filename;
-	char *shortname;
-	size_t size;
-};
-
 struct Instance
 {
 	uint16_t  id;
@@ -399,11 +391,6 @@ struct Scene
 
 #if 1 /* region: function prototypes */
 
-bool FileExists(const char *filename);
-struct File *FileNew(const char *filename, size_t size);
-struct File *FileFromFilename(const char *filename);
-int FileToFilename(struct File *file, const char *filename);
-const char *FileGetError(void);
 struct Scene *SceneFromFilename(const char *filename);
 struct Scene *SceneFromFilenamePredictRooms(const char *filename);
 void SceneToFilename(struct Scene *scene, const char *filename);
@@ -416,7 +403,6 @@ void *Calloc(size_t howMany, size_t sizeEach);
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header);
 void RoomAddHeader(struct Room *room, struct RoomHeader *header);
 void SceneAddRoom(struct Scene *scene, struct Room *room);
-void FileFree(struct File *file);
 void SceneFree(struct Scene *scene);
 void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
