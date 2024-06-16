@@ -573,6 +573,10 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 	//if (dlBlob->sizeBytes)
 	//	return;
 	
+	// don't cumulatively increase size if it's encountered multiple times
+	// (just reset size to 0 and restart the calculation each time)
+	dlBlob->sizeBytes = 0;
+	
 #define HISTORY_GET(n) \
 	history[(i - 1 - (n) < 0) ? (i - 1 - (n) + ARRLEN(history)) : (i - 1 - (n))]
 	
@@ -852,9 +856,8 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 	}
 	
 	bool exit = false;
-	for (const uint8_t *data = dlBlob->refData; !exit; dlBlob->sizeBytes += 8)
+	for (const uint8_t *data = dlBlob->refData; !exit; dlBlob->sizeBytes += SIZEOF_GFX, data += SIZEOF_GFX)
 	{
-		size_t cmdlen = SIZEOF_GFX;
 		uint32_t w0 = READ_32_BE(data, 0);
 		uint32_t w1 = READ_32_BE(data, 4);
 		void *w1addr = (void*)(data + 4);
@@ -1114,15 +1117,6 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 				break;
 			
 			/*
-			 * These commands are 128 bits rather than the usual 64 bits
-			 */
-			
-			case G_TEXRECTFLIP:
-			case G_TEXRECT:
-				cmdlen = 16;
-				break;
-			
-			/*
 			 * These should not appear in objects
 			 */
 			
@@ -1143,9 +1137,6 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			default:
 				break;
 		}
-		
-		// Increment to next command
-		data += cmdlen;
 		
 		// Update history ringbuffer
 		history[i] = cmd;

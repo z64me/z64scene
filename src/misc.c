@@ -497,6 +497,32 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			struct DataBlob *a = array[i];
 			struct DataBlob *b = array[i + 1];
 			
+			// don't trim overlapping meshes
+			// (aka the G_ENDDL command could get stripped off
+			// the end of a display list if the G_ENDDL command
+			// itself is referenced elsewhere as a blank mesh)
+			if (a->type == DATA_BLOB_TYPE_MESH
+				&& b->type == DATA_BLOB_TYPE_MESH
+			)
+			{
+				/*
+				// log overlaps
+				if (((uint8_t*)a->refData) + a->sizeBytes > ((uint8_t*)b->refData))
+				{
+					FILE *fp = fopen("bin/mesh-overlaps.txt", "a+");
+					
+					fprintf(fp, "%08x + %08x >= %08x (%08x) -- %s\n",
+						a->originalSegmentAddress, a->sizeBytes,
+						b->originalSegmentAddress, b->sizeBytes,
+						scene->file->filename
+					);
+					
+					fclose(fp);
+				}
+				*/
+				continue;
+			}
+			
 			if (((uint8_t*)a->refData) + a->sizeBytes > ((uint8_t*)b->refData))
 			{
 				a->sizeBytes =
