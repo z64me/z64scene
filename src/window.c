@@ -799,6 +799,13 @@ struct Object *WindowLoadObject(const char *fn)
 		SkelAnime_Init(&gSkelAnimeTest, obj, &obj->skeletons[0], &obj->animations[0]);
 		SkelAnime_Update(&gSkelAnimeTest, 0);
 		//SkelAnime_Free(&gSkelAnimeTest);
+		
+		// get texture blobs
+		// very WIP, just want to view texture blobs for now
+		struct DataBlob *blobs = MiscSkeletonDataBlobs(obj->file, 0, obj->skeletons[0].segAddr);
+		sb_array(struct TextureBlob, texBlobs) = 0;
+		TextureBlobSbArrayFromDataBlobs(obj->file, blobs, &texBlobs);
+		(*gSceneP)->textureBlobs = texBlobs;
 	}
 	
 	return obj;
