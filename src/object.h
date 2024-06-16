@@ -19,11 +19,21 @@ struct ObjectAnimation
 	uint32_t segAddr;
 };
 
+struct ObjectSkeleton
+{
+	/* 0x0000 */ uint32_t limbAddrsSegAddr;
+	/* 0x0004 */ uint8_t limbCount;
+	/* 0x0008 */ uint8_t limbMatrixCount; // unused
+	
+	uint32_t segAddr;
+};
+
 struct Object
 {
 	struct File *file;
 	uint8_t segment;
 	
+	sb_array(struct ObjectSkeleton, skeletons);
 	sb_array(struct ObjectAnimation, animations);
 };
 

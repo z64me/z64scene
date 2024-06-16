@@ -136,6 +136,11 @@ static void ObjectParseAfterLoad(struct Object *obj)
 		fprintf(stderr, "skeleton at %08x, %d limbs\n"
 			, skeletonHeaderAddr, numLimbs
 		);
+		sb_push(obj->skeletons, ((struct ObjectSkeleton){
+			.limbAddrsSegAddr = limbAddrsSegAddr,
+			.limbCount = numLimbs,
+			.segAddr = skeletonHeaderAddr,
+		}));
 	}
 	
 	// TODO use skeletons to derive datablobs
