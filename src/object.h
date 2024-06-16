@@ -5,10 +5,26 @@
 #include <stdint.h>
 
 #include "file.h"
+#include "stretchy_buffer.h"
+
+struct ObjectAnimation
+{
+	/* 0x0000 */ uint16_t numFrames;
+	/* 0x0002 */ uint16_t pad0;
+	/* 0x0004 */ uint32_t rotValSegAddr;
+	/* 0x0008 */ uint32_t rotIndexSegAddr;
+	/* 0x000C */ uint16_t limit;
+	/* 0x000E */ uint16_t pad1;
+	
+	uint32_t segAddr;
+};
 
 struct Object
 {
 	struct File *file;
+	uint8_t segment;
+	
+	sb_array(struct ObjectAnimation, animations);
 };
 
 struct Object *ObjectFromFilename(const char *filename);

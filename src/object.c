@@ -122,6 +122,61 @@ static void ObjectParseAfterLoad(struct Object *obj)
 			, skeletonHeaderAddr, numLimbs
 		);
 	}
+	
+	// TODO use skeletons to derive datablobs
+	// (that way, mesh/vertex/texture data is
+	// excluded from the following searches)
+	
+	// search for animations
+	for (const uint8_t *walk = start; walk <= end - 16; walk += 4)
+	{
+		struct ObjectAnimation anim = {
+			.numFrames = u16r(walk + 0),
+			.pad0 = u16r(walk + 2),
+			.rotValSegAddr = u32r(walk + 4),
+			.rotIndexSegAddr = u32r(walk + 8),
+			.limit = u16r(walk + 12),
+			.pad1 = u16r(walk + 14),
+			.segAddr = (walk - start) | (obj->segment << 24),
+		};
+		
+		// these are expected to always be 0
+		if (anim.pad0 || anim.pad1)
+			continue;
+		
+		// these are expected to always be non-zero
+		if (!anim.rotValSegAddr || !anim.rotIndexSegAddr || !anim.numFrames)
+			continue;
+		
+		// reasonable to expect no animation is this long
+		if (anim.numFrames >= 500)
+			continue;
+		
+		// mismatching segments
+		if ((anim.rotValSegAddr >> 24) != (anim.rotIndexSegAddr >> 24))
+			continue;
+		
+		// bad segment in general
+		if ((anim.rotValSegAddr >> 24) > 0x0F
+			|| (anim.rotValSegAddr >> 24) == 0x00
+		)
+			continue;
+		
+		// let's assume animations don't reference other segments
+		// (do they ever?)
+		if ((anim.rotValSegAddr >> 24) != obj->segment)
+			continue;
+		
+		// each value is 16 bit, so should be 2-byte-aligned
+		if ((anim.rotValSegAddr & 1) || (anim.rotIndexSegAddr & 1))
+			continue;
+		
+		// is likely an animation
+		fprintf(stderr, "animation at %08x, %d frames\n"
+			, anim.segAddr, anim.numFrames
+		);
+		sb_push(obj->animations, anim);
+	}
 }
 
 struct Object *ObjectFromFilename(const char *filename)
@@ -129,6 +184,8 @@ struct Object *ObjectFromFilename(const char *filename)
 	struct Object *result = Calloc(1, sizeof(*result));
 	
 	result->file = FileFromFilename(filename);
+	
+	result->segment = 0x06; // is fine hard-coded for now
 	
 	ObjectParseAfterLoad(result);
 	
