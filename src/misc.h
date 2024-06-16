@@ -379,6 +379,8 @@ struct SceneHeader
 		int sceneSetupType;
 		sb_array(AnimatedMaterial, sceneSetupData);
 	} mm;
+	sb_array(uint16_t, exits); // TODO if == 0, fall back to header[0] exit data
+	uint32_t exitsSegAddr;
 	bool isBlank;
 };
 
@@ -389,10 +391,8 @@ struct Scene
 	sb_array(struct TextureBlob, textureBlobs);
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
-	sb_array(uint16_t, exits);
 	CollisionHeader *collisions;
 	
-	uint32_t exitsSegAddr;
 	int test;
 };
 #endif /* types */

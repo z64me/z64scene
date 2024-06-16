@@ -602,12 +602,12 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	}
 	
 	// exits
-	if (scene->exits)
+	if (header->exits)
 	{
 		WorkblobPut32(0x13000000);
 		
 		WorkblobPush(4);
-		sb_foreach(scene->exits, { WorkblobPut16(*each); });
+		sb_foreach(header->exits, { WorkblobPut16(*each); });
 		WorkblobPop();
 		
 		WorkblobPut32(gWorkblobAddr);

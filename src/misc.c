@@ -700,6 +700,8 @@ void SceneHeaderFree(struct SceneHeader *header)
 	CutsceneListMmFree(header->cutsceneListMm);
 	
 	AnimatedMaterialFree(header->mm.sceneSetupData);
+	
+	sb_free(header->exits);
 }
 
 void SceneFree(struct Scene *scene)
@@ -720,8 +722,6 @@ void SceneFree(struct Scene *scene)
 	
 	DatablobFreeList(scene->blobs);
 	sb_free(scene->textureBlobs);
-	
-	sb_free(scene->exits); // TODO these belong in scene header
 	
 	free(scene);
 }
@@ -1161,33 +1161,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x13: { // exit list
-				uint32_t w1 = u32r(walk + 4);
-				if (scene->exits && scene->exitsSegAddr != w1)
-				{
-					const uint8_t *ref = n64_segment_get(w1);
-					bool isEqual = true;
-					
-					sb_foreach(scene->exits, {
-						if (*each != u16r(ref + eachIndex * 2))
-							isEqual = false;
-					});
-					
-					// TODO optional alternate exist list for each scene header?
-					if (isEqual == false)
-					{
-						fprintf(stderr, "unique exit list\n");
-						sb_foreach(scene->exits, {
-							fprintf(stderr, " [%d] %04x vs %04x\n"
-								, eachIndex, *each, u16r(ref + eachIndex * 2)
-							);
-						});
-						//Die("multiple non-matching exit lists at different segment addresses");
-					}
-				}
-				else
-				{
-					scene->exitsSegAddr = w1;
-				}
+				result->exitsSegAddr = u32r(walk + 4);
 				break;
 			}
 			
@@ -1270,21 +1244,22 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	}
 	
 	// parse exit list after header loop, b/c count is derived from collision data
-	if (scene->exitsSegAddr
-		&& !scene->exits
+	if (result->exitsSegAddr
 		&& scene->collisions
 		&& scene->collisions->numExits
 	)
 	{
-		const uint8_t *exitData = n64_segment_get(scene->exitsSegAddr);
+		const uint8_t *exitData = n64_segment_get(result->exitsSegAddr);
 		
 		for (int i = 0; i < scene->collisions->numExits; ++i)
-			sb_push(scene->exits, u16r(exitData + i * 2));
+			sb_push(result->exits, u16r(exitData + i * 2));
 		
 		fprintf(stderr, "exits:\n");
-		sb_foreach(scene->exits, {
+		sb_foreach(result->exits, {
 			fprintf(stderr, " -> %04x\n", *each);
 		});
+		
+		// TODO if matches header[0] exits, set == 0 to indicate no unique exits
 	}
 	
 	// add after parsing
