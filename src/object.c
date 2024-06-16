@@ -15,9 +15,20 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	// find skeletons, starting 2 u32's from the end, backwards
 	for (const uint8_t *walk = end - 8; walk > start; walk -= 4)
 	{
-		uint32_t skeletonHeaderAddr = walk - start; // where we are now
+		uint32_t skeletonHeaderAddr = (walk - start) | (obj->segment << 24);
 		int numLimbs = walk[4];
 		uint32_t limbAddrsSegAddr = u32r(walk);
+		
+		// assert common segments
+		if ((limbAddrsSegAddr >> 24) < 0x04
+			|| (limbAddrsSegAddr >> 24) > 0x06
+		)
+			continue;
+		
+		// let's assume skeletons don't store
+		// their limb lists in other segments
+		if ((limbAddrsSegAddr >> 24) != obj->segment)
+			continue;
 		
 		// expects format nn000000
 		if (u32r(walk + 4) & u24)
@@ -104,12 +115,16 @@ static void ObjectParseAfterLoad(struct Object *obj)
 			)
 				continue;
 			
-			// don't allow segment mismatches
-			if ((limbDL >> 24) != (limbAddrsSegAddr >> 24))
+			// don't allow bad segments
+			if ((limbDL >> 24) > 0x0F
+				|| (limbDL >> 24) == 0x00
+			)
 				break;
 			
 			// don't allow DL's that are beyond EOF
-			if (start + (limbAddrsSegAddr & u24) >= end)
+			if ((limbDL >> 24) == (limbAddrsSegAddr >> 24)
+				&& start + (limbAddrsSegAddr & u24) >= end
+			)
 				break;
 		}
 		
@@ -170,6 +185,15 @@ static void ObjectParseAfterLoad(struct Object *obj)
 		// each value is 16 bit, so should be 2-byte-aligned
 		if ((anim.rotValSegAddr & 1) || (anim.rotIndexSegAddr & 1))
 			continue;
+		
+		//
+		// TODO find out whether this check would be okay to include
+		//
+		// for extract safety, you could also check whether the first
+		// u16 in rotValSegAddr is 0, because it seems to be for most
+		// (all?) animations, but it would come at the cost of false
+		// negatives (aka skipping over real animations)
+		//
 		
 		// is likely an animation
 		fprintf(stderr, "animation at %08x, %d frames\n"
