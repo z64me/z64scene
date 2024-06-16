@@ -82,6 +82,25 @@ struct DataBlob *DataBlobNew(
 	return blob;
 }
 
+void DatablobFree(struct DataBlob *blob)
+{
+	sb_free(blob->refs);
+	
+	free(blob);
+}
+
+void DatablobFreeList(struct DataBlob *listHead)
+{
+	struct DataBlob *next = 0;
+	
+	for ( ; listHead; listHead = next)
+	{
+		next = listHead->next;
+		
+		DatablobFree(listHead);
+	}
+}
+
 // listHead = DataBlobPush(listHead, ...)
 struct DataBlob *DataBlobPush(
 	struct DataBlob *listHead

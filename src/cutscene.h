@@ -983,6 +983,8 @@ void CutsceneOotToWorkblob(
 	, void WorkblobThisExactlyEnd(void)
 );
 
+void CutsceneMmFree(struct CutsceneMm *cs);
+void CutsceneListMmFree(struct CutsceneListMm *sbArr);
 struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataEnd, const u8 num);
 uint32_t CutsceneMmToWorkblob(
 	struct CutsceneMm *cs

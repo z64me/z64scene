@@ -26,6 +26,22 @@ static uint32_t gWorkFindAlignment = 0;
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
 
+// invoke once on program exit for cleanup
+void SceneWriterCleanup(void)
+{
+	if (gWorkblobData)
+	{
+		free(gWorkblobData);
+		gWorkblobData = 0;
+	}
+	
+	if (gWork)
+	{
+		FileFree(gWork);
+		gWork = 0;
+	}
+}
+
 // guarantee a minimum number of alternate headers are written
 #define PAD_ALTERNATE_HEADERS(PARAM, HOWMANY) \
 	while (gWorkblob->sizeBytes < (HOWMANY * 4)) \
@@ -148,6 +164,7 @@ static void WorkblobPush(uint8_t alignBytes)
 	gWorkblob->sizeBytes = 0;
 	gWorkblob->originalSegmentAddress = gWorkblobSegment;
 	gWorkblob->alignBytes = alignBytes;
+	gWorkFindAlignment = alignBytes;
 }
 
 static uint32_t WorkblobPop(void)
@@ -159,6 +176,9 @@ static uint32_t WorkblobPop(void)
 	gWorkblobAddrEnd = gWorkblobAddr + gWorkblob->sizeBytes;
 	if (!gWorkblob->sizeBytes) gWorkblobAddr = 0;
 	gWorkblob -= 1;
+	
+	if (gWorkblob >= gWorkblobStack)
+		gWorkFindAlignment = gWorkblob->alignBytes;
 	
 	return gWorkblobAddr;
 }
@@ -933,7 +953,7 @@ void CollisionHeaderToWorkblob(CollisionHeader *header)
 	} WorkblobPut32(WorkblobPop());
 	
 	WorkblobPush(4);
-	for (int i = 0; i < header->numCameras; ++i) {
+	for (int i = 0; i < sb_count(header->bgCamList); ++i) {
 		BgCamInfo cam = header->bgCamList[i];
 		WorkblobPut16(cam.setting);
 		WorkblobPut16(cam.count);

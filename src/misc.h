@@ -210,7 +210,7 @@ typedef struct {
 	/* 0x14 */ uint16_t numPolygons;
 	/* 0x18 */ CollisionPoly* polyList;
 	/* 0x1C */ SurfaceType* surfaceTypeList;
-	/* 0x20 */ BgCamInfo* bgCamList; // TODO make sb_array later so it can be resized
+	/* 0x20 */ sb_array(BgCamInfo, bgCamList);
 	/* 0x24 */ uint16_t numWaterBoxes;
 	/* 0x28 */ WaterBox* waterBoxes; // TODO make sb_array later so it can be resized
 	
@@ -430,6 +430,7 @@ void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_
 const char *ExePath(const char *path);
 struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr);
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs);
+void SceneWriterCleanup(void);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
@@ -437,6 +438,7 @@ void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
 
 CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
+void CollisionHeaderFree(CollisionHeader *header);
 
 #endif /* function prototypes */
 

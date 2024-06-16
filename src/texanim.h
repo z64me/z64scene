@@ -72,6 +72,7 @@ typedef struct {
 GbiGfx* Gfx_TexScroll(uint32_t x, uint32_t y, int32_t width, int32_t height);
 GbiGfx* Gfx_TwoTexScroll(int32_t tile1, uint32_t x1, uint32_t y1, int32_t width1, int32_t height1, int32_t tile2, uint32_t x2, uint32_t y2, int32_t width2, int32_t height2);
 AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr);
+void AnimatedMaterialFree(AnimatedMaterial *sbArr);
 void TexAnimSetGameplayFrames(float frames);
 
 void AnimatedMaterialToWorkblob(

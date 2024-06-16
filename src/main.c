@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
 		else
 			fprintf(stderr, "successfully processed input scene\n");
 	}
+	SceneWriterCleanup();
 	return 0;
 #endif
 
@@ -62,6 +63,7 @@ int main(int argc, char *argv[])
 		}
 		FileFree(file);
 		fprintf(stderr, "successfully wrote everything\n");
+		SceneWriterCleanup();
 		return 0;
 	}
 #endif
@@ -129,6 +131,7 @@ int main(int argc, char *argv[])
 	
 	WindowMainLoop(scene);
 	
+	SceneWriterCleanup();
 	return 0;
 }
 

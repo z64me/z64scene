@@ -1012,6 +1012,45 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 	return result;
 }
 
+void AnimatedMaterialFree(AnimatedMaterial *sbArr)
+{
+	sb_foreach(sbArr, {
+		switch (each->type)
+		{
+			case 0: // AnimatedMat_DrawTexScroll
+			case 1: // AnimatedMat_DrawTwoTexScroll
+				free(each->params);
+				break;
+			
+			case 2: // AnimatedMat_DrawColor
+			case 3: // AnimatedMat_DrawColorLerp
+			case 4: // AnimatedMat_DrawColorNonLinearInterp
+			{
+				AnimatedMatColorParams *params = each->params;
+				
+				sb_free(params->primColors);
+				sb_free(params->envColors);
+				sb_free(params->keyFrames);
+				
+				free(params);
+				break;
+			}
+			
+			case 5: // AnimatedMat_DrawTexCycle
+			{
+				AnimatedMatTexCycleParams *params = each->params;
+				
+				sb_free(params->textureList);
+				sb_free(params->textureIndexList);
+				
+				free(params);
+				break;
+			}
+		}
+	})
+	sb_free(sbArr);
+}
+
 void AnimatedMaterialToWorkblob(
 	AnimatedMaterial *matAnim
 	, void WorkblobPush(uint8_t alignBytes)

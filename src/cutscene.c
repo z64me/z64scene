@@ -32,7 +32,20 @@ void CutsceneOotFree(struct CutsceneOot *cs)
 	if (!cs)
 		return;
 	
-	// TODO free nested data
+	// free nested data
+	sb_foreach(cs->commands, {
+		if (strstr(CutsceneCmdOotAsString(each->type), "_CAM_"))
+		{
+			CsCmdOotCam *cams = each->cam;
+			
+			sb_foreach(cams, {
+				sb_free(each->points);
+			})
+		}
+		
+		// is a union, so this polymorphically frees any list
+		sb_free(each->misc);
+	})
 	
 	sb_free(cs->commands);
 	free(cs);
@@ -585,10 +598,27 @@ void CutsceneMmFree(struct CutsceneMm *cs)
 	if (!cs)
 		return;
 	
-	// TODO free nested data
+	// free nested data
+	sb_foreach(cs->commands, {
+		if (each->type == CS_CMD_MM_CAMERA_SPLINE)
+		{
+			// TODO free camera inner data, when it exists
+		}
+		
+		// is a union, so this polymorphically frees any list
+		sb_free(each->misc);
+	})
 	
 	sb_free(cs->commands);
 	free(cs);
+}
+
+void CutsceneListMmFree(struct CutsceneListMm *sbArr)
+{
+	sb_foreach(sbArr, {
+		CutsceneMmFree(each->script);
+	})
+	sb_free(sbArr);
 }
 
 struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)

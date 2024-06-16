@@ -648,6 +648,22 @@ void RoomHeaderFree(struct RoomHeader *header)
 	sb_free(header->instances);
 	sb_free(header->objects);
 	sb_free(header->displayLists);
+	sb_free(header->unhandledCommands);
+	
+	// prerendered background
+	if (header->meshFormat == 1)
+	{
+		switch (header->image.base.amountType)
+		{
+			case ROOM_SHAPE_IMAGE_AMOUNT_SINGLE:
+				// no memory was allocated
+				break;
+			
+			case ROOM_SHAPE_IMAGE_AMOUNT_MULTI:
+				sb_free(header->image.multi.backgrounds);
+				break;
+		}
+	}
 }
 
 void RoomFree(struct Room *room)
@@ -658,12 +674,32 @@ void RoomFree(struct Room *room)
 		RoomHeaderFree(each);
 	});
 	sb_free(room->headers);
+	
+	DatablobFreeList(room->blobs);
 }
 
 void SceneHeaderFree(struct SceneHeader *header)
 {
 	sb_free(header->spawns);
 	sb_free(header->lights);
+	sb_free(header->doorways);
+	sb_free(header->actorCutscenes);
+	sb_free(header->unhandledCommands);
+	
+	sb_foreach(header->actorCsCamInfo, {
+		sb_free(each->actorCsCamFuncData);
+	})
+	sb_free(header->actorCsCamInfo);
+	
+	sb_foreach(header->paths, {
+		sb_free(each->points);
+	})
+	sb_free(header->paths);
+	
+	CutsceneOotFree(header->cutsceneOot);
+	CutsceneListMmFree(header->cutsceneListMm);
+	
+	AnimatedMaterialFree(header->mm.sceneSetupData);
 }
 
 void SceneFree(struct Scene *scene)
@@ -679,6 +715,13 @@ void SceneFree(struct Scene *scene)
 		RoomFree(each);
 	});
 	sb_free(scene->rooms);
+	
+	CollisionHeaderFree(scene->collisions);
+	
+	DatablobFreeList(scene->blobs);
+	sb_free(scene->textureBlobs);
+	
+	sb_free(scene->exits); // TODO these belong in scene header
 	
 	free(scene);
 }
@@ -794,8 +837,6 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	}
 	if ((nest = n64_segment_get(u32r(data + 32))))
 	{
-		result->bgCamList = Calloc(result->numCameras, sizeof(*(result->bgCamList)));
-		
 		for (int i = 0; i < result->numCameras; ++i)
 		{
 			const uint8_t *elem = nest + i * 8; // 8 bytes per entry
@@ -809,7 +850,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			elem = n64_segment_get(cam.dataAddr); // bgCamFuncData
 			if (!(cam.dataAddrResolved = elem))
 			{
-				result->bgCamList[i] = cam;
+				sb_push(result->bgCamList, cam);
 				continue;
 				//Die("bgCamFuncData empty, at %08x in file", (int)(elem - data));
 			}
@@ -850,7 +891,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			}
 			*/
 			
-			result->bgCamList[i] = cam;
+			sb_push(result->bgCamList, cam);
 		}
 	}
 	result->numWaterBoxes = u16r(data + 36);
@@ -875,6 +916,23 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	}
 	
 	return result;
+}
+
+void CollisionHeaderFree(CollisionHeader *header)
+{
+	free(header->vtxList);
+	free(header->polyList);
+	free(header->surfaceTypeList);
+	
+	sb_foreach(header->bgCamList, {
+		if (each->data)
+			free(each->data);
+	})
+	sb_free(header->bgCamList);
+	
+	free(header->waterBoxes);
+	
+	free(header);
 }
 
 
@@ -1022,7 +1080,8 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				uint32_t w1 = u32r(walk + 4);
 				if (scene->collisions && scene->collisions->originalSegmentAddress != w1)
 					Die("multiple collision headers with different segment addresses");
-				scene->collisions = CollisionHeaderNewFromSegment(w1);
+				else if (!scene->collisions)
+					scene->collisions = CollisionHeaderNewFromSegment(w1);
 				break;
 			}
 			
