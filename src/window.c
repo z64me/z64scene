@@ -14,6 +14,7 @@
 #include "window.h"
 #include "texanim.h"
 #include "object.h"
+#include "skelanime.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -73,6 +74,8 @@ void processInput(GLFWwindow *window);
 #define WINDOW_INITIAL_HEIGHT  600
 #define WINDOW_INITIAL_FOVY    60.0f
 #define PROJ_NEAR              10
+
+SkelAnime gSkelAnimeTest = {0};
 
 struct Input gInput = {
 	.textInput = {
@@ -791,6 +794,13 @@ struct Object *WindowLoadObject(const char *fn)
 {
 	struct Object *obj = ObjectFromFilename(fn);
 	
+	if (sb_count(obj->skeletons) && sb_count(obj->animations))
+	{
+		SkelAnime_Init(&gSkelAnimeTest, obj, &obj->skeletons[0], &obj->animations[0]);
+		SkelAnime_Update(&gSkelAnimeTest, 0);
+		//SkelAnime_Free(&gSkelAnimeTest);
+	}
+	
 	return obj;
 }
 
@@ -1374,7 +1384,7 @@ void WindowMainLoop(struct Scene *scene)
 		n64_light_set_ambient(UNFOLD_RGB(light->ambient));
 		*/
 		
-		mtx_to_zmtx((Matrix*)model, &zmtx);
+		mat44_to_matn64((void*)&zmtx, (void*)model);
 		
 		// generate billboard matrices
 		{
@@ -1422,13 +1432,13 @@ void WindowMainLoop(struct Scene *scene)
 			gSPSegment(POLY_OPA_DISP++, 2, sceneSegment);
 			gSPSegment(POLY_OPA_DISP++, 3, roomSegment);
 			gDPSetEnvColor(POLY_OPA_DISP++, 0x80, 0x80, 0x80, 0x80);
-			//gSPMatrix(POLY_OPA_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
+			gSPMatrix(POLY_OPA_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
 			
 			gSPDisplayList(POLY_XLU_DISP++, n64_material_setup_dl[0x19]);
 			gSPSegment(POLY_XLU_DISP++, 2, sceneSegment);
 			gSPSegment(POLY_XLU_DISP++, 3, roomSegment);
 			gDPSetEnvColor(POLY_XLU_DISP++, 0x80, 0x80, 0x80, 0x80);
-			//gSPMatrix(POLY_XLU_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
+			gSPMatrix(POLY_XLU_DISP++, &zmtx, G_MTX_MODELVIEW | G_MTX_LOAD);
 			
 			// animate water in forest test scene
 			if (scene->file->size == 0x11240)
@@ -1476,6 +1486,19 @@ void WindowMainLoop(struct Scene *scene)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06021F78);
 			else if (test->size == 0x1E250)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06016480);
+		}
+		
+		if (gSkelAnimeTest.skeleton)
+		{
+			float scale = 0.02;
+			Matrix_Translate(-100, 0, 0, MTXMODE_NEW);
+			//Matrix_RotateY_s(rot.y, MTXMODE_APPLY);
+			//Matrix_RotateX_s(rot.x, MTXMODE_APPLY);
+			//Matrix_RotateZ_s(rot.z, MTXMODE_APPLY);
+			Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+			SkelAnime_Update(&gSkelAnimeTest, gInput.delta_time_sec * (20.0));
+			SkelAnime_Draw(&gSkelAnimeTest, SKELANIME_TYPE_FLEX);
 		}
 		
 		// if mouse has moved or ctrl key state has changed,

@@ -1993,6 +1993,10 @@ MtxN64* Matrix_MtxFToMtx(Matrix* src, MtxN64* dest) {
 }
 
 MtxN64* Matrix_ToMtx(MtxN64* dest) {
+	mat44_to_matn64((void*)dest, (void*)gCurrentMatrix);
+	return dest;
+	
+	// old code
 	return Matrix_MtxFToMtx(gCurrentMatrix, dest);
 }
 

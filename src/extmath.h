@@ -449,7 +449,7 @@ typedef enum {
 	MTXMODE_APPLY
 } MtxMode;
 
-typedef struct {
+typedef union {
 	s32 m[4][4];
 	struct {
 		u16 intPart[4][4];
