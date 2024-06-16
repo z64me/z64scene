@@ -673,13 +673,6 @@ void SceneFree(struct Scene *scene)
 	free(scene);
 }
 
-void ObjectFree(struct Object *object)
-{
-	FileFree(object->file);
-	
-	free(object);
-}
-
 void SceneAddRoom(struct Scene *scene, struct Room *room)
 {
 	room->scene = scene;
@@ -696,15 +689,6 @@ struct Room *RoomFromFilename(const char *filename)
 	result->file = FileFromFilename(filename);
 	
 	return private_RoomParseAfterLoad(result);
-}
-
-struct Object *ObjectFromFilename(const char *filename)
-{
-	struct Object *result = Calloc(1, sizeof(*result));
-	
-	result->file = FileFromFilename(filename);
-	
-	return result;
 }
 
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);

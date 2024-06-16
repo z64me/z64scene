@@ -318,11 +318,6 @@ struct Room
 	sb_array(struct RoomHeader, headers);
 };
 
-struct Object
-{
-	struct File *file;
-};
-
 struct SpawnPoint
 {
 	struct Instance inst;
@@ -395,7 +390,6 @@ struct Scene *SceneFromFilename(const char *filename);
 struct Scene *SceneFromFilenamePredictRooms(const char *filename);
 void SceneToFilename(struct Scene *scene, const char *filename);
 struct Room *RoomFromFilename(const char *filename);
-struct Object *ObjectFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 void SceneReadyDataBlobs(struct Scene *scene);
 void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
@@ -404,7 +398,6 @@ void SceneAddHeader(struct Scene *scene, struct SceneHeader *header);
 void RoomAddHeader(struct Room *room, struct RoomHeader *header);
 void SceneAddRoom(struct Scene *scene, struct Room *room);
 void SceneFree(struct Scene *scene);
-void ObjectFree(struct Object *object);
 void RoomFree(struct Room *room);
 char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
