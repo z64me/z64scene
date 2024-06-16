@@ -13,6 +13,7 @@
 #include "gui.h"
 #include "window.h"
 #include "texanim.h"
+#include "object.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -260,6 +261,8 @@ static void drop_callback(GLFWwindow* window, int count, const char *files[])
 	
 	if (!strcmp(extensionLower, "zscene"))
 		WindowLoadScene(filename);
+	else if (!strcmp(extensionLower, "zobj"))
+		WindowLoadObject(filename);
 	
 	free(extensionLower);
 }
@@ -782,6 +785,13 @@ struct Scene *WindowLoadScene(const char *fn)
 	*gSceneP = scene;
 	
 	return scene;
+}
+
+struct Object *WindowLoadObject(const char *fn)
+{
+	struct Object *obj = ObjectFromFilename(fn);
+	
+	return obj;
 }
 
 RayLine WindowGetRayLine(Vec2f point)
