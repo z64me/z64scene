@@ -402,6 +402,14 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	if (!sb_count(gizmo->children))
 		return;
 	
+	// copy child pos, which may have been changed using the gui
+	if (gizmo->state == GIZMO_STATE_IDLE)
+	{
+		gizmo->pos = *(gizmo->children[0].pos);
+		gizmo->children[0].startPos = gizmo->pos;
+		gizmo->actionPos = gizmo->pos;
+	}
+	
 	if (!gfxHead)
 		gfxHead = malloc(128 * sizeof(*gfxHead));
 	

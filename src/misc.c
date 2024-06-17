@@ -875,18 +875,11 @@ static struct Instance private_InstanceParse(const void *data)
 	
 	return (struct Instance) {
 		.id = u16r(data8 + 0)
-		, .x = s16r(data8 + 2)
-		, .y = s16r(data8 + 4)
-		, .z = s16r(data8 + 6)
+		, .pos = { s16r3(data8 + 2) }
 		, .xrot = s16r(data8 + 8)
 		, .yrot = s16r(data8 + 10)
 		, .zrot = s16r(data8 + 12)
 		, .params = u16r(data8 + 14)
-		, .pos = {
-			s16r(data8 + 2)
-			, s16r(data8 + 4)
-			, s16r(data8 + 6)
-		}
 	};
 }
 

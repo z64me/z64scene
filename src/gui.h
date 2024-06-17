@@ -32,6 +32,8 @@ struct GuiInterop
 		int envPreviewEach;
 		uint16_t envPreviewTime;
 	} env;
+	
+	struct Instance *queueInstanceSelect;
 };
 
 #ifdef __cplusplus
@@ -47,7 +49,7 @@ int GuiHasFocusMouse(void);
 int GuiHasFocusKeyboard(void);
 void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
 void GuiPushModal(const char *message);
-void GuiCallbackActorGrabbed(uint16_t index);
+void GuiCallbackActorGrabbed(struct Instance *inst);
 
 #endif
 

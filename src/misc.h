@@ -42,6 +42,7 @@ struct CutsceneOot;
 #define u16r3(X) { u16r(X), u16r(((const uint8_t*)(X)) + 2), u16r(((const uint8_t*)(X)) + 4) }
 #define u32r3(X) { u32r(X), u32r(((const uint8_t*)(X)) + 4), u32r(((const uint8_t*)(X)) + 8) }
 #define f32r3(X) { f32r(X), f32r(((const uint8_t*)(X)) + 4), f32r(((const uint8_t*)(X)) + 8) }
+#define s16r3(X) { s16r(X), s16r(((const uint8_t*)(X)) + 2), s16r(((const uint8_t*)(X)) + 4) }
 float f32r(const void *data);
 uint32_t f32tou32(float v);
 
@@ -272,9 +273,6 @@ typedef struct {
 struct Instance
 {
 	uint16_t  id;
-	int16_t   x;
-	int16_t   y;
-	int16_t   z;
 	uint16_t  xrot;
 	uint16_t  yrot;
 	uint16_t  zrot;
@@ -415,6 +413,7 @@ struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
 void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
+void WindowCallbackSelectInstance(struct Instance *inst);
 
 CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
 void CollisionHeaderFree(CollisionHeader *header);

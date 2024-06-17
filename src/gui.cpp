@@ -447,12 +447,24 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			RoomHeader *header = &gScene->rooms[0].headers[0];
 			Instance *instances = header->instances;
 			Instance *inst;
+			int instancePrev = gGuiSettings.combos.instanceCurrent;
+			bool instanceSelectionChanged = false;
 			
 			if (sb_count(instances) == 0)
 			{
 				ImGui::TextWrapped("No instances. Add an instance to get started.");
 				
 				return;
+			}
+			
+			// instance selected externally, likely from viewport
+			if (gGui->queueInstanceSelect)
+			{
+				sb_foreach(instances, {
+					if (each == gGui->queueInstanceSelect)
+						gGuiSettings.combos.instanceCurrent = eachIndex;
+				})
+				gGui->queueInstanceSelect = 0;
 			}
 			
 			ImGui::SeparatorText("Instance List");
@@ -469,10 +481,18 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				, sb_count(instances)
 			);
 			IMGUI_COMBO_HOVER(gGuiSettings.combos.instanceCurrent, sb_count(instances));
+			
 			inst = &instances[gGuiSettings.combos.instanceCurrent];
 			ImGui::Button("Add##InstanceCombo"); ImGui::SameLine();
 			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
 			ImGui::Button("Delete##InstanceCombo");
+			
+			// different instance selected than last time, reset some things
+			if (gGuiSettings.combos.instanceCurrent != instancePrev)
+			{
+				instanceSelectionChanged = true;
+				WindowCallbackSelectInstance(inst);
+			}
 			
 			ImGui::SeparatorText("Data");
 			
@@ -503,15 +523,12 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			PickHexValueU16("Params##Instance", &inst->params);
 			
 			ImGui::SeparatorText("Position");
-			int xpos = inst->x;
-			int ypos = inst->y;
-			int zpos = inst->z;
-			ImGui::InputInt("X##InstancePos", &xpos);
-			ImGui::InputInt("Y##InstancePos", &ypos);
-			ImGui::InputInt("Z##InstancePos", &zpos);
-			inst->x = xpos;
-			inst->y = ypos;
-			inst->z = zpos;
+			int xpos = rintf(inst->pos.x);
+			int ypos = rintf(inst->pos.y);
+			int zpos = rintf(inst->pos.z);
+			if (ImGui::InputInt("X##InstancePos", &xpos)) inst->pos.x = xpos;
+			if (ImGui::InputInt("Y##InstancePos", &ypos)) inst->pos.y = ypos;
+			if (ImGui::InputInt("Z##InstancePos", &zpos)) inst->pos.z = zpos;
 			
 			ImGui::SeparatorText("Rotation");
 			int xrot = inst->xrot;
@@ -530,6 +547,11 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				ImGui::SeparatorText("Options");
 				
 				static ActorDatabase::Entry::Property *current = 0;
+				
+				// when a new instance is selected, clear the selected property
+				if (instanceSelectionChanged)
+					current = 0;
+				
 				if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
 				{
 					for (auto &option : options)
@@ -1002,9 +1024,11 @@ extern "C" void GuiInit(GLFWwindow *window)
 }
 
 // just testing things for now
-extern "C" void GuiCallbackActorGrabbed(uint16_t index)
+extern "C" void GuiCallbackActorGrabbed(struct Instance *inst)
 {
-	fprintf(stderr, "selected actor '%s'\n", gGuiSettings.actorDatabase.GetActorName(index));
+	fprintf(stderr, "selected actor '%s'\n", gGuiSettings.actorDatabase.GetActorName(inst->id));
+	
+	gGui->queueInstanceSelect = inst;
 }
 
 extern "C" void GuiCleanup(void)

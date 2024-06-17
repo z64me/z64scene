@@ -93,6 +93,7 @@ static struct State
 	int winHeight;
 	struct CameraFly cameraFly;
 	bool cameraIgnoreLMB;
+	struct Gizmo *gizmo;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
 	, .winHeight = WINDOW_INITIAL_HEIGHT
@@ -1169,10 +1170,20 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 	}
 }
 
+void WindowCallbackSelectInstance(struct Instance *inst)
+{
+	struct Gizmo *gizmo = gState.gizmo;
+	
+	GizmoRemoveChildren(gizmo);
+	GizmoSetPosition(gizmo, UNFOLD_VEC3(inst->pos));
+	GizmoAddChild(gizmo, &inst->pos);
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
 	struct Gizmo *gizmo = GizmoNew();
+	gState.gizmo = gizmo;
 	GLFWwindow* window;
 	bool shouldIgnoreInput = false;
 	gSceneP = &scene;
@@ -1309,7 +1320,7 @@ void WindowMainLoop(struct Scene *scene)
 							if (Col3D_LineVsSphere(
 								&ray
 								, &(Sphere){
-									.pos = (Vec3f){ each->x, each->y, each->z }
+									.pos = each->pos
 									, .r = 20
 								}
 								, 0
@@ -1317,9 +1328,9 @@ void WindowMainLoop(struct Scene *scene)
 								// TODO construct a list of collisions and choose the nearest instance
 								// TODO if multiple instances overlap, each click should cycle through them
 								// TODO update gui instances tab
-								GizmoSetPosition(gizmo, each->x, each->y, each->z);
+								GizmoSetPosition(gizmo, UNFOLD_VEC3(each->pos));
 								GizmoAddChild(gizmo, &each->pos);
-								GuiCallbackActorGrabbed(each->id);
+								GuiCallbackActorGrabbed(each);
 							}
 						});
 					});
@@ -1535,9 +1546,6 @@ void WindowMainLoop(struct Scene *scene)
 		sb_foreach(scene->rooms, {
 			struct RoomHeader *header = &each->headers[0];
 			sb_foreach(header->instances, {
-				each->x = rintf(each->pos.x);
-				each->y = rintf(each->pos.y);
-				each->z = rintf(each->pos.z);
 				identity(model);
 				{
 					mtx_translate_rot(

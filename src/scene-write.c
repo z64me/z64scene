@@ -420,9 +420,9 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		
 		sb_foreach(header->instances, {
 			WorkblobPut16(each->id);
-			WorkblobPut16(each->x);
-			WorkblobPut16(each->y);
-			WorkblobPut16(each->z);
+			WorkblobPut16(rintf(each->pos.x));
+			WorkblobPut16(rintf(each->pos.y));
+			WorkblobPut16(rintf(each->pos.z));
 			WorkblobPut16(each->xrot);
 			WorkblobPut16(each->yrot);
 			WorkblobPut16(each->zrot);
@@ -579,9 +579,9 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		sb_foreach(header->spawns, {
 			struct Instance inst = each->inst;
 			WorkblobPut16(inst.id);
-			WorkblobPut16(inst.x);
-			WorkblobPut16(inst.y);
-			WorkblobPut16(inst.z);
+			WorkblobPut16(rintf(inst.pos.x));
+			WorkblobPut16(rintf(inst.pos.y));
+			WorkblobPut16(rintf(inst.pos.z));
 			WorkblobPut16(inst.xrot);
 			WorkblobPut16(inst.yrot);
 			WorkblobPut16(inst.zrot);
