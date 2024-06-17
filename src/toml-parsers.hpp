@@ -80,6 +80,7 @@ struct ActorDatabase
 		uint16_t                index;
 		std::vector<uint16_t>   objects;
 		std::vector<Property>   properties;
+		bool isEmpty = false;
 		
 		void AddProperty(Property property)
 		{
@@ -103,6 +104,7 @@ struct ActorDatabase
 		if (index >= entries.size())
 		{
 			static Entry empty;
+			empty.isEmpty = true;
 			
 			return empty;
 		}

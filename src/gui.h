@@ -35,6 +35,10 @@ struct GuiInterop
 	
 	struct Instance *queueInstanceSelect;
 	struct Instance *selectedInstance;
+	sb_array(struct Instance, *instanceList);
+	
+	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
+	bool rightClickedInViewport;
 };
 
 #ifdef __cplusplus

@@ -349,6 +349,14 @@ static inline void *camera_flythrough(Matrix *m)
 		pos[2] + look[2] * PROJ_NEAR
 	};
 	
+	const float distSpawnActorFromCamera = 250;
+	gGui->newSpawnPos = (Vec3f) {
+		pos[0] + look[0] * distSpawnActorFromCamera,
+		pos[1] + look[1] * distSpawnActorFromCamera,
+		pos[2] + look[2] * distSpawnActorFromCamera
+	};
+	//fprintf(stderr, "newSpawnPos = %f %f %f\n", UNFOLD_VEC3(gGui->newSpawnPos));
+	
 	oldcursor = cursor;
 	
 	return m;
@@ -1516,12 +1524,13 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// if mouse has moved or ctrl key state has changed,
 		// perform raycast against all visual geometry
-		if (GizmoHasFocus(gizmo)
+		if ((GizmoHasFocus(gizmo)
 			&& gInput.key.lctrl
 			&& (gInput.mouse.vel.x
 				|| gInput.mouse.vel.y
 				|| gInput.key.lctrl != gInput.keyOld.lctrl
-			)
+			))
+			|| gInput.mouse.clicked.right
 		)
 		{
 			worldRayData.ray = WindowGetCursorRayLine();
@@ -1581,6 +1590,21 @@ void WindowMainLoop(struct Scene *scene)
 		// gizmo
 		GizmoDraw(gizmo, &gState.cameraFly);
 		
+		// consume right click (after raycasts)
+		if (gInput.mouse.clicked.right)
+		{
+			gGui->rightClickedInViewport = true;
+			gInput.mouse.clicked.right = false;
+			gInput.mouse.isControllingCamera = false;
+			
+			// spawn thing at position raycast resolved to
+			if (worldRayData.ray.nearest < FLT_MAX)
+			{
+				gGui->newSpawnPos = worldRayData.pos;
+				//fprintf(stderr, "newSpawnPos = %f %f %f\n", UNFOLD_VEC3(gGui->newSpawnPos));
+			}
+		}
+		
 	L_skipSceneRender:
 		// draw the ui
 		GuiDraw(window, scene, &gui);
@@ -1588,6 +1612,7 @@ void WindowMainLoop(struct Scene *scene)
 		if (!GuiHasFocusKeyboard()) // ignore gizmo keyboard shortcuts if gui has keyboard focus
 			GizmoUpdate(gizmo, &worldRayData.pos);
 		shouldIgnoreInput |= GizmoHasFocus(gizmo);
+		shouldIgnoreInput |= gGui->rightClickedInViewport;
 		gState.cameraIgnoreLMB = GizmoIsHovered(gizmo);
 		
 		// changed selections using ui
@@ -1609,6 +1634,7 @@ void WindowMainLoop(struct Scene *scene)
 		gInput.mouse.clicked.left = false;
 		gInput.mouse.clicked.right = false;
 		gInput.mouse.vel.x = gInput.mouse.vel.y = 0;
+		gGui->rightClickedInViewport = false;
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------

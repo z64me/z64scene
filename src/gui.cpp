@@ -34,6 +34,17 @@ extern "C" {
 
 #endif
 
+#if 1 // region: misc decls
+
+#define DECL_POPUP(NAME) static bool isPopup##NAME##Queued = false;
+#define QUEUE_POPUP(NAME) isPopup##NAME##Queued = true;
+#define DEQUEUE_POPUP(NAME) if (isPopup##NAME##Queued) { ImGui::OpenPopup(#NAME); isPopup##NAME##Queued = false; }
+#define STRINGIFY(NAME) #NAME
+
+DECL_POPUP(AddNewInstanceSearch)
+
+#endif
+
 #if 1 // region: private types
 
 struct GuiSettings
@@ -349,6 +360,28 @@ static void PickHexValueU16(const char *uniqueName, uint16_t *v, uint16_t min = 
 	*v = tmp;
 }
 
+static ActorDatabase::Entry &InstanceTypeSearch(void)
+{
+	static ImGuiTextFilter filter;
+	filter.Draw();
+	
+	for (auto &entry : gGuiSettings.actorDatabase.entries)
+	{
+		const char *name = entry.name;
+		
+		if (name
+			&& filter.PassFilter(name)
+			&& ImGui::Selectable(name)
+		)
+			return entry;
+	}
+	
+	static ActorDatabase::Entry empty;
+	empty.isEmpty = true;
+	
+	return empty;
+}
+
 static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"General"
@@ -443,13 +476,17 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"Instances"
 		, [](){
+			
 			RoomHeader *header = &gScene->rooms[0].headers[0];
-			Instance *instances = header->instances;
+			gGui->instanceList = &(header->instances);
+			Instance *instances = *gGui->instanceList;
+			
+			if (ImGui::Button("Add New Instance##InstanceCombo"))
+				QUEUE_POPUP(AddNewInstanceSearch);
+			
 			Instance *inst = gGui->selectedInstance;
 			int instanceCurIndex = sb_find_index(instances, inst);
 			bool instanceSelectionChanged = false;
-			
-			ImGui::Button("Add New Instance##InstanceCombo");
 			
 			if (sb_count(instances) == 0)
 			{
@@ -505,19 +542,11 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				ImGui::OpenPopup("InstanceTypeSearch");
 			if (ImGui::BeginPopup("InstanceTypeSearch"))
 			{
-				static ImGuiTextFilter filter;
-				filter.Draw();
+				auto &entry = InstanceTypeSearch();
 				
-				for (auto &entry : gGuiSettings.actorDatabase.entries)
-				{
-					const char *name = entry.name;
-					
-					if (name
-						&& filter.PassFilter(name)
-						&& ImGui::Selectable(name)
-					)
-						inst->id = entry.index;
-				}
+				if (!entry.isEmpty)
+					inst->id = entry.index;
+				
 				ImGui::EndPopup();
 			}
 			
@@ -928,6 +957,40 @@ static void DrawSidebar(void)
 		*/
 	}
 	ImGui::End();
+	
+	if (gGui->rightClickedInViewport)
+		ImGui::OpenPopup("##RightClickWorldMenu");
+	if (ImGui::BeginPopup("##RightClickWorldMenu"))
+	{
+		if (ImGui::Selectable("Add Actor Here"))
+			QUEUE_POPUP(AddNewInstanceSearch);
+		
+		ImGui::EndPopup();
+	}
+	
+	// misc popups
+	DEQUEUE_POPUP(AddNewInstanceSearch);
+	if (ImGui::BeginPopup(STRINGIFY(AddNewInstanceSearch)))
+	{
+		auto &type = InstanceTypeSearch();
+		
+		if (!type.isEmpty)
+		{
+			fprintf(stderr, "add instance of type '%s'\n", type.name);
+			
+			struct Instance newInst = {
+				.id = type.index,
+				.pos = gGui->newSpawnPos,
+			};
+			
+			if (gGui->instanceList)
+				gGui->selectedInstance = &sb_push(*gGui->instanceList, newInst);
+			else
+				fprintf(stderr, "instanceList == 0, can't add\n");
+		}
+		
+		ImGui::EndPopup();
+	}
 }
 
 static void DrawMenuBar(void)
