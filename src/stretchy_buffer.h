@@ -209,6 +209,20 @@
 #define stb__sbgrow(a,n)      (*((void **)&(a)) = stb__sbgrowf((a), (n), sizeof(*(a))))
 
 #include <stdlib.h>
+#include <stdint.h>
+
+#define sb_find_index(HAYSTACK, NEEDLE) sb_find_index(HAYSTACK, NEEDLE, sizeof(*(NEEDLE)))
+static int (sb_find_index)(const void *haystack, const void *needle, const int sizeofEach)
+{
+	int len = sb_count(haystack);
+	const uint8_t *addr = (const uint8_t*)haystack;
+	
+	for (int i = 0; i < len; ++i, addr += sizeofEach)
+		if ((const void*)addr == needle)
+			return i;
+	
+	return -1;
+}
 
 static void * stb__sbgrowf(void *arr, int increment, int itemsize)
 {

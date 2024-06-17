@@ -102,6 +102,8 @@ static struct State
 	}
 };
 
+static struct GuiInterop *gGui = 0;
+
 struct CameraRay
 {
 	RayLine ray;
@@ -1170,15 +1172,6 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 	}
 }
 
-void WindowCallbackSelectInstance(struct Instance *inst)
-{
-	struct Gizmo *gizmo = gState.gizmo;
-	
-	GizmoRemoveChildren(gizmo);
-	GizmoSetPosition(gizmo, UNFOLD_VEC3(inst->pos));
-	GizmoAddChild(gizmo, &inst->pos);
-}
-
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
@@ -1194,6 +1187,7 @@ void WindowMainLoop(struct Scene *scene)
 			.envPreviewMode = GUI_ENV_PREVIEW_EACH
 		}
 	};
+	gGui = &gui;
 	struct CameraRay worldRayData = { 0 };
 	
 	// glfw: initialize and configure
@@ -1313,6 +1307,7 @@ void WindowMainLoop(struct Scene *scene)
 				{
 					RayLine ray = WindowGetCursorRayLine();
 					GizmoRemoveChildren(gizmo);
+					gGui->selectedInstance = 0;
 					
 					sb_foreach(scene->rooms, {
 						struct RoomHeader *header = &each->headers[0];
@@ -1327,10 +1322,10 @@ void WindowMainLoop(struct Scene *scene)
 							)) {
 								// TODO construct a list of collisions and choose the nearest instance
 								// TODO if multiple instances overlap, each click should cycle through them
-								// TODO update gui instances tab
 								GizmoSetPosition(gizmo, UNFOLD_VEC3(each->pos));
 								GizmoAddChild(gizmo, &each->pos);
-								GuiCallbackActorGrabbed(each);
+								gGui->selectedInstance = each;
+								break;
 							}
 						});
 					});
@@ -1594,6 +1589,23 @@ void WindowMainLoop(struct Scene *scene)
 			GizmoUpdate(gizmo, &worldRayData.pos);
 		shouldIgnoreInput |= GizmoHasFocus(gizmo);
 		gState.cameraIgnoreLMB = GizmoIsHovered(gizmo);
+		
+		// changed selections using ui
+		{
+			static struct Instance *prevGizmoInst = 0;
+			if (gGui->selectedInstance != prevGizmoInst)
+			{
+				struct Instance *inst = gGui->selectedInstance;
+				prevGizmoInst = inst;
+				
+				GizmoRemoveChildren(gizmo);
+				if (inst)
+				{
+					GizmoSetPosition(gizmo, UNFOLD_VEC3(inst->pos));
+					GizmoAddChild(gizmo, &inst->pos);
+				}
+			}
+		}
 		
 		// consume left-click if nothing already has
 		gInput.mouse.clicked.left = false;

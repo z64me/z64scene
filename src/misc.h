@@ -413,7 +413,6 @@ struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
 void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
-void WindowCallbackSelectInstance(struct Instance *inst);
 
 CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
 void CollisionHeaderFree(CollisionHeader *header);

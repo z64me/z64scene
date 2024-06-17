@@ -47,7 +47,6 @@ struct GuiSettings
 	// when loading different scenes for editing
 	struct
 	{
-		int instanceCurrent;
 		struct TextureBlob *textureBlob;
 		int textureBlobIndex;
 	} combos;
@@ -446,9 +445,12 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		, [](){
 			RoomHeader *header = &gScene->rooms[0].headers[0];
 			Instance *instances = header->instances;
-			Instance *inst;
-			int instancePrev = gGuiSettings.combos.instanceCurrent;
+			Instance *inst = gGui->selectedInstance;
+			static int instancePrevIndex = -1;
+			int instanceCurIndex = sb_find_index(instances, inst);
 			bool instanceSelectionChanged = false;
+			
+			ImGui::Button("Add New Instance##InstanceCombo");
 			
 			if (sb_count(instances) == 0)
 			{
@@ -457,22 +459,15 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				return;
 			}
 			
-			// instance selected externally, likely from viewport
-			if (gGui->queueInstanceSelect)
-			{
-				sb_foreach(instances, {
-					if (each == gGui->queueInstanceSelect)
-						gGuiSettings.combos.instanceCurrent = eachIndex;
-				})
-				gGui->queueInstanceSelect = 0;
-			}
-			
 			ImGui::SeparatorText("Instance List");
 			ImGui::Combo(
 				"##Instance##InstanceCombo"
-				, &gGuiSettings.combos.instanceCurrent
+				, &instanceCurIndex
 				, [](void* data, int n) {
 					static char test[256];
+					// possible safety, but i think imgui handles it automatically
+					//if (n < 0)
+					//	return (const char*)strcpy(test, "");
 					Instance *inst = &((Instance*)data)[n];
 					sprintf(test, "%d: %s 0x%04x", n, gGuiSettings.actorDatabase.GetActorName(inst->id), inst->id);
 					return (const char*)test;
@@ -480,19 +475,28 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				, instances
 				, sb_count(instances)
 			);
-			IMGUI_COMBO_HOVER(gGuiSettings.combos.instanceCurrent, sb_count(instances));
+			IMGUI_COMBO_HOVER(instanceCurIndex, sb_count(instances));
 			
-			inst = &instances[gGuiSettings.combos.instanceCurrent];
-			ImGui::Button("Add##InstanceCombo"); ImGui::SameLine();
-			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
-			ImGui::Button("Delete##InstanceCombo");
+			inst = &instances[instanceCurIndex];
+			if (instanceCurIndex < 0) inst = 0;
 			
 			// different instance selected than last time, reset some things
-			if (gGuiSettings.combos.instanceCurrent != instancePrev)
+			if (instanceCurIndex != instancePrevIndex)
 			{
 				instanceSelectionChanged = true;
-				WindowCallbackSelectInstance(inst);
+				gGui->selectedInstance = inst;
+				instancePrevIndex = instanceCurIndex;
 			}
+			
+			if (instanceCurIndex < 0)
+			{
+				ImGui::TextWrapped("No instance selected.");
+				
+				return;
+			}
+			
+			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
+			ImGui::Button("Delete##InstanceCombo");
 			
 			ImGui::SeparatorText("Data");
 			
@@ -1021,14 +1025,6 @@ extern "C" void GuiInit(GLFWwindow *window)
 	gGuiSettings.PushModal("hello world");
 	gGuiSettings.PushModal("hello world-1");
 	gGuiSettings.PushModal("hello world-2");
-}
-
-// just testing things for now
-extern "C" void GuiCallbackActorGrabbed(struct Instance *inst)
-{
-	fprintf(stderr, "selected actor '%s'\n", gGuiSettings.actorDatabase.GetActorName(inst->id));
-	
-	gGui->queueInstanceSelect = inst;
 }
 
 extern "C" void GuiCleanup(void)
