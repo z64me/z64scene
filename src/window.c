@@ -93,6 +93,7 @@ static struct State
 	int winHeight;
 	struct CameraFly cameraFly;
 	bool cameraIgnoreLMB;
+	bool hasCameraMoved;
 	struct Gizmo *gizmo;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
@@ -203,7 +204,24 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			break;
 		
 		case GLFW_KEY_D:
-			gInput.key.d = pressed;
+			// Shift + D to Duplicate & Move
+			if (gGui->selectedInstance
+				&& !gState.hasCameraMoved
+				&& GizmoIsIdle(gState.gizmo)
+				&& (mods & GLFW_MOD_SHIFT)
+				&& gGui->instanceList
+			)
+			{
+				struct Instance newInst = *(gGui->selectedInstance);
+				
+				sb_push(*gGui->instanceList, newInst);
+				gGui->selectedInstance = &sb_last(*gGui->instanceList);
+				
+				GuiPushModal("Duplicated instance.");
+				GizmoSetupMove(gState.gizmo);
+			}
+			else
+				gInput.key.d = pressed;
 			break;
 		
 		case GLFW_KEY_Q:
@@ -1291,6 +1309,7 @@ void WindowMainLoop(struct Scene *scene)
 		identity(model);
 		
 		// ignore 3d camera controls if gui has focus
+		gState.hasCameraMoved = false;
 		if (shouldIgnoreInput == false && scene)
 		{
 			bool wasControllingCamera = gInput.mouse.isControllingCamera;
@@ -1302,7 +1321,10 @@ void WindowMainLoop(struct Scene *scene)
 			if (gInput.mouseOld.button.left
 				&& memcmp(&gState.viewMtx, &viewMtxOld, sizeof(viewMtxOld))
 			)
+			{
 				gInput.mouse.isControllingCamera = true;
+				gState.hasCameraMoved = true;
+			}
 			
 			// consume left-click
 			if (gInput.mouse.clicked.left)

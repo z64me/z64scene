@@ -17,5 +17,7 @@ bool GizmoIsHovered(struct Gizmo *gizmo);
 void GizmoSetPosition(struct Gizmo *gizmo, float x, float y, float z);
 void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos);
 void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera);
+void GizmoSetupMove(struct Gizmo *gizmo);
+bool GizmoIsIdle(struct Gizmo *gizmo);
 
 #endif

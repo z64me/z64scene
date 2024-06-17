@@ -343,11 +343,7 @@ void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 		// press G key to move, like Blender
 		if (gInput.key.g)
 		{
-			GizmoSetState(gizmo, GIZMO_STATE_MOVE);
-			
-			gInput.textInput.isEnabled = true;
-			gInput.textInput.text[0] = '\0';
-			gInput.textInput.maxChars = 10;
+			GizmoSetupMove(gizmo);
 		}
 		
 		for (int i = 0; i < 3; i++)
@@ -382,6 +378,20 @@ void GizmoUpdate(struct Gizmo *gizmo, Vec3f *rayPos)
 		GizmoMove(gizmo, rayPos);
 	
 	GizmoUpdateChildren(gizmo);
+}
+
+void GizmoSetupMove(struct Gizmo *gizmo)
+{
+	GizmoSetState(gizmo, GIZMO_STATE_MOVE);
+	
+	gInput.textInput.isEnabled = true;
+	gInput.textInput.text[0] = '\0';
+	gInput.textInput.maxChars = 10;
+}
+
+bool GizmoIsIdle(struct Gizmo *gizmo)
+{
+	return gizmo->state == GIZMO_STATE_IDLE;
 }
 
 // TODO still very WIP
