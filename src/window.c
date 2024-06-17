@@ -1592,11 +1592,9 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// changed selections using ui
 		{
-			static struct Instance *prevGizmoInst = 0;
-			if (gGui->selectedInstance != prevGizmoInst)
+			ON_CHANGE(gGui->selectedInstance)
 			{
 				struct Instance *inst = gGui->selectedInstance;
-				prevGizmoInst = inst;
 				
 				GizmoRemoveChildren(gizmo);
 				if (inst)

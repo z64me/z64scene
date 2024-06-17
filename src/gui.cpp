@@ -446,7 +446,6 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			RoomHeader *header = &gScene->rooms[0].headers[0];
 			Instance *instances = header->instances;
 			Instance *inst = gGui->selectedInstance;
-			static int instancePrevIndex = -1;
 			int instanceCurIndex = sb_find_index(instances, inst);
 			bool instanceSelectionChanged = false;
 			
@@ -481,11 +480,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			if (instanceCurIndex < 0) inst = 0;
 			
 			// different instance selected than last time, reset some things
-			if (instanceCurIndex != instancePrevIndex)
+			ON_CHANGE(inst)
 			{
 				instanceSelectionChanged = true;
 				gGui->selectedInstance = inst;
-				instancePrevIndex = instanceCurIndex;
 			}
 			
 			if (instanceCurIndex < 0)
