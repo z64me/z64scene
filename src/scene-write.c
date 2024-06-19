@@ -624,12 +624,12 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			WorkblobPut8(each->frontCamera);
 			WorkblobPut8(each->backRoom);
 			WorkblobPut8(each->backCamera);
-			WorkblobPut16(each->id);
-			WorkblobPut16(each->x);
-			WorkblobPut16(each->y);
-			WorkblobPut16(each->z);
-			WorkblobPut16(each->rot);
-			WorkblobPut16(each->params);
+			WorkblobPut16(each->inst.id);
+			WorkblobPut16(rintf(each->inst.pos.x));
+			WorkblobPut16(rintf(each->inst.pos.y));
+			WorkblobPut16(rintf(each->inst.pos.z));
+			WorkblobPut16(each->inst.yrot);
+			WorkblobPut16(each->inst.params);
 		});
 		WorkblobPop();
 		

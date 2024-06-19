@@ -62,7 +62,7 @@ static struct Scene *private_SceneParseAfterLoad(struct Scene *scene);
 static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr);
 static struct Room *private_RoomParseAfterLoad(struct Room *room);
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr);
-static struct Instance private_InstanceParse(const void *data);
+static struct Instance private_InstanceParse(const void *data, enum InstanceTab tab);
 
 #endif /* private function declarations */
 
@@ -866,10 +866,96 @@ void CollisionHeaderFree(CollisionHeader *header)
 	free(header);
 }
 
+struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src)
+{
+	const struct Instance *inst = src;
+	
+	switch (inst->tab)
+	{
+		case INSTANCE_TAB_ACTOR:
+			sb_push(*list, *inst);
+			break;
+		
+		case INSTANCE_TAB_DOOR: {
+			const struct Doorway *inst = src;
+			sb_push(*((struct Doorway**)list), *inst);
+			break;
+		}
+		
+		case INSTANCE_TAB_SPAWN: {
+			const struct SpawnPoint *inst = src;
+			sb_push(*((struct SpawnPoint**)list), *inst);
+			break;
+		}
+		
+		default:
+			Die("InstanceAddToListGeneric() unknown tab type");
+			break;
+	}
+	
+	return &sb_last(*list);
+}
+
+void InstanceDeleteFromListGeneric(struct Instance **list, const void *src)
+{
+	const struct Instance *inst = src;
+	int index = -1;
+	
+	sb_foreach(*list, {
+		if (each == inst) {
+			index = eachIndex;
+			break;
+		}
+	})
+	
+	if (index < 0)
+		Die("trying to delete item, doesn't exist");
+	
+	int copyHowMany = sb_count(*list) - (index + 1);
+	int copySizeEach = 0;
+	
+	// popping off the end of the list
+	if (copyHowMany <= 0)
+	{
+		sb_pop(*list);
+		return;
+	}
+	
+	switch (inst->tab)
+	{
+		case INSTANCE_TAB_ACTOR:
+			copySizeEach = sizeof(struct Instance);
+			break;
+		
+		case INSTANCE_TAB_DOOR: {
+			copySizeEach = sizeof(struct Doorway);
+			break;
+		}
+		
+		case INSTANCE_TAB_SPAWN: {
+			copySizeEach = sizeof(struct SpawnPoint);
+			break;
+		}
+		
+		default:
+			Die("InstanceDeleteFromListGeneric() unknown tab type");
+			break;
+	}
+	
+	uint8_t *listRaw = (void*)*list;
+	memmove(
+		&listRaw[copySizeEach * index]
+		, &listRaw[copySizeEach * (index + 1)]
+		, copySizeEach * copyHowMany
+	);
+	
+	sb_pop(*list);
+}
+
 
 #if 1 /* region: private function implementations */
 
-static struct Instance private_InstanceParse(const void *data)
+static struct Instance private_InstanceParse(const void *data, enum InstanceTab tab)
 {
 	const uint8_t *data8 = data;
 	
@@ -880,6 +966,7 @@ static struct Instance private_InstanceParse(const void *data)
 		, .yrot = s16r(data8 + 10)
 		, .zrot = s16r(data8 + 12)
 		, .params = u16r(data8 + 14)
+		, .tab = tab
 	};
 }
 
@@ -1044,15 +1131,14 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						.frontCamera = arr[1],
 						.backRoom = arr[2],
 						.backCamera = arr[3],
-						.id = u16r(arr + 4),
-						.x = u16r(arr + 6),
-						.y = u16r(arr + 8),
-						.z = u16r(arr + 10),
-						.rot = u16r(arr + 12),
-						.params = u16r(arr + 14),
+						.inst = {
+							.id = u16r(arr + 4),
+							.pos = { s16r3(arr + 6) },
+							.yrot = u16r(arr + 12),
+							.params = u16r(arr + 14),
+							.tab = INSTANCE_TAB_DOOR,
+						}
 					};
-					
-					doorway.pos = (Vec3f) { UNFOLD_VEC3(doorway) };
 					
 					sb_push(result->doorways, doorway);
 				}
@@ -1148,6 +1234,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				.room = spawnPoints.entrances[i * 2 + 1]
 				, .inst = private_InstanceParse(spawnPoints.positions
 					+ 16 * spawnPoints.entrances[i * 2]
+					, INSTANCE_TAB_SPAWN
 				)
 			};
 			
@@ -1250,7 +1337,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				
 				for (int i = 0; i < walk[1]; ++i)
 					sb_push(result->instances
-						, private_InstanceParse(arr + 16 * i)
+						, private_InstanceParse(arr + 16 * i, INSTANCE_TAB_ACTOR)
 					);
 				break;
 			}

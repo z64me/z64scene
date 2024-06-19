@@ -478,8 +478,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		, [](){
 			
 			RoomHeader *header = &gScene->rooms[0].headers[0];
-			gGui->instanceList = &(header->instances);
-			Instance *instances = *gGui->instanceList;
+			gGui->instanceList[INSTANCE_TAB_ACTOR] = &(header->instances);
+			Instance *instances = *(gGui->instanceList[INSTANCE_TAB_ACTOR]);
 			
 			if (ImGui::Button("Add New Instance##InstanceCombo"))
 				QUEUE_POPUP(AddNewInstanceSearch);
@@ -983,8 +983,8 @@ static void DrawSidebar(void)
 				.pos = gGui->newSpawnPos,
 			};
 			
-			if (gGui->instanceList)
-				gGui->selectedInstance = &sb_push(*gGui->instanceList, newInst);
+			if (gGui->instanceList[INSTANCE_TAB_ACTOR])
+				gGui->selectedInstance = &sb_push(*(gGui->instanceList[INSTANCE_TAB_ACTOR]), newInst);
 			else
 				fprintf(stderr, "instanceList == 0, can't add\n");
 		}

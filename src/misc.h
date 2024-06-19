@@ -274,6 +274,14 @@ typedef struct {
 
 #endif // endregion
 
+enum InstanceTab
+{
+	INSTANCE_TAB_ACTOR = 0,
+	INSTANCE_TAB_DOOR,
+	INSTANCE_TAB_SPAWN,
+	INSTANCE_TAB_COUNT,
+};
+
 struct Instance
 {
 	uint16_t  id;
@@ -283,6 +291,7 @@ struct Instance
 	uint16_t  params;
 	
 	Vec3f     pos;
+	uint8_t   tab; // enum InstanceTab
 };
 
 struct RoomMeshSimple
@@ -322,7 +331,7 @@ struct Room
 
 struct SpawnPoint
 {
-	struct Instance inst;
+	struct Instance inst; // always first
 	uint8_t room;
 };
 
@@ -336,18 +345,11 @@ struct ActorPath
 
 struct Doorway
 {
+	struct Instance inst; // always first
 	uint8_t   frontRoom;
 	uint8_t   frontCamera;
 	uint8_t   backRoom;
 	uint8_t   backCamera;
-	uint16_t  id;
-	int16_t   x;
-	int16_t   y;
-	int16_t   z;
-	uint16_t  rot;
-	uint16_t  params;
-	
-	Vec3f     pos;
 };
 
 struct SceneHeader
@@ -412,6 +414,9 @@ const char *ExePath(const char *path);
 struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head, uint32_t segAddr);
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs);
 void SceneWriterCleanup(void);
+
+struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src);
+void InstanceDeleteFromListGeneric(struct Instance **list, const void *src);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);
