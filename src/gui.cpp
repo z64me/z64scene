@@ -415,7 +415,7 @@ static ActorDatabase::Entry &InstanceTypeSearch(void)
 
 // multi-purpose instance tab, good for actors/spawnpoints/doors
 // XXX if "String##Instance" etc give issues, try QuickFmt("String##%s", tabType)
-static void InstanceTab(sb_array(struct Instance, *instanceList), const char *tabType, enum InstanceTab tab)
+static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const char *tabType, enum InstanceTab tab)
 {
 	gGui->instanceList = instanceList;
 	Instance *instances = *(gGui->instanceList);
@@ -434,10 +434,10 @@ static void InstanceTab(sb_array(struct Instance, *instanceList), const char *ta
 	{
 		ImGui::TextWrapped("No instances. Add an instance to get started.");
 		
-		return;
+		return 0;
 	}
 	
-	ImGui::SeparatorText("Instance List");
+	ImGui::SeparatorText(QuickFmt("%s List", tabType));
 	ImGui::Combo(
 		"##Instance##InstanceCombo"
 		, &instanceCurIndex
@@ -469,7 +469,7 @@ static void InstanceTab(sb_array(struct Instance, *instanceList), const char *ta
 	{
 		ImGui::TextWrapped("No instance selected.");
 		
-		return;
+		return 0;
 	}
 	
 	ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
@@ -507,9 +507,9 @@ static void InstanceTab(sb_array(struct Instance, *instanceList), const char *ta
 	int xrot = inst->xrot;
 	int yrot = inst->yrot;
 	int zrot = inst->zrot;
-	ImGui::InputInt("X##InstanceRot", &xrot);
+	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("X##InstanceRot", &xrot);
 	ImGui::InputInt("Y##InstanceRot", &yrot);
-	ImGui::InputInt("Z##InstanceRot", &zrot);
+	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("Z##InstanceRot", &zrot);
 	inst->xrot = xrot;
 	inst->yrot = yrot;
 	inst->zrot = zrot;
@@ -586,6 +586,8 @@ static void InstanceTab(sb_array(struct Instance, *instanceList), const char *ta
 			current->Inject(comboOpt, &inst->params, &inst->xrot, &inst->yrot, &inst->zrot);
 		}
 	}
+	
+	return inst;
 }
 
 static const LinkedStringFunc *gSidebarTabs[] = {
@@ -604,9 +606,24 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		TABNAME_DOORS
 		, [](){
-			ImGui::TextWrapped("TODO: '" TABNAME_DOORS "' tab");
 			
-			InstanceTab(gGui->doorList, "Doorway", INSTANCE_TAB_DOOR);
+			Instance *inst = InstanceTab(gGui->doorList, "Doorway", INSTANCE_TAB_DOOR);
+			
+			if (!inst)
+				return;
+			
+			// room change data
+			ImGui::SeparatorText("Room Change Data");
+			
+			int frontRoom = inst->doorway.frontRoom;
+			int frontCamera = inst->doorway.frontCamera;
+			int backRoom = inst->doorway.backRoom;
+			int backCamera = inst->doorway.backCamera;
+			
+			if (ImGui::InputInt("Front Room##DoorwayData", &frontRoom)) inst->doorway.frontRoom = frontRoom;
+			if (ImGui::InputInt("Front Camera##DoorwayData", &frontCamera)) inst->doorway.frontCamera = frontCamera;
+			if (ImGui::InputInt("Back Room##DoorwayData", &backRoom)) inst->doorway.backRoom = backRoom;
+			if (ImGui::InputInt("Back Camera##DoorwayData", &backCamera)) inst->doorway.backCamera = backCamera;
 		}
 	},
 	new LinkedStringFunc{
@@ -678,7 +695,6 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		TABNAME_SPAWNS
 		, [](){
-			ImGui::TextWrapped("TODO: 'Spawns' tab");
 			
 			InstanceTab(gGui->spawnList, "Spawn Point", INSTANCE_TAB_SPAWN);
 		}
