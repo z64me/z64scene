@@ -205,11 +205,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_D:
 			// Shift + D to Duplicate & Move
+			// TODO move this logic elsewhere
 			if (gGui->selectedInstance
 				&& !gState.hasCameraMoved
 				&& GizmoIsIdle(gState.gizmo)
 				&& (mods & GLFW_MOD_SHIFT)
 				&& gGui->instanceList
+				&& !GuiHasFocus()
 			)
 			{
 				struct Instance newInst = *(gGui->selectedInstance);
