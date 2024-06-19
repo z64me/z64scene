@@ -434,7 +434,7 @@ static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const cha
 	gGui->instanceList = instanceList;
 	Instance *instances = *(gGui->instanceList);
 	
-	if (ImGui::Button("Add New Instance##InstanceCombo"))
+	if (ImGui::Button(QuickFmt("Add New %s##InstanceCombo", tabType)))
 	{
 		QUEUE_POPUP(AddNewInstanceSearch);
 		gAddNewInstanceSearchTab = tab;
