@@ -1018,7 +1018,20 @@ static void DrawSidebar(void)
 	if (ImGui::BeginPopup("##RightClickWorldMenu"))
 	{
 		if (ImGui::Selectable("Add Actor Here"))
+		{
 			QUEUE_POPUP(AddNewInstanceSearch);
+			gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
+		}
+		if (ImGui::Selectable("Add Spawn Point Here"))
+		{
+			QUEUE_POPUP(AddNewInstanceSearch);
+			gAddNewInstanceSearchTab = INSTANCE_TAB_SPAWN;
+		}
+		if (ImGui::Selectable("Add Doorway Here"))
+		{
+			QUEUE_POPUP(AddNewInstanceSearch);
+			gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
+		}
 		
 		ImGui::EndPopup();
 	}
@@ -1032,6 +1045,14 @@ static void DrawSidebar(void)
 		if (!type.isEmpty)
 		{
 			fprintf(stderr, "add instance of type '%s'\n", type.name);
+			
+			switch (gAddNewInstanceSearchTab)
+			{
+				case INSTANCE_TAB_ACTOR: gGui->instanceList = gGui->actorList; break;
+				case INSTANCE_TAB_SPAWN: gGui->instanceList = gGui->spawnList; break;
+				case INSTANCE_TAB_DOOR: gGui->instanceList = gGui->doorList; break;
+				default: Die("unknown tab type"); break;
+			}
 			
 			struct Instance newInst = {
 				.id = type.index,
