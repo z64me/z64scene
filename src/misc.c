@@ -866,6 +866,8 @@ void CollisionHeaderFree(CollisionHeader *header)
 	free(header);
 }
 
+// experimented with polymorphic instance types
+/*
 struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src)
 {
 	const struct Instance *inst = src;
@@ -951,6 +953,7 @@ void InstanceDeleteFromListGeneric(struct Instance **list, const void *src)
 	
 	sb_pop(*list);
 }
+*/
 
 
 #if 1 /* region: private function implementations */
@@ -1126,17 +1129,17 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				
 				for (int i = 0; i < numPaths; ++i, arr += 16)
 				{
-					struct Doorway doorway = {
-						.frontRoom = arr[0],
-						.frontCamera = arr[1],
-						.backRoom = arr[2],
-						.backCamera = arr[3],
-						.inst = {
-							.id = u16r(arr + 4),
-							.pos = { s16r3(arr + 6) },
-							.yrot = u16r(arr + 12),
-							.params = u16r(arr + 14),
-							.tab = INSTANCE_TAB_DOOR,
+					struct Instance doorway = {
+						.id = u16r(arr + 4),
+						.pos = { s16r3(arr + 6) },
+						.yrot = u16r(arr + 12),
+						.params = u16r(arr + 14),
+						.tab = INSTANCE_TAB_DOOR,
+						.doorway = {
+							.frontRoom = arr[0],
+							.frontCamera = arr[1],
+							.backRoom = arr[2],
+							.backCamera = arr[3],
 						}
 					};
 					
@@ -1230,13 +1233,11 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	{
 		for (int i = 0; i < spawnPoints.count; ++i)
 		{
-			struct SpawnPoint tmp = (struct SpawnPoint) {
-				.room = spawnPoints.entrances[i * 2 + 1]
-				, .inst = private_InstanceParse(spawnPoints.positions
-					+ 16 * spawnPoints.entrances[i * 2]
-					, INSTANCE_TAB_SPAWN
-				)
-			};
+			struct Instance tmp = private_InstanceParse(
+				spawnPoints.positions + 16 * spawnPoints.entrances[i * 2]
+				, INSTANCE_TAB_SPAWN
+			);
+			tmp.spawnpoint.room = spawnPoints.entrances[i * 2 + 1];
 			
 			sb_push(result->spawns, tmp);
 		}

@@ -36,6 +36,11 @@ extern "C" {
 
 #if 1 // region: misc decls
 
+// sidebar tabs
+#define TABNAME_ACTORS "Actors"
+#define TABNAME_DOORS "Doorways"
+#define TABNAME_SPAWNS "Spawns"
+
 #define DECL_POPUP(NAME) static bool isPopup##NAME##Queued = false;
 #define QUEUE_POPUP(NAME) isPopup##NAME##Queued = true;
 #define DEQUEUE_POPUP(NAME) if (isPopup##NAME##Queued) { ImGui::OpenPopup(#NAME); isPopup##NAME##Queued = false; }
@@ -396,6 +401,12 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
+		TABNAME_DOORS
+		, [](){
+			ImGui::TextWrapped("TODO: '" TABNAME_DOORS "' tab");
+		}
+	},
+	new LinkedStringFunc{
 		"Environment"
 		, [](){
 			ImGui::TextWrapped("TODO: 'Scene Env' tab");
@@ -462,7 +473,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
-		"Spawns"
+		TABNAME_SPAWNS
 		, [](){
 			ImGui::TextWrapped("TODO: 'Spawns' tab");
 		}
@@ -474,12 +485,12 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
-		"Instances"
+		TABNAME_ACTORS
 		, [](){
 			
 			RoomHeader *header = &gScene->rooms[0].headers[0];
-			gGui->instanceList[INSTANCE_TAB_ACTOR] = &(header->instances);
-			Instance *instances = *(gGui->instanceList[INSTANCE_TAB_ACTOR]);
+			gGui->instanceList = &(header->instances);
+			Instance *instances = *(gGui->instanceList);
 			
 			if (ImGui::Button("Add New Instance##InstanceCombo"))
 				QUEUE_POPUP(AddNewInstanceSearch);
@@ -917,11 +928,41 @@ static void DrawSidebar(void)
 	{
 		static int which = 0;
 		
+		// when an instance is clicked, automatically switch
+		// to the tab containing information about it
+		ON_CHANGE(gGui->selectedInstance)
+		{
+			if (gGui->selectedInstance)
+			{
+				const char *tabName = 0;
+				
+				switch (gGui->selectedInstance->tab)
+				{
+					case INSTANCE_TAB_ACTOR: tabName = TABNAME_ACTORS; break;
+					case INSTANCE_TAB_DOOR: tabName = TABNAME_DOORS; break;
+					case INSTANCE_TAB_SPAWN: tabName = TABNAME_SPAWNS; break;
+					default: Die("unknown tab type");
+				}
+				
+				if (tabName)
+				{
+					for (int i = 0; i < sizeof(gSidebarTabs) / sizeof(*gSidebarTabs); ++i)
+					{
+						if (!strcmp(gSidebarTabs[i]->name, tabName))
+						{
+							which = i;
+							break;
+						}
+					}
+				}
+			}
+		}
+		
 		MultiLineTabBarGeneric(
 			"SidebarTabs"
 			, reinterpret_cast<const void**>(gSidebarTabs)
 			, sizeof(gSidebarTabs) / sizeof(*gSidebarTabs)
-			, 5
+			, 6
 			, &which
 			, [](const void **arr, const int index) -> const char* {
 				const LinkedStringFunc **ready = reinterpret_cast<const LinkedStringFunc**>(arr);
@@ -983,8 +1024,8 @@ static void DrawSidebar(void)
 				.pos = gGui->newSpawnPos,
 			};
 			
-			if (gGui->instanceList[INSTANCE_TAB_ACTOR])
-				gGui->selectedInstance = &sb_push(*(gGui->instanceList[INSTANCE_TAB_ACTOR]), newInst);
+			if (gGui->instanceList)
+				gGui->selectedInstance = &sb_push(*(gGui->instanceList), newInst);
 			else
 				fprintf(stderr, "instanceList == 0, can't add\n");
 		}

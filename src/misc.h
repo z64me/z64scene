@@ -292,6 +292,17 @@ struct Instance
 	
 	Vec3f     pos;
 	uint8_t   tab; // enum InstanceTab
+	
+	struct {
+		uint8_t   frontRoom;
+		uint8_t   frontCamera;
+		uint8_t   backRoom;
+		uint8_t   backCamera;
+	} doorway;
+	
+	struct {
+		uint8_t room;
+	} spawnpoint;
 };
 
 struct RoomMeshSimple
@@ -329,12 +340,6 @@ struct Room
 	sb_array(struct RoomHeader, headers);
 };
 
-struct SpawnPoint
-{
-	struct Instance inst; // always first
-	uint8_t room;
-};
-
 struct ActorPath
 {
 	//uint8_t numPoints; // unused b/c sb_array() has sb_count()
@@ -343,23 +348,14 @@ struct ActorPath
 	sb_array(Vec3f, points);
 };
 
-struct Doorway
-{
-	struct Instance inst; // always first
-	uint8_t   frontRoom;
-	uint8_t   frontCamera;
-	uint8_t   backRoom;
-	uint8_t   backCamera;
-};
-
 struct SceneHeader
 {
 	struct Scene *scene;
-	sb_array(struct SpawnPoint, spawns);
+	sb_array(struct Instance, spawns);
 	sb_array(ZeldaLight, lights);
 	sb_array(uint32_t, unhandledCommands);
 	sb_array(struct ActorPath, paths);
-	sb_array(struct Doorway, doorways);
+	sb_array(struct Instance, doorways);
 	struct CutsceneOot *cutsceneOot;
 	sb_array(struct CutsceneListMm, cutsceneListMm);
 	sb_array(ActorCsCamInfo, actorCsCamInfo);

@@ -216,10 +216,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			{
 				struct Instance newInst = *(gGui->selectedInstance);
 				
-				gGui->selectedInstance = InstanceAddToListGeneric(
-					gGui->instanceList[newInst.tab]
-					, &newInst
-				);
+				sb_push(*gGui->instanceList, newInst);
+				gGui->selectedInstance = &sb_last(*gGui->instanceList);
 				
 				GuiPushModal("Duplicated instance.");
 				GizmoSetupMove(gState.gizmo);

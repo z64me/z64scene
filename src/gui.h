@@ -35,7 +35,7 @@ struct GuiInterop
 	
 	struct Instance *queueInstanceSelect;
 	struct Instance *selectedInstance;
-	sb_array(struct Instance, *instanceList)[INSTANCE_TAB_COUNT];
+	sb_array(struct Instance, *instanceList);
 	
 	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
 	bool rightClickedInViewport;

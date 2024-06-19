@@ -569,7 +569,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPush(4);
 		sb_foreach(header->spawns, {
 			WorkblobPut8(eachIndex);
-			WorkblobPut8(each->room);
+			WorkblobPut8(each->spawnpoint.room);
 		});
 		WorkblobPop();
 		WorkblobPut32(gWorkblobAddr);
@@ -577,15 +577,14 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(0x00000000 | (sb_count(header->spawns) << 16));
 		WorkblobPush(4);
 		sb_foreach(header->spawns, {
-			struct Instance inst = each->inst;
-			WorkblobPut16(inst.id);
-			WorkblobPut16(rintf(inst.pos.x));
-			WorkblobPut16(rintf(inst.pos.y));
-			WorkblobPut16(rintf(inst.pos.z));
-			WorkblobPut16(inst.xrot);
-			WorkblobPut16(inst.yrot);
-			WorkblobPut16(inst.zrot);
-			WorkblobPut16(inst.params);
+			WorkblobPut16(each->id);
+			WorkblobPut16(rintf(each->pos.x));
+			WorkblobPut16(rintf(each->pos.y));
+			WorkblobPut16(rintf(each->pos.z));
+			WorkblobPut16(each->xrot);
+			WorkblobPut16(each->yrot);
+			WorkblobPut16(each->zrot);
+			WorkblobPut16(each->params);
 		});
 		WorkblobPop();
 		WorkblobPut32(gWorkblobAddr);
@@ -620,16 +619,16 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		WorkblobPush(4);
 		sb_foreach(header->doorways, {
-			WorkblobPut8(each->frontRoom);
-			WorkblobPut8(each->frontCamera);
-			WorkblobPut8(each->backRoom);
-			WorkblobPut8(each->backCamera);
-			WorkblobPut16(each->inst.id);
-			WorkblobPut16(rintf(each->inst.pos.x));
-			WorkblobPut16(rintf(each->inst.pos.y));
-			WorkblobPut16(rintf(each->inst.pos.z));
-			WorkblobPut16(each->inst.yrot);
-			WorkblobPut16(each->inst.params);
+			WorkblobPut8(each->doorway.frontRoom);
+			WorkblobPut8(each->doorway.frontCamera);
+			WorkblobPut8(each->doorway.backRoom);
+			WorkblobPut8(each->doorway.backCamera);
+			WorkblobPut16(each->id);
+			WorkblobPut16(rintf(each->pos.x));
+			WorkblobPut16(rintf(each->pos.y));
+			WorkblobPut16(rintf(each->pos.z));
+			WorkblobPut16(each->yrot);
+			WorkblobPut16(each->params);
 		});
 		WorkblobPop();
 		
