@@ -81,6 +81,7 @@ struct ActorDatabase
 		std::vector<uint16_t>   objects;
 		std::vector<Property>   properties;
 		bool isEmpty = false;
+		int categoryInt = -1;
 		
 		void AddProperty(Property property)
 		{

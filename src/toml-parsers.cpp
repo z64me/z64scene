@@ -76,6 +76,23 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 	entry.name = TOML_CSTRING(tomlActor["Name"]);
 	entry.index = TOML_INT(tomlActor["Index"]);
 	
+	if (tomlActor.contains("Category")
+		&& tomlActor["Category"].is_string()
+	)
+	{
+		char *category = TOML_CSTRING(tomlActor["Category"]);
+		
+		if (category)
+		{
+			int categoryInt;
+			
+			if (sscanf(category, "%d", &categoryInt) == 1)
+				entry.categoryInt = categoryInt;
+			
+			free(category);
+		}
+	}
+	
 	auto objects = tomlActor["Objects"];
 	if (objects.is_array())
 		for (auto &each : objects.as_array())

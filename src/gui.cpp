@@ -375,6 +375,31 @@ static ActorDatabase::Entry &InstanceTypeSearch(void)
 	{
 		const char *name = entry.name;
 		
+		// custom filters
+		switch (gAddNewInstanceSearchTab)
+		{
+			case INSTANCE_TAB_ACTOR:
+				if (entry.categoryInt == ACTORCAT_PLAYER
+					|| entry.categoryInt == ACTORCAT_DOOR
+				)
+					continue;
+				break;
+			
+			case INSTANCE_TAB_SPAWN:
+				if (entry.categoryInt != ACTORCAT_PLAYER)
+					continue;
+				break;
+			
+			case INSTANCE_TAB_DOOR:
+				if (entry.categoryInt != ACTORCAT_DOOR)
+					continue;
+				break;
+			
+			default:
+				Die("unknown tab type");
+				break;
+		}
+		
 		if (name
 			&& filter.PassFilter(name)
 			&& ImGui::Selectable(name)
