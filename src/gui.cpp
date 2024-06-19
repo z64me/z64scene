@@ -230,6 +230,20 @@ static GuiInterop *gGui;
 
 #if 1 // region: private functions
 
+// Helper to display a little (?) mark which shows a tooltip when hovered.
+// In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
+static void HelpMarker(const char *desc)
+{
+	ImGui::TextDisabled("(?)");
+	if (ImGui::BeginItemTooltip())
+	{
+		ImGui::PushTextWrapPos(ImGui::GetFontSize() * 35.0f);
+		ImGui::TextUnformatted(desc);
+		ImGui::PopTextWrapPos();
+		ImGui::EndTooltip();
+	}
+}
+
 // imgui doesn't support this natively, so hack a custom one into it
 static void MultiLineTabBarGeneric(
 	const char *uniqueName
@@ -499,17 +513,26 @@ static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const cha
 	int xpos = rintf(inst->pos.x);
 	int ypos = rintf(inst->pos.y);
 	int zpos = rintf(inst->pos.z);
-	if (ImGui::InputInt("X##InstancePos", &xpos)) inst->pos.x = xpos;
-	if (ImGui::InputInt("Y##InstancePos", &ypos)) inst->pos.y = ypos;
-	if (ImGui::InputInt("Z##InstancePos", &zpos)) inst->pos.z = zpos;
+	int nudgeBy = (ImGui::GetIO().KeyShift) ? 20 : 1; // nudge by 20 if shift is held
+	int nudgeCtrl = nudgeBy; // ctrl has no effect
+	if (ImGui::InputInt("X##InstancePos", &xpos, nudgeBy, nudgeCtrl)) inst->pos.x = xpos;
+	ImGui::SameLine(); HelpMarker("These buttons nudge farther\n""if you hold the Shift key.");
+	if (ImGui::InputInt("Y##InstancePos", &ypos, nudgeBy, nudgeCtrl)) inst->pos.y = ypos;
+	if (ImGui::InputInt("Z##InstancePos", &zpos, nudgeBy, nudgeCtrl)) inst->pos.z = zpos;
 	
 	ImGui::SeparatorText("Rotation");
 	int xrot = inst->xrot;
 	int yrot = inst->yrot;
 	int zrot = inst->zrot;
-	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("X##InstanceRot", &xrot);
-	ImGui::InputInt("Y##InstanceRot", &yrot);
-	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("Z##InstanceRot", &zrot);
+	nudgeBy = (ImGui::GetIO().KeyShift) ? 0x2000 : 1; // nudge by 20 if shift is held
+	nudgeCtrl = 0xffff / 360; // 1 degree
+	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("X##InstanceRot", &xrot, nudgeBy, nudgeCtrl);
+	ImGui::InputInt("Y##InstanceRot", &yrot, nudgeBy, nudgeCtrl);
+	ImGui::SameLine(); HelpMarker(
+		"These buttons turn by 45 degrees if you hold the\n"
+		"Shift key, or by 1 degree if you hold the Ctrl key."
+	);
+	if (tab != INSTANCE_TAB_DOOR) ImGui::InputInt("Z##InstanceRot", &zrot, nudgeBy, nudgeCtrl);
 	inst->xrot = xrot;
 	inst->yrot = yrot;
 	inst->zrot = zrot;
