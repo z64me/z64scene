@@ -1200,6 +1200,70 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 	}
 }
 
+static void RaycastInstanceList(sb_array(struct Instance, *instanceList), struct Gizmo *gizmo, RayLine ray)
+{
+	struct Instance *instances;
+	
+	if (!instanceList)
+		return;
+	
+	if (!(instances = *instanceList))
+		return;
+	
+	sb_foreach(instances, {
+		if (Col3D_LineVsSphere(
+			&ray
+			, &(Sphere){
+				.pos = each->pos
+				, .r = 20
+			}
+			, 0
+		)) {
+			// TODO construct a list of collisions and choose the nearest instance
+			// TODO if multiple instances overlap, each click should cycle through them
+			GizmoSetPosition(gizmo, UNFOLD_VEC3(each->pos));
+			GizmoAddChild(gizmo, &each->pos);
+			gGui->selectedInstance = each;
+			break;
+		}
+	});
+}
+
+static void DrawInstanceList(sb_array(struct Instance, *instanceList))
+{
+	float model[16];
+	struct Instance *instances;
+	
+	if (!instanceList)
+		return;
+	
+	if (!(instances = *instanceList))
+		return;
+	
+	sb_foreach(instances, {
+		identity(model);
+		{
+			mtx_translate_rot(
+				(void*)model
+				, &(N64Vector3){ UNFOLD_VEC3(each->pos) }
+				, &(N64Vector3){
+					BinToRad(each->xrot)
+					, BinToRad(each->yrot) - DegToRad(90) // correct model rotation
+					, BinToRad(each->zrot)
+				}
+			);
+			
+			// scale non-positioning components
+			for (int i = 0; i < 12; ++i)
+				model[i] *= 0.025f;
+		}
+		
+		n64_mtx_model(model);
+		n64_segment_set(0x06, meshPrismArrow);
+		n64_draw_dlist(&meshPrismArrow[0x100]);
+	});
+}
+
 void WindowMainLoop(struct Scene *scene)
 {
 	gState.input = &gInput;
@@ -1341,26 +1405,9 @@ void WindowMainLoop(struct Scene *scene)
 					GizmoRemoveChildren(gizmo);
 					gGui->selectedInstance = 0;
 					
-					sb_foreach(scene->rooms, {
-						struct RoomHeader *header = &each->headers[0];
-						sb_foreach(header->instances, {
-							if (Col3D_LineVsSphere(
-								&ray
-								, &(Sphere){
-									.pos = each->pos
-									, .r = 20
-								}
-								, 0
-							)) {
-								// TODO construct a list of collisions and choose the nearest instance
-								// TODO if multiple instances overlap, each click should cycle through them
-								GizmoSetPosition(gizmo, UNFOLD_VEC3(each->pos));
-								GizmoAddChild(gizmo, &each->pos);
-								gGui->selectedInstance = each;
-								break;
-							}
-						});
-					});
+					RaycastInstanceList(gGui->actorList, gizmo, ray);
+					RaycastInstanceList(gGui->spawnList, gizmo, ray);
+					RaycastInstanceList(gGui->doorList, gizmo, ray);
 				}
 				/*
 				for (var_t i = 0; i < room->actorList.num; i++) {
@@ -1570,32 +1617,14 @@ void WindowMainLoop(struct Scene *scene)
 		n64_draw_dlist(matBlank);
 		static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
 		static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
+		static GbiGfx gfxGreen[] = { gsDPSetPrimColor(0, 0, 0, 255, 0, 255), gsSPEndDisplayList() };
+		static GbiGfx gfxRed[] = { gsDPSetPrimColor(0, 0, 255, 0, 0, 255), gsSPEndDisplayList() };
 		n64_draw_dlist(gfxEnableXray);
-		sb_foreach(scene->rooms, {
-			struct RoomHeader *header = &each->headers[0];
-			sb_foreach(header->instances, {
-				identity(model);
-				{
-					mtx_translate_rot(
-						(void*)model
-						, &(N64Vector3){ UNFOLD_VEC3(each->pos) }
-						, &(N64Vector3){
-							BinToRad(each->xrot)
-							, BinToRad(each->yrot) - DegToRad(90) // correct model rotation
-							, BinToRad(each->zrot)
-						}
-					);
-					
-					// scale non-positioning components
-					for (int i = 0; i < 12; ++i)
-						model[i] *= 0.025f;
-				}
-				
-				n64_mtx_model(model);
-				n64_segment_set(0x06, meshPrismArrow);
-				n64_draw_dlist(&meshPrismArrow[0x100]);
-			});
-		});
+		DrawInstanceList(gGui->actorList);
+		n64_draw_dlist(gfxGreen);
+		DrawInstanceList(gGui->spawnList);
+		n64_draw_dlist(gfxRed);
+		DrawInstanceList(gGui->doorList);
 		n64_draw_dlist(gfxDisableXray);
 		
 		// test

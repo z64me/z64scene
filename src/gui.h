@@ -33,9 +33,12 @@ struct GuiInterop
 		uint16_t envPreviewTime;
 	} env;
 	
-	struct Instance *queueInstanceSelect;
 	struct Instance *selectedInstance;
-	sb_array(struct Instance, *instanceList);
+	sb_array(struct Instance, *instanceList); // used for duplicating etc
+	
+	sb_array(struct Instance, *actorList);
+	sb_array(struct Instance, *doorList);
+	sb_array(struct Instance, *spawnList);
 	
 	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
 	bool rightClickedInViewport;

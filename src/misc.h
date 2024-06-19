@@ -393,6 +393,7 @@ struct Room *RoomFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 void SceneReadyDataBlobs(struct Scene *scene);
 void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
+const char *QuickFmt(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void *Calloc(size_t howMany, size_t sizeEach);
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header);
 void RoomAddHeader(struct Room *room, struct RoomHeader *header);

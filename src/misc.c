@@ -84,6 +84,20 @@ void Die(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
+const char *QuickFmt(const char *fmt, ...)
+{
+	static char buf[256];
+	
+	va_list args;
+	va_start(args, fmt);
+	
+	vsnprintf(buf, sizeof(buf), fmt, args);
+	
+	va_end(args);
+	
+	return buf;
+}
+
 void *Calloc(size_t howMany, size_t sizeEach)
 {
 	void *result = calloc(howMany, sizeEach);

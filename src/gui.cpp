@@ -47,6 +47,7 @@ extern "C" {
 #define STRINGIFY(NAME) #NAME
 
 DECL_POPUP(AddNewInstanceSearch)
+static enum InstanceTab gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
 
 #endif
 
@@ -387,6 +388,181 @@ static ActorDatabase::Entry &InstanceTypeSearch(void)
 	return empty;
 }
 
+// multi-purpose instance tab, good for actors/spawnpoints/doors
+// XXX if "String##Instance" etc give issues, try QuickFmt("String##%s", tabType)
+static void InstanceTab(sb_array(struct Instance, *instanceList), const char *tabType, enum InstanceTab tab)
+{
+	gGui->instanceList = instanceList;
+	Instance *instances = *(gGui->instanceList);
+	
+	if (ImGui::Button("Add New Instance##InstanceCombo"))
+	{
+		QUEUE_POPUP(AddNewInstanceSearch);
+		gAddNewInstanceSearchTab = tab;
+	}
+	
+	Instance *inst = gGui->selectedInstance;
+	int instanceCurIndex = sb_find_index(instances, inst);
+	bool instanceSelectionChanged = false;
+	
+	if (sb_count(instances) == 0)
+	{
+		ImGui::TextWrapped("No instances. Add an instance to get started.");
+		
+		return;
+	}
+	
+	ImGui::SeparatorText("Instance List");
+	ImGui::Combo(
+		"##Instance##InstanceCombo"
+		, &instanceCurIndex
+		, [](void* data, int n) {
+			static char test[256];
+			// possible safety, but i think imgui handles it automatically
+			//if (n < 0)
+			//	return (const char*)strcpy(test, "");
+			Instance *inst = &((Instance*)data)[n];
+			sprintf(test, "%d: %s 0x%04x", n, gGuiSettings.actorDatabase.GetActorName(inst->id), inst->id);
+			return (const char*)test;
+		}
+		, instances
+		, sb_count(instances)
+	);
+	IMGUI_COMBO_HOVER(instanceCurIndex, sb_count(instances));
+	
+	inst = &instances[instanceCurIndex];
+	if (instanceCurIndex < 0) inst = 0;
+	
+	// different instance selected than last time, reset some things
+	ON_CHANGE(inst)
+	{
+		instanceSelectionChanged = true;
+		gGui->selectedInstance = inst;
+	}
+	
+	if (instanceCurIndex < 0)
+	{
+		ImGui::TextWrapped("No instance selected.");
+		
+		return;
+	}
+	
+	ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
+	ImGui::Button("Delete##InstanceCombo");
+	
+	ImGui::SeparatorText("Data");
+	
+	// id w/ search
+	PickHexValueU16("ID##Instance", &inst->id);
+	ImGui::SameLine();
+	if (ImGui::Button("Search##Instance"))
+		ImGui::OpenPopup("InstanceTypeSearch");
+	if (ImGui::BeginPopup("InstanceTypeSearch"))
+	{
+		auto &entry = InstanceTypeSearch();
+		
+		if (!entry.isEmpty)
+			inst->id = entry.index;
+		
+		ImGui::EndPopup();
+	}
+	
+	// params
+	PickHexValueU16("Params##Instance", &inst->params);
+	
+	ImGui::SeparatorText("Position");
+	int xpos = rintf(inst->pos.x);
+	int ypos = rintf(inst->pos.y);
+	int zpos = rintf(inst->pos.z);
+	if (ImGui::InputInt("X##InstancePos", &xpos)) inst->pos.x = xpos;
+	if (ImGui::InputInt("Y##InstancePos", &ypos)) inst->pos.y = ypos;
+	if (ImGui::InputInt("Z##InstancePos", &zpos)) inst->pos.z = zpos;
+	
+	ImGui::SeparatorText("Rotation");
+	int xrot = inst->xrot;
+	int yrot = inst->yrot;
+	int zrot = inst->zrot;
+	ImGui::InputInt("X##InstanceRot", &xrot);
+	ImGui::InputInt("Y##InstanceRot", &yrot);
+	ImGui::InputInt("Z##InstanceRot", &zrot);
+	inst->xrot = xrot;
+	inst->yrot = yrot;
+	inst->zrot = zrot;
+	
+	auto &options = gGuiSettings.actorDatabase.GetEntry(inst->id).properties;
+	if (options.size())
+	{
+		ImGui::SeparatorText("Options");
+		
+		static ActorDatabase::Entry::Property *current = 0;
+		
+		// when a new instance is selected, clear the selected property
+		if (instanceSelectionChanged)
+			current = 0;
+		
+		if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+		{
+			for (auto &option : options)
+			{
+				const bool is_selected = (current == &option);
+				
+				if (ImGui::Selectable(option.name, is_selected))
+					current = &option;
+
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndListBox();
+		}
+		
+		if (current)
+		{
+			int comboOpt = current->Extract(inst->params, inst->xrot, inst->yrot, inst->zrot);
+			
+			// TODO different value input types for different options? or hide this if combos.size()?
+			ImGui::InputInt("Value##Instance##InstanceOptions##Value", &comboOpt);
+			
+			// display combo boxes
+			auto &combos = current->combos;
+			if (combos.size())
+			{
+				const char *previewText = "Custom Value (Above)";
+				int selectedIndex = -1;
+				int i;
+				
+				i = 0;
+				for (auto &combo : combos)
+				{
+					if (combo.value == comboOpt)
+					{
+						previewText = combo.label;
+						selectedIndex = i;
+					}
+					++i;
+				}
+				
+				if (ImGui::BeginCombo("##Instance##InstanceOptions##Dropdown", previewText))
+				{
+					i = 0;
+					for (auto &combo : combos)
+					{
+						if (ImGui::Selectable(combo.label, combo.value == comboOpt))
+						{
+							comboOpt = combo.value;
+							selectedIndex = i;
+						}
+					}
+					ImGui::EndCombo();
+				}
+				IMGUI_COMBO_HOVER_ONCHANGE(selectedIndex, combos.size(), { comboOpt = combos[selectedIndex].value; });
+			}
+			
+			current->Inject(comboOpt, &inst->params, &inst->xrot, &inst->yrot, &inst->zrot);
+		}
+	}
+}
+
 static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"General"
@@ -404,6 +580,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		TABNAME_DOORS
 		, [](){
 			ImGui::TextWrapped("TODO: '" TABNAME_DOORS "' tab");
+			
+			InstanceTab(gGui->doorList, "Doorway", INSTANCE_TAB_DOOR);
 		}
 	},
 	new LinkedStringFunc{
@@ -476,6 +654,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		TABNAME_SPAWNS
 		, [](){
 			ImGui::TextWrapped("TODO: 'Spawns' tab");
+			
+			InstanceTab(gGui->spawnList, "Spawn Point", INSTANCE_TAB_SPAWN);
 		}
 	},
 	new LinkedStringFunc{
@@ -488,173 +668,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		TABNAME_ACTORS
 		, [](){
 			
-			RoomHeader *header = &gScene->rooms[0].headers[0];
-			gGui->instanceList = &(header->instances);
-			Instance *instances = *(gGui->instanceList);
-			
-			if (ImGui::Button("Add New Instance##InstanceCombo"))
-				QUEUE_POPUP(AddNewInstanceSearch);
-			
-			Instance *inst = gGui->selectedInstance;
-			int instanceCurIndex = sb_find_index(instances, inst);
-			bool instanceSelectionChanged = false;
-			
-			if (sb_count(instances) == 0)
-			{
-				ImGui::TextWrapped("No instances. Add an instance to get started.");
-				
-				return;
-			}
-			
-			ImGui::SeparatorText("Instance List");
-			ImGui::Combo(
-				"##Instance##InstanceCombo"
-				, &instanceCurIndex
-				, [](void* data, int n) {
-					static char test[256];
-					// possible safety, but i think imgui handles it automatically
-					//if (n < 0)
-					//	return (const char*)strcpy(test, "");
-					Instance *inst = &((Instance*)data)[n];
-					sprintf(test, "%d: %s 0x%04x", n, gGuiSettings.actorDatabase.GetActorName(inst->id), inst->id);
-					return (const char*)test;
-				}
-				, instances
-				, sb_count(instances)
-			);
-			IMGUI_COMBO_HOVER(instanceCurIndex, sb_count(instances));
-			
-			inst = &instances[instanceCurIndex];
-			if (instanceCurIndex < 0) inst = 0;
-			
-			// different instance selected than last time, reset some things
-			ON_CHANGE(inst)
-			{
-				instanceSelectionChanged = true;
-				gGui->selectedInstance = inst;
-			}
-			
-			if (instanceCurIndex < 0)
-			{
-				ImGui::TextWrapped("No instance selected.");
-				
-				return;
-			}
-			
-			ImGui::Button("Duplicate##InstanceCombo"); ImGui::SameLine();
-			ImGui::Button("Delete##InstanceCombo");
-			
-			ImGui::SeparatorText("Data");
-			
-			// id w/ search
-			PickHexValueU16("ID##Instance", &inst->id);
-			ImGui::SameLine();
-			if (ImGui::Button("Search##Instance"))
-				ImGui::OpenPopup("InstanceTypeSearch");
-			if (ImGui::BeginPopup("InstanceTypeSearch"))
-			{
-				auto &entry = InstanceTypeSearch();
-				
-				if (!entry.isEmpty)
-					inst->id = entry.index;
-				
-				ImGui::EndPopup();
-			}
-			
-			// params
-			PickHexValueU16("Params##Instance", &inst->params);
-			
-			ImGui::SeparatorText("Position");
-			int xpos = rintf(inst->pos.x);
-			int ypos = rintf(inst->pos.y);
-			int zpos = rintf(inst->pos.z);
-			if (ImGui::InputInt("X##InstancePos", &xpos)) inst->pos.x = xpos;
-			if (ImGui::InputInt("Y##InstancePos", &ypos)) inst->pos.y = ypos;
-			if (ImGui::InputInt("Z##InstancePos", &zpos)) inst->pos.z = zpos;
-			
-			ImGui::SeparatorText("Rotation");
-			int xrot = inst->xrot;
-			int yrot = inst->yrot;
-			int zrot = inst->zrot;
-			ImGui::InputInt("X##InstanceRot", &xrot);
-			ImGui::InputInt("Y##InstanceRot", &yrot);
-			ImGui::InputInt("Z##InstanceRot", &zrot);
-			inst->xrot = xrot;
-			inst->yrot = yrot;
-			inst->zrot = zrot;
-			
-			auto &options = gGuiSettings.actorDatabase.GetEntry(inst->id).properties;
-			if (options.size())
-			{
-				ImGui::SeparatorText("Options");
-				
-				static ActorDatabase::Entry::Property *current = 0;
-				
-				// when a new instance is selected, clear the selected property
-				if (instanceSelectionChanged)
-					current = 0;
-				
-				if (ImGui::BeginListBox("##Options", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
-				{
-					for (auto &option : options)
-					{
-						const bool is_selected = (current == &option);
-						
-						if (ImGui::Selectable(option.name, is_selected))
-							current = &option;
-
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					}
-					ImGui::EndListBox();
-				}
-				
-				if (current)
-				{
-					int comboOpt = current->Extract(inst->params, inst->xrot, inst->yrot, inst->zrot);
-					
-					// TODO different value input types for different options? or hide this if combos.size()?
-					ImGui::InputInt("Value##Instance##InstanceOptions##Value", &comboOpt);
-					
-					// display combo boxes
-					auto &combos = current->combos;
-					if (combos.size())
-					{
-						const char *previewText = "Custom Value (Above)";
-						int selectedIndex = -1;
-						int i;
-						
-						i = 0;
-						for (auto &combo : combos)
-						{
-							if (combo.value == comboOpt)
-							{
-								previewText = combo.label;
-								selectedIndex = i;
-							}
-							++i;
-						}
-						
-						if (ImGui::BeginCombo("##Instance##InstanceOptions##Dropdown", previewText))
-						{
-							i = 0;
-							for (auto &combo : combos)
-							{
-								if (ImGui::Selectable(combo.label, combo.value == comboOpt))
-								{
-									comboOpt = combo.value;
-									selectedIndex = i;
-								}
-							}
-							ImGui::EndCombo();
-						}
-						IMGUI_COMBO_HOVER_ONCHANGE(selectedIndex, combos.size(), { comboOpt = combos[selectedIndex].value; });
-					}
-					
-					current->Inject(comboOpt, &inst->params, &inst->xrot, &inst->yrot, &inst->zrot);
-				}
-			}
+			InstanceTab(gGui->actorList, "Actor", INSTANCE_TAB_ACTOR);
 		}
 	},
 	new LinkedStringFunc{
@@ -1022,6 +1036,7 @@ static void DrawSidebar(void)
 			struct Instance newInst = {
 				.id = type.index,
 				.pos = gGui->newSpawnPos,
+				.tab = gAddNewInstanceSearchTab
 			};
 			
 			if (gGui->instanceList)
@@ -1156,6 +1171,16 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	gGuiSettings.FlushLines();
 	
 	DrawMenuBar();
+	
+	// handling this here for now
+	{
+		RoomHeader *roomHeader = &gScene->rooms[0].headers[0];
+		SceneHeader *sceneHeader = &gScene->headers[0];
+		
+		gGui->doorList = &(sceneHeader->doorways);
+		gGui->spawnList = &(sceneHeader->spawns);
+		gGui->actorList = &(roomHeader->instances);
+	}
 	
 	if (gGuiSettings.showSidebar)
 		DrawSidebar();
