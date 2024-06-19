@@ -1258,6 +1258,7 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	DrawMenuBar();
 	
 	// handling this here for now
+	if (scene)
 	{
 		RoomHeader *roomHeader = &gScene->rooms[0].headers[0];
 		SceneHeader *sceneHeader = &gScene->headers[0];
