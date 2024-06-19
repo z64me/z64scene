@@ -13,3 +13,6 @@
 [submodule "stb"]
 	path = stb
 	url = https://github.com/nothings/stb
+[submodule "wren"]
+	path = wren
+	url = https://github.com/wren-lang/wren

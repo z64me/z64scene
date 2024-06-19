@@ -1,10 +1,11 @@
 CC=gcc
 CXX=g++
 MINGW=i686-w64-mingw32.static-
-CFLAGS_COMMON=-I z64viewer/include -I z64viewer/src -Istb -Wall -Wno-unused-function -Wno-scalar-storage-order
-CXXFLAGS_COMMON=-Iimgui -Iimgui/backends -Iz64viewer/include -Ijson/include -Itoml11 -Istb
+WREN_INCLUDES=-Iwren/src/vm -Iwren/src/include -Iwren/src/optional
+CFLAGS_COMMON=-I z64viewer/include -I z64viewer/src -Istb $(WREN_INCLUDES) -Wall -Wno-unused-function -Wno-scalar-storage-order
+CXXFLAGS_COMMON=-Iimgui -Iimgui/backends -Iz64viewer/include -Ijson/include -Itoml11 -Istb $(WREN_INCLUDES)
 LDFLAGS_COMMON=`$(MINGW)pkg-config --libs glfw3` -Wall -Wno-unused-function -Wno-scalar-storage-order
-SRC_C=$(wildcard src/*.c) $(wildcard z64viewer/src/*.c)
+SRC_C=$(wildcard src/*.c) $(wildcard z64viewer/src/*.c) $(wildcard wren/src/vm/*.c) $(wildcard wren/src/optional/*.c)
 SRC_CXX=$(wildcard src/*.cpp)
 OBJ_C=$(patsubst %.c,bin/o/$(FOLDER)/%.o,$(SRC_C))
 OBJ_CXX=$(patsubst %.cpp,bin/o/$(FOLDER)/%.o,$(SRC_CXX))

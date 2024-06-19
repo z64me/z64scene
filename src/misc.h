@@ -36,6 +36,8 @@ struct CutsceneOot;
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
 #define MAX3(A, B, C) MAX(A, MAX(B, C))
 
+#define CODE_AS_STRING(...) # __VA_ARGS__
+
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
 #define ON_CHANGE(VARIABLE) \

@@ -10,12 +10,16 @@
 #include <string.h>
 
 #include "misc.h"
+#include "test.h"
 
 extern void WindowMainLoop(struct Scene *scene);
 
 int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
+	
+	// test wren
+	TestWren();
 	
 	// test: open and re-export a single scene (argv[1] -> argv[2])
 #if 0
