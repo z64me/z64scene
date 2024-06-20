@@ -10,7 +10,36 @@
 
 #include "misc.h"
 
-#define CODE_AS_WRENHOOK(...) "class hooks { static draw() { " # __VA_ARGS__ " } } "
+typedef struct TestWrenUdata
+{
+	float Xpos;
+	float Ypos;
+	float Zpos;
+} TestWrenUdata;
+#define WREN_UDATA ((TestWrenUdata*)wrenGetUserData(vm))
+
+// will contain pos/rot/scale/params
+// meanwhile, class Prop will be populated
+// based on properties defined in the toml
+#define WRENHOOK_PREFIXES " \
+class World { \
+	foreign static Xpos \n \
+	foreign static Ypos \n \
+	foreign static Zpos \n \
+} \
+\n \
+class Draw { \
+	foreign static SetScale(xscale, yscale, zscale) \n \
+	foreign static SetScale(scale) \n \
+} \
+\n \
+"
+
+#define CODE_AS_WRENHOOK(...) WRENHOOK_PREFIXES "class hooks { static draw() { \n " # __VA_ARGS__ " } } "
+
+#define CODE_AS_WRENHOOK_R(WHAT) WRENHOOK_PREFIXES "class hooks { static draw() { \n " WHAT " } } "
+
+#define streq(A, B) !strcmp(A, B)
 
 static void writeFn(WrenVM* vm, const char* text)
 {
@@ -36,13 +65,65 @@ static void errorFn(WrenVM* vm, WrenErrorType errorType,
 	}
 }
 
+static WrenForeignMethodFn bindForeignMethod(
+	WrenVM* vm
+	, const char* module
+	, const char* className
+	, bool isStatic
+	, const char* signature
+)
+{
+	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Xpos); }
+	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Ypos); }
+	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Zpos); }
+	
+	void DrawSetScale3(WrenVM* vm) {
+		float xscale = wrenGetSlotDouble(vm, 1);
+		float yscale = wrenGetSlotDouble(vm, 2);
+		float zscale = wrenGetSlotDouble(vm, 3);
+		fprintf(stderr, "DrawSetScale3 = %f %f %f\n", xscale, yscale, zscale);
+	}
+	void DrawSetScale1(WrenVM* vm) {
+		float xscale = wrenGetSlotDouble(vm, 1);
+		float yscale = xscale;
+		float zscale = xscale;
+		fprintf(stderr, "DrawSetScale1 = %f %f %f\n", xscale, yscale, zscale);
+	}
+	
+	if (streq(module, "main")) {
+		// no setters, are read-only
+		if (streq(className, "World")) {
+			if (streq(signature, "Xpos")) return WorldGetXpos;
+			else if (streq(signature, "Ypos")) return WorldGetYpos;
+			else if (streq(signature, "Zpos")) return WorldGetZpos;
+			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
+		}
+		else if (streq(className, "Prop")) {
+			// TODO
+		}
+		else if (streq(className, "Draw")) {
+			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
+			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
+		}
+	}
+	
+	return 0;
+}
+
 void TestWren(void)
 {
 	WrenConfiguration config;
 	wrenInitConfiguration(&config);
 		config.writeFn = &writeFn;
 		config.errorFn = &errorFn;
+		config.bindForeignMethodFn = &bindForeignMethod;
 	WrenVM* vm = wrenNewVM(&config);
+	TestWrenUdata udata = {
+		.Xpos = 123,
+		.Ypos = 456,
+		.Zpos = 789,
+	};
+	wrenSetUserData(vm, &udata);
 	
 	const char* module = "main";
 	const char* script = CODE_AS_STRING(
@@ -55,6 +136,12 @@ void TestWren(void)
 		System.print("ran wrenInterpet()")
 	);
 	script = CODE_AS_WRENHOOK( System.print("ran autowrapped draw() function") );
+	script = CODE_AS_WRENHOOK_R( R"(
+		System.print("test %(World.Xpos) %(World.Xpos / 2) %(World.Xpos >> 1) ")
+		Draw.SetScale(1.23)
+		Draw.SetScale(1.23, 4.56, 7.89)
+	)" );
+	fprintf(stderr, "script = %s\n", script);
 	
 	// compile the code
 	WrenInterpretResult result = wrenInterpret(vm, module, script);
