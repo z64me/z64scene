@@ -1,7 +1,10 @@
+#define _XOPEN_SOURCE 500 // nftw
+
 #include <stdio.h>
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <ftw.h>
 
 #include "misc.h"
 #include "file.h"
@@ -94,4 +97,141 @@ int FileSetError(const char *fmt, ...)
 	va_end(args);
 	
 	return EXIT_FAILURE;
+}
+
+sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders)
+{
+	sb_array(char *, result) = 0;
+	
+	int each(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb)
+	{
+		// filter by request
+		if (!(
+			(wantFiles && type == FTW_F)
+			|| (wantFolders
+				&& (type == FTW_D
+					|| type == FTW_DNR
+					|| type == FTW_DP
+					|| type == FTW_SL
+				)
+			)
+		))
+			return 0;
+		
+		// skip extensionless files
+		if (type == FTW_F && !strchr(MAX3(
+				strrchr(pathname, '/') + 1
+				, strrchr(pathname, '\\') + 1
+				, pathname
+			), '.')
+		)
+			return 0;
+		
+		// consistency on the slashes
+		char *copy = Strdup(pathname);
+		for (char *c = copy; *c; ++c)
+			if (*c == '\\')
+				*c = '/';
+		
+		// add to list
+		sb_push(result, copy);
+		
+		return 0;
+		
+		// -Wunused-parameter
+		(void)sbuf;
+		(void)ftwb;
+	}
+	
+	if (nftw(path, each, 64 /* max directory depth */, FTW_DEPTH) < 0)
+		Die("failed to walk file tree '%s'", path);
+	
+	return result;
+}
+
+sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains, const char *excludes)
+{
+	sb_array(char *, result) = 0;
+	
+	sb_foreach(list, {
+		if (contains && !strstr(*each, contains))
+			continue;
+		if (excludes && strstr(*each, excludes))
+			continue;
+		sb_push(result, *each);
+	});
+	
+	return result;
+}
+
+sb_array(char *, FileListCopy)(sb_array(char *, list))
+{
+	int count = sb_count(list);
+	sb_array(char *, result) = 0;
+	
+	if (!count)
+		return result;
+	
+	(void)sb_add(result, count);
+	
+	memcpy(result, list, count * sizeof(*list));
+	
+	return result;
+}
+
+sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, vanilla))
+{
+	sb_array(char *, result) = FileListCopy(list);
+	
+	// include vanilla folders whose id's don't match mod folder id's
+	sb_foreach(vanilla, {
+		const char *needle = strrchr(*each, '/');
+		if (!needle)
+			continue;
+		int len = strcspn(needle, "- ");
+		bool skip = false;
+		sb_foreach(list, {
+			const char *haystack = strrchr(*each, '/');
+			if (!haystack)
+				continue;
+			if (!strncmp(needle, haystack, len)) {
+				skip = true;
+				break;
+			}
+		})
+		if (skip == false)
+			sb_push(result, *each);
+	})
+	
+	return result;
+}
+
+sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char *contains)
+{
+	char filterA[64];
+	char filterB[64];
+	
+	snprintf(filterA, sizeof(filterA), "/%s/", contains);
+	snprintf(filterB, sizeof(filterB), "/%s/.vanilla/", contains);
+	
+	sb_array(char *, objectsVanilla) = FileListFilterBy(list, filterB, 0);
+	sb_array(char *, objects) = FileListFilterBy(list, filterA, "/.vanilla/");
+	sb_array(char *, merged) = FileListMergeVanilla(objects, objectsVanilla);
+	
+	//fprintf(stderr, "objectsVanilla = %p\n", objectsVanilla);
+	//fprintf(stderr, "objects = %p\n", objects);
+	//fprintf(stderr, "merged = %p\n", merged);
+	//FileListPrintAll(merged);
+	
+	sb_free(objectsVanilla);
+	sb_free(objects);
+	
+	return merged;
+}
+
+void FileListPrintAll(sb_array(char *, list))
+{
+	sb_foreach(list, {
+		fprintf(stderr, "%s\n", *each);
+	})
 }

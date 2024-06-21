@@ -21,6 +21,31 @@ int main(int argc, char *argv[])
 	// test wren
 	TestWren();
 	
+	// project directory -> file/folder list test
+	if (false)
+	{
+		sb_array(char *, folders) = FileListFromDirectory(argv[1], false, true);
+		
+		if (folders)
+		{
+			sb_array(char *, objects) = FileListFilterByWithVanilla(folders, "object");
+			
+			FileListPrintAll(objects);
+			
+			if (sb_count(objects) > 0)
+			{
+				sb_array(char *, files) = FileListFromDirectory(objects[0], true, false);
+				FileListPrintAll(files);
+				sb_free(files);
+			}
+			
+			sb_free(objects);
+			sb_free(folders);
+		}
+		
+		return 0;
+	}
+
 	// test: open and re-export a single scene (argv[1] -> argv[2])
 #if 0
 	if (argc >= 2)
