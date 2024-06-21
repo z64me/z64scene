@@ -36,11 +36,11 @@ int main(int argc, char *argv[])
 			{
 				sb_array(char *, files) = FileListFromDirectory(objects[1], true, false, false);
 				FileListPrintAll(files);
-				sb_free(files);
+				FileListFree(files);
 			}
 			
-			sb_free(objects);
-			sb_free(folders);
+			FileListFree(objects);
+			FileListFree(folders);
 		}
 		
 		return 0;

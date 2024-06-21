@@ -17,8 +17,10 @@
 
 static char sFileError[2048];
 FILE_LIST_DEFINE_PREFIX(FileListHasPrefixId)
+FILE_LIST_DEFINE_PREFIX(FileListAttribIsHead) // owns the strings it references
 #define FILE_LIST_ON_PREFIX(STRING, CODE) \
 	if ((STRING) == FileListHasPrefixId \
+		|| (STRING) == FileListAttribIsHead \
 	) { CODE; }
 
 bool FileExists(const char *filename)
@@ -109,17 +111,37 @@ int FileSetError(const char *fmt, ...)
 	return EXIT_FAILURE;
 }
 
+void FileListFree(sb_array(char *, list))
+{
+	// if it owns the strings it references, free non-prefix strings
+	if (sb_contains_ref(list, FileListAttribIsHead))
+	{
+		bool hasPrefixId = sb_contains_ref(list, FileListHasPrefixId);
+		int padEach = hasPrefixId ? -FILE_LIST_FILE_ID_PREFIX_LEN : 0;
+		
+		sb_foreach(list, {
+			FILE_LIST_ON_PREFIX(*each, continue)
+			free((*each) + padEach);
+		})
+	}
+	
+	sb_free(list);
+}
+
 sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders, bool allocateIds)
 {
 	sb_array(char *, result) = 0;
 	int padEach = 0;
 	
-	// 2 byte u16 id prefix for each
+	// binary prefix for each file
 	if (allocateIds)
 	{
 		sb_push(result, FileListHasPrefixId);
 		padEach = -FILE_LIST_FILE_ID_PREFIX_LEN;
 	}
+	
+	// this file list owns the strings it references
+	sb_push(result, FileListAttribIsHead);
 	
 	int each(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb)
 	{
