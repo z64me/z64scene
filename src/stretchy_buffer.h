@@ -187,6 +187,7 @@
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
 #define sb_push   stb_sb_push
+#define sb_insert stb_sb_insert
 #define sb_pop    stb_sb_pop
 #define sb_count  stb_sb_count
 #define sb_add    stb_sb_add
@@ -206,6 +207,14 @@
 #define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
+
+#define stb_sb_insert(a, v, index) { \
+	stb__sbmaybegrow(a,1); \
+	for (int i = stb__sbn(a); i > index; --i) \
+		(a)[i] = (a)[(i) - 1]; \
+	(a)[index] = (v); \
+	stb__sbn(a)++; \
+}
 
 #define stb__sbraw(a) ((int *) (void *) (a) - 2)
 #define stb__sbm(a)   stb__sbraw(a)[0]
