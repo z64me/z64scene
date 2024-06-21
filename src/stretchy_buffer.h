@@ -172,6 +172,9 @@
 //
 //   See end of file for license information.
 
+#include <assert.h>
+#include <stdlib.h>
+
 #ifndef STB_STRETCHY_BUFFER_H_INCLUDED
 #define STB_STRETCHY_BUFFER_H_INCLUDED
 
@@ -189,6 +192,8 @@
 #define sb_add    stb_sb_add
 #define sb_last   stb_sb_last
 #define sb_clear  stb_sb_clear
+#define sb_contains stb_sb_contains
+#define sb_contains_ref stb_sb_contains_ref
 #endif
 
 #define stb_sb_free(a)         ((a) ? free(stb__sbraw(a)),0 : 0)
@@ -199,6 +204,8 @@
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
 #define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
+#define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
+#define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
 
 #define stb__sbraw(a) ((int *) (void *) (a) - 2)
 #define stb__sbm(a)   stb__sbraw(a)[0]
@@ -211,6 +218,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+// expects needle to reference haystack[0..n]
 #define sb_find_index(HAYSTACK, NEEDLE) sb_find_index(HAYSTACK, NEEDLE, sizeof(*(NEEDLE)))
 static int (sb_find_index)(const void *haystack, const void *needle, const int sizeofEach)
 {
@@ -219,6 +227,22 @@ static int (sb_find_index)(const void *haystack, const void *needle, const int s
 	
 	for (int i = 0; i < len; ++i, addr += sizeofEach)
 		if ((const void*)addr == needle)
+			return i;
+	
+	return -1;
+}
+
+// expects haystack[0..n] to be reference to needle
+#define sb_find_ref(HAYSTACK, NEEDLE) sb_find_ref(HAYSTACK, NEEDLE, sizeof(*(NEEDLE)))
+static int (sb_find_ref)(const void *haystack, const void *needle, const int sizeofEach)
+{
+	int len = sb_count(haystack);
+	const uint8_t *addr = (const uint8_t*)haystack;
+	
+	assert(sizeofEach == sizeof(void*));
+	
+	for (int i = 0; i < len; ++i, addr += sizeofEach)
+		if (*(const uintptr_t*)addr == (uintptr_t)needle)
 			return i;
 	
 	return -1;

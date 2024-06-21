@@ -4,12 +4,22 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <ctype.h>
 #include <ftw.h>
 
 #include "misc.h"
 #include "file.h"
 
+// define prefix type w/ guaranteed binary prefix
+#define FILE_LIST_DEFINE_PREFIX(X) \
+	static char X##Data[] = "\0\0" #X; \
+	static char *X = X##Data + FILE_LIST_FILE_ID_PREFIX_LEN;
+
 static char sFileError[2048];
+FILE_LIST_DEFINE_PREFIX(FileListHasPrefixId)
+#define FILE_LIST_ON_PREFIX(STRING, CODE) \
+	if ((STRING) == FileListHasPrefixId \
+	) { CODE; }
 
 bool FileExists(const char *filename)
 {
@@ -99,9 +109,17 @@ int FileSetError(const char *fmt, ...)
 	return EXIT_FAILURE;
 }
 
-sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders)
+sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders, bool allocateIds)
 {
 	sb_array(char *, result) = 0;
+	int padEach = 0;
+	
+	// 2 byte u16 id prefix for each
+	if (allocateIds)
+	{
+		sb_push(result, FileListHasPrefixId);
+		padEach = -FILE_LIST_FILE_ID_PREFIX_LEN;
+	}
 	
 	int each(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb)
 	{
@@ -128,7 +146,7 @@ sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool w
 			return 0;
 		
 		// consistency on the slashes
-		char *copy = Strdup(pathname);
+		char *copy = StrdupPad(pathname, padEach);
 		for (char *c = copy; *c; ++c)
 			if (*c == '\\')
 				*c = '/';
@@ -152,6 +170,10 @@ sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool w
 sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains, const char *excludes)
 {
 	sb_array(char *, result) = 0;
+	bool hasPrefixId = sb_contains_ref(list, FileListHasPrefixId);
+	
+	if (hasPrefixId)
+		sb_push(result, FileListHasPrefixId);
 	
 	sb_foreach(list, {
 		if (contains && !strstr(*each, contains))
@@ -159,6 +181,27 @@ sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains,
 		if (excludes && strstr(*each, excludes))
 			continue;
 		sb_push(result, *each);
+		
+		// add id prefix
+		if (hasPrefixId && contains)
+		{
+			char *str = *each;
+			char *match = strstr(str, contains);
+			
+			if (match)
+			{
+				match += strlen(contains);
+				while (!isalnum(*match)) ++match;
+				
+				int v;
+				if (sscanf(match, "%i", &v) == 1)
+				{
+					uint8_t *prefix = (void*)(str - 2);
+					prefix[0] = (v >> 8);
+					prefix[1] = v & 0xff;
+				}
+			}
+		}
 	});
 	
 	return result;
@@ -182,6 +225,28 @@ sb_array(char *, FileListCopy)(sb_array(char *, list))
 sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, vanilla))
 {
 	sb_array(char *, result) = FileListCopy(list);
+	bool hasPrefixId = sb_contains_ref(list, FileListHasPrefixId);
+	
+	// compare id's = faster
+	if (hasPrefixId)
+	{
+		sb_foreach(vanilla, {
+			uint16_t vanillaPrefix = FileListFilePrefix(*each);
+			if (vanillaPrefix == 0)
+				continue;
+			bool skip = false;
+			sb_foreach(list, {
+				if (FileListFilePrefix(*each) == vanillaPrefix) {
+					skip = true;
+					break;
+				}
+			})
+			if (skip == false)
+				sb_push(result, *each);
+		})
+		
+		return result;
+	}
 	
 	// include vanilla folders whose id's don't match mod folder id's
 	sb_foreach(vanilla, {
@@ -231,6 +296,15 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 
 void FileListPrintAll(sb_array(char *, list))
 {
+	// prefixes
+	if (sb_contains_ref(list, FileListHasPrefixId))
+	{
+		sb_foreach(list, {
+			fprintf(stderr, "%s, prefix=0x%04x\n", *each, FileListFilePrefix(*each));
+		})
+		return;
+	}
+	
 	sb_foreach(list, {
 		fprintf(stderr, "%s\n", *each);
 	})

@@ -113,7 +113,11 @@ char *StrdupPad(const char *str, int padding)
 	if (!str)
 		return 0;
 	
-	char *result = Calloc(1, strlen(str) + padding + 1);
+	char *result = Calloc(1, strlen(str) + ABS(padding) + 1);
+	
+	// negative padding = before data
+	if (padding < 0)
+		result -= padding;
 	
 	strcpy(result, str);
 	
