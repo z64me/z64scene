@@ -181,5 +181,6 @@ void TestWren(void)
 	}
 	fprintf(stderr, "done\n");
 	
+	wrenFreeVM(vm);
 	//exit(0);
 }
