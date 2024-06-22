@@ -59,6 +59,7 @@ struct GuiSettings
 	bool showImGuiDemoWindow = false;
 	
 	ActorDatabase actorDatabase;
+	ObjectDatabase objectDatabase;
 	
 	// combo boxes can be volatile as sizes change
 	// when loading different scenes for editing
@@ -1221,6 +1222,7 @@ extern "C" void GuiInit(GLFWwindow *window)
 	//JsonTest();
 	//TomlTest();
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+	gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
 	
 	// test modals
 	return;

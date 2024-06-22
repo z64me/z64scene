@@ -9,6 +9,8 @@
 #include <stdint.h>
 
 #include <vector>
+#include <string>
+#include <map>
 
 struct ActorDatabase
 {
@@ -126,10 +128,49 @@ struct ActorDatabase
 
 struct ObjectDatabase
 {
-	struct ObjectDatabaseEntry
+	struct Entry
 	{
+		const char *name;
+		uint16_t index;
+		std::map<std::string, uint32_t> symbolAddresses;
+		bool isEmpty = false;
 	};
+	
+	std::vector<Entry> entries;
+	
+	void AddEntry(Entry entry)
+	{
+		// make sure it will fit
+		if (entry.index >= entries.size())
+			entries.resize(entry.index + 1);
+		
+		entries[entry.index] = entry;
+	}
+	
+	Entry &GetEntry(uint16_t index)
+	{
+		if (index >= entries.size())
+		{
+			static Entry empty;
+			empty.isEmpty = true;
+			
+			return empty;
+		}
+		
+		return entries[index];
+	}
+	
+	const char *GetObjectName(uint16_t index)
+	{
+		auto entry = GetEntry(index);
+		
+		if (!entry.name)
+			return "unknown";
+		
+		return entry.name;
+	}
 };
 
 void TomlTest(void);
 ActorDatabase TomlLoadActorDatabase(const char *tomlPath);
+ObjectDatabase TomlLoadObjectDatabase(const char *tomlPath);

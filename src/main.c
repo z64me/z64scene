@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 	TestWren();
 	
 	// project loader test
-	if (true)
+	if (false)
 	{
 		struct Project *project = ProjectNewFromFilename(argv[1]);
 		

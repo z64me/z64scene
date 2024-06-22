@@ -71,7 +71,7 @@ static std::vector<ActorDatabase::Entry::Property> ActorDatabasePropertiesFromTo
 
 static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 {
-	ActorDatabase::Entry entry;
+	ActorDatabase::Entry entry = {0};
 	
 	entry.name = TOML_CSTRING(tomlActor["Name"]);
 	entry.index = TOML_INT(tomlActor["Index"]);
@@ -104,6 +104,16 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 	return entry;
 }
 
+static ObjectDatabase::Entry ObjectDatabaseEntryFromToml(toml::value tomlObject)
+{
+	ObjectDatabase::Entry entry = {0};
+	
+	entry.name = TOML_CSTRING(tomlObject["Name"]);
+	entry.index = TOML_INT(tomlObject["Index"]);
+	
+	return entry;
+}
+
 ActorDatabase TomlLoadActorDatabase(const char *tomlPath)
 {
 	auto data = toml::parse(ExePath(tomlPath));
@@ -120,6 +130,24 @@ ActorDatabase TomlLoadActorDatabase(const char *tomlPath)
 	}
 	
 	return actorDatabase;
+}
+
+ObjectDatabase TomlLoadObjectDatabase(const char *tomlPath)
+{
+	auto data = toml::parse(ExePath(tomlPath));
+	auto tomlObjects = data["Object"].as_array();
+	
+	ObjectDatabase database;
+	
+	// load object database
+	for (auto &tomlObject : tomlObjects)
+	{
+		auto object = ObjectDatabaseEntryFromToml(tomlObject);
+		
+		database.AddEntry(object);
+	}
+	
+	return database;
 }
 
 // testing toml code
