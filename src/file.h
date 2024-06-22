@@ -25,7 +25,7 @@ int FileToFilename(struct File *file, const char *filename);
 const char *FileGetError(void);
 void FileFree(struct File *file);
 int FileSetError(const char *fmt, ...);
-sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders, bool allocateIds);
+sb_array(char *, FileListFromDirectory)(const char *path, int depth, bool wantFiles, bool wantFolders, bool allocateIds);
 sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains, const char *excludes);
 sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, vanilla));
 sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char *contains, const char *vanilla);

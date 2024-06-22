@@ -128,7 +128,7 @@ void FileListFree(sb_array(char *, list))
 	sb_free(list);
 }
 
-sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool wantFolders, bool allocateIds)
+sb_array(char *, FileListFromDirectory)(const char *path, int depth, bool wantFiles, bool wantFolders, bool allocateIds)
 {
 	sb_array(char *, result) = 0;
 	int padEach = 0;
@@ -145,6 +145,10 @@ sb_array(char *, FileListFromDirectory)(const char *path, bool wantFiles, bool w
 	
 	int each(const char *pathname, const struct stat *sbuf, int type, struct FTW *ftwb)
 	{
+		// max depth exceeded
+		if (depth > 0 && ftwb->level > depth)
+			return 0;
+		
 		// filter by request
 		if (!(
 			(wantFiles && type == FTW_F)

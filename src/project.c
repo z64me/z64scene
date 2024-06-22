@@ -87,7 +87,7 @@ struct Project *ProjectNewFromFilename(const char *filename)
 	proj->shortname = Strdup(file->shortname);
 	proj->folder = Strdup(file->filename);
 	proj->folder[strlen(file->filename) - strlen(file->shortname)] = '\0';
-	proj->foldersAll = FileListFromDirectory(proj->folder, false, true, true);
+	proj->foldersAll = FileListFromDirectory(proj->folder, 0, false, true, true);
 	
 	// z64rom project
 	if (file->size >= 10

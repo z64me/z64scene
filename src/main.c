@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 	// project directory -> file/folder list test
 	if (false)
 	{
-		sb_array(char *, folders) = FileListFromDirectory(argv[1], false, true, true);
+		sb_array(char *, folders) = FileListFromDirectory(argv[1], 0, false, true, true);
 		
 		if (folders)
 		{
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 			
 			if (sb_count(objects) > 0)
 			{
-				sb_array(char *, files) = FileListFromDirectory(objects[1], true, false, false);
+				sb_array(char *, files) = FileListFromDirectory(objects[1], 1, true, false, false);
 				FileListPrintAll(files);
 				FileListFree(files);
 			}
