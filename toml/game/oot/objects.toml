@@ -1,0 +1,1608 @@
+
+[[Object]]
+	Name = "(intentionally blank)"
+	Index = 0
+
+[[Object]]
+	Name = "Global Gameplay Objects"
+	Index = 1
+
+[[Object]]
+	Name = "Global Field Objects"
+	Index = 2
+
+[[Object]]
+	Name = "Global Dungeon Objects"
+	Index = 3
+
+[[Object]]
+	Name = "(unused)"
+	Index = 4
+
+[[Object]]
+	Name = "(unused)"
+	Index = 5
+
+[[Object]]
+	Name = "Green Dress Brown Hair NPC [Early] (unused)"
+	Index = 6
+
+[[Object]]
+	Name = "Octorok"
+	Index = 7
+
+[[Object]]
+	Name = "Guay"
+	Index = 8
+
+[[Object]]
+	Name = "Poe"
+	Index = 9
+
+[[Object]]
+	Name = "Great Fairy"
+	Index = 10
+
+[[Object]]
+	Name = "Floormaster & Wallmaster"
+	Index = 11
+
+[[Object]]
+	Name = "Dodongo"
+	Index = 12
+
+[[Object]]
+	Name = "Keese"
+	Index = 13
+
+[[Object]]
+	Name = "Treasure Chest"
+	Index = 14
+
+[[Object]]
+	Name = "Dancing Flame (unused)"
+	Index = 15
+
+[[Object]]
+	Name = "(unused)"
+	Index = 16
+
+[[Object]]
+	Name = "(unused)"
+	Index = 17
+
+[[Object]]
+	Name = "Shabom"
+	Index = 18
+
+[[Object]]
+	Name = "Cucco"
+	Index = 19
+
+[[Object]]
+	Name = "Adult Link"
+	Index = 20
+
+[[Object]]
+	Name = "Young Link"
+	Index = 21
+
+[[Object]]
+	Name = "Tektites"
+	Index = 22
+
+[[Object]]
+	Name = "Leever"
+	Index = 23
+
+[[Object]]
+	Name = "Peahat"
+	Index = 24
+
+[[Object]]
+	Name = "King Dodongo"
+	Index = 25
+
+[[Object]]
+	Name = "Epona"
+	Index = 26
+
+[[Object]]
+	Name = "Lizalfos & Dinolfos"
+	Index = 27
+
+[[Object]]
+	Name = "Gohma"
+	Index = 28
+
+[[Object]]
+	Name = "Young Zelda"
+	Index = 29
+
+[[Object]]
+	Name = "Gohma Larva"
+	Index = 30
+
+[[Object]]
+	Name = "Baby Dodongo"
+	Index = 31
+
+[[Object]]
+	Name = "Dark Link"
+	Index = 32
+
+[[Object]]
+	Name = "Biri"
+	Index = 33
+
+[[Object]]
+	Name = "Tailpasaran"
+	Index = 34
+
+[[Object]]
+	Name = "Kakariko Rooftop Man [Early] (unused)"
+	Index = 35
+
+[[Object]]
+	Name = "Skulltulas"
+	Index = 36
+
+[[Object]]
+	Name = "Torch Slug"
+	Index = 37
+
+[[Object]]
+	Name = "Stingers"
+	Index = 38
+
+[[Object]]
+	Name = "Generic Horse"
+	Index = 39
+
+[[Object]]
+	Name = "Bazaar Proprietor [Early] (unused)"
+	Index = 40
+
+[[Object]]
+	Name = "NPC Animations I"
+	Index = 41
+
+[[Object]]
+	Name = "Kokiri Forest Objects"
+	Index = 42
+
+[[Object]]
+	Name = "Dodongo's Cavern Objects"
+	Index = 43
+
+[[Object]]
+	Name = "Fire Temple Objects"
+	Index = 44
+
+[[Object]]
+	Name = "Ganondorf's Horse"
+	Index = 45
+
+[[Object]]
+	Name = "Zora [Early] (unused)"
+	Index = 46
+
+[[Object]]
+	Name = "Hyrule Field Objects (Child)"
+	Index = 47
+
+[[Object]]
+	Name = "Moblins"
+	Index = 48
+
+[[Object]]
+	Name = "Bomb Flower"
+	Index = 49
+
+[[Object]]
+	Name = "Stalfos"
+	Index = 50
+
+[[Object]]
+	Name = "Mido I [Early] (unused)"
+	Index = 51
+
+[[Object]]
+	Name = "NPC Animations II"
+	Index = 52
+
+[[Object]]
+	Name = "Red-Haired Kokiri Girl [Early]"
+	Index = 53
+
+[[Object]]
+	Name = "Inside the Deku Tree Objects"
+	Index = 54
+
+[[Object]]
+	Name = "Phantom Ganon"
+	Index = 55
+
+[[Object]]
+	Name = "Armos"
+	Index = 56
+
+[[Object]]
+	Name = "Deku Babas"
+	Index = 57
+
+[[Object]]
+	Name = "(unused)"
+	Index = 58
+
+[[Object]]
+	Name = "Impa's Masked Head [Early] (unused)"
+	Index = 59
+
+[[Object]]
+	Name = "Laughing Man [Early] (unused)"
+	Index = 60
+
+[[Object]]
+	Name = "Hylian Woman in Purple Dress [Early] (unused)"
+	Index = 61
+
+[[Object]]
+	Name = "Hylian Man in Blue Shirt & Orange Pants [Early] (unused)"
+	Index = 62
+
+[[Object]]
+	Name = "Hylian Woman in White Shirt & Orange Pants [Early] (unused)"
+	Index = 63
+
+[[Object]]
+	Name = "Jabu-Jabu"
+	Index = 64
+
+[[Object]]
+	Name = "Old Hylian Man [Early] (unused)"
+	Index = 65
+
+[[Object]]
+	Name = "Old Hylian Man's Head [Early] (unused)"
+	Index = 66
+
+[[Object]]
+	Name = "Hylian Man in Purple Shirt & Green Pants [Early] (unused)"
+	Index = 67
+
+[[Object]]
+	Name = "Carpenter Boss's Wife [Early] (unused)"
+	Index = 68
+
+[[Object]]
+	Name = "Hylian Woman in Blue Shirt & White Dress [Early] (unused)"
+	Index = 69
+
+[[Object]]
+	Name = "Zelda's Horse"
+	Index = 70
+
+[[Object]]
+	Name = "Opening Cutscene Animations"
+	Index = 71
+
+[[Object]]
+	Name = "Warp Circle & Rupee Prism"
+	Index = 72
+
+[[Object]]
+	Name = "Heart Container [Early] (unused)"
+	Index = 73
+
+[[Object]]
+	Name = "Mad Scrub"
+	Index = 74
+
+[[Object]]
+	Name = "Saria [Early] (unused)"
+	Index = 75
+
+[[Object]]
+	Name = "Red-Haired Kokiri Boy I [Early] (unused)"
+	Index = 76
+
+[[Object]]
+	Name = "Gerudo Training Ground Objects"
+	Index = 77
+
+[[Object]]
+	Name = "Fado [Early] (unused)"
+	Index = 78
+
+[[Object]]
+	Name = "Kokiri Girl in Brown Band's Head [Early] (unused)"
+	Index = 79
+
+[[Object]]
+	Name = "Kokiri Boy in Green Cap's Head [Early] (unused)"
+	Index = 80
+
+[[Object]]
+	Name = "Kokiri Girl in Green Band's Head [Early] (unused)"
+	Index = 81
+
+[[Object]]
+	Name = "Kokiri Boy in Mint Cap's Head [Early] (unused)"
+	Index = 82
+
+[[Object]]
+	Name = "Kokiri Shop Proprietor's Head [Early] (unused)"
+	Index = 83
+
+[[Object]]
+	Name = "Kokiri Girl in Green Cap's Head [Early] (unused)"
+	Index = 84
+
+[[Object]]
+	Name = "Fado's Head [Early] (unused)"
+	Index = 85
+
+[[Object]]
+	Name = "Bari"
+	Index = 86
+
+[[Object]]
+	Name = "Soldier [Early] (unused)"
+	Index = 87
+
+[[Object]]
+	Name = "Soldier (Courtyard) [Early] (unused)"
+	Index = 88
+
+[[Object]]
+	Name = "Water Temple Objects"
+	Index = 89
+
+[[Object]]
+	Name = "Phantom Ganon's Horse & Objects"
+	Index = 90
+
+[[Object]]
+	Name = "Shooting Gallery & Bazaar Proprietors"
+	Index = 91
+
+[[Object]]
+	Name = "Forest Temple Room 13 (Twisted)"
+	Index = 92
+
+[[Object]]
+	Name = "Bubbles"
+	Index = 93
+
+[[Object]]
+	Name = "Temple of Time Objects"
+	Index = 94
+
+[[Object]]
+	Name = "Flying Floor Tile"
+	Index = 95
+
+[[Object]]
+	Name = "Adult Zelda"
+	Index = 96
+
+[[Object]]
+	Name = "Warp Pad Base"
+	Index = 97
+
+[[Object]]
+	Name = "Light Warp Pad"
+	Index = 98
+
+[[Object]]
+	Name = "Shadow Warp Pad"
+	Index = 99
+
+[[Object]]
+	Name = "Fire Warp Pad"
+	Index = 100
+
+[[Object]]
+	Name = "Water Warp Pad"
+	Index = 101
+
+[[Object]]
+	Name = "Spirit Warp Pad"
+	Index = 102
+
+[[Object]]
+	Name = "Forest Warp Pad"
+	Index = 103
+
+[[Object]]
+	Name = "Ocarina Pedestal [Early] (unused)"
+	Index = 104
+
+[[Object]]
+	Name = "Shadow Temple Objects"
+	Index = 105
+
+[[Object]]
+	Name = "Lake Hylia Objects"
+	Index = 106
+
+[[Object]]
+	Name = "Ice Cavern Objects"
+	Index = 107
+
+[[Object]]
+	Name = "Dampé's Relay Race Objects"
+	Index = 108
+
+[[Object]]
+	Name = "Big Poe & Poe Guide"
+	Index = 109
+
+[[Object]]
+	Name = "Sharp & Flat"
+	Index = 110
+
+[[Object]]
+	Name = "Forest Temple Room 13 (Straight)"
+	Index = 111
+
+[[Object]]
+	Name = "Forest Temple Room 14 (Straight)"
+	Index = 112
+
+[[Object]]
+	Name = "Forest Temple Room 14 (Twisted)"
+	Index = 113
+
+[[Object]]
+	Name = "Forest Temple Objects"
+	Index = 114
+
+[[Object]]
+	Name = "Forest Temple Textures"
+	Index = 115
+
+[[Object]]
+	Name = "Zora's Fountain Objects"
+	Index = 116
+
+[[Object]]
+	Name = "[Blank] (unused)"
+	Index = 117
+
+[[Object]]
+	Name = "Flagpole"
+	Index = 118
+
+[[Object]]
+	Name = "Brown Bird (unused)"
+	Index = 119
+
+[[Object]]
+	Name = "(unused)"
+	Index = 120
+
+[[Object]]
+	Name = "(unused)"
+	Index = 121
+
+[[Object]]
+	Name = "(unused)"
+	Index = 122
+
+[[Object]]
+	Name = "(unused)"
+	Index = 123
+
+[[Object]]
+	Name = "Bushes & Trees"
+	Index = 124
+
+[[Object]]
+	Name = "(unused)"
+	Index = 125
+
+[[Object]]
+	Name = "(unused)"
+	Index = 126
+
+[[Object]]
+	Name = "(unused)"
+	Index = 127
+
+[[Object]]
+	Name = "(unused)"
+	Index = 128
+
+[[Object]]
+	Name = "Rectangular Stone Blocks (Light Grey) (unused)"
+	Index = 129
+
+[[Object]]
+	Name = "Rectangular Stone Blocks (Dark Grey) (unused)"
+	Index = 130
+
+[[Object]]
+	Name = "(unused)"
+	Index = 131
+
+[[Object]]
+	Name = "(unused)"
+	Index = 132
+
+[[Object]]
+	Name = "Blade Trap"
+	Index = 133
+
+[[Object]]
+	Name = "Orange Pot (unused)"
+	Index = 134
+
+[[Object]]
+	Name = "Impa"
+	Index = 135
+
+[[Object]]
+	Name = "Talon"
+	Index = 136
+
+[[Object]]
+	Name = "Dampé & Ghost"
+	Index = 137
+
+[[Object]]
+	Name = "Sheik"
+	Index = 138
+
+[[Object]]
+	Name = "Beamos"
+	Index = 139
+
+[[Object]]
+	Name = "Barinade"
+	Index = 140
+
+[[Object]]
+	Name = "Bottom of the Well Objects"
+	Index = 141
+
+[[Object]]
+	Name = "[todo]"
+	Index = 142
+
+[[Object]]
+	Name = "Goddesses' Flame of Creation"
+	Index = 143
+
+[[Object]]
+	Name = "[Blank] (unused)"
+	Index = 144
+
+[[Object]]
+	Name = "Goddess Light Dome"
+	Index = 145
+
+[[Object]]
+	Name = "Light Beam & Rubble"
+	Index = 146
+
+[[Object]]
+	Name = "Golden Goddesses"
+	Index = 147
+
+[[Object]]
+	Name = "Jagged-Edged Light Ring"
+	Index = 148
+
+[[Object]]
+	Name = "Triforce & Beam of Light"
+	Index = 149
+
+[[Object]]
+	Name = "Inside Jabu-Jabu's Belly Objects"
+	Index = 150
+
+[[Object]]
+	Name = "Soldiers"
+	Index = 151
+
+[[Object]]
+	Name = "Redead & Gibdo"
+	Index = 152
+
+[[Object]]
+	Name = "Poe Sisters & Objects"
+	Index = 153
+
+[[Object]]
+	Name = "Golden Gauntlets Boulder"
+	Index = 154
+
+[[Object]]
+	Name = "Ganondorf (Cutscenes)"
+	Index = 155
+
+[[Object]]
+	Name = "Volvagia (Flying)"
+	Index = 156
+
+[[Object]]
+	Name = "Darunia"
+	Index = 157
+
+[[Object]]
+	Name = "Flare Dancer"
+	Index = 158
+
+[[Object]]
+	Name = "Medallions [Early] (unused)"
+	Index = 159
+
+[[Object]]
+	Name = "Young Epona"
+	Index = 160
+
+[[Object]]
+	Name = "Graveyard Objects"
+	Index = 161
+
+[[Object]]
+	Name = "Gravestone"
+	Index = 162
+
+[[Object]]
+	Name = "Young Ruto"
+	Index = 163
+
+[[Object]]
+	Name = "Torches"
+	Index = 164
+
+[[Object]]
+	Name = "Volvagia (Whack-a-Mole)"
+	Index = 165
+
+[[Object]]
+	Name = "Dead Hand & Hands"
+	Index = 166
+
+[[Object]]
+	Name = "Rauru"
+	Index = 167
+
+[[Object]]
+	Name = "Time Block Disappearance Effect"
+	Index = 168
+
+[[Object]]
+	Name = "[Blank] (unused)"
+	Index = 169
+
+[[Object]]
+	Name = "Item Model - Small Key"
+	Index = 170
+
+[[Object]]
+	Name = "Mirror Shield's Light Reflection"
+	Index = 171
+
+[[Object]]
+	Name = "Jelly Platform"
+	Index = 172
+
+[[Object]]
+	Name = "Item Model - Spiritual Stones"
+	Index = 173
+
+[[Object]]
+	Name = "Gerudo Valley Objects"
+	Index = 174
+
+[[Object]]
+	Name = "Goron City Objects"
+	Index = 175
+
+[[Object]]
+	Name = "Boss Doors"
+	Index = 176
+
+[[Object]]
+	Name = "Death Mountain Crater Objects"
+	Index = 177
+
+[[Object]]
+	Name = "Shop Shelves"
+	Index = 178
+
+[[Object]]
+	Name = "Nabooru"
+	Index = 179
+
+[[Object]]
+	Name = "Morpha"
+	Index = 180
+
+[[Object]]
+	Name = "Shellblade"
+	Index = 181
+
+[[Object]]
+	Name = "Item Model - Music Notes (unused)"
+	Index = 182
+
+[[Object]]
+	Name = "Item Model - Recovery Heart"
+	Index = 183
+
+[[Object]]
+	Name = "Item Model - Compass"
+	Index = 184
+
+[[Object]]
+	Name = "Item Model - Big Key"
+	Index = 185
+
+[[Object]]
+	Name = "Item Model - Medallions"
+	Index = 186
+
+[[Object]]
+	Name = "Item Model - Deku Nut"
+	Index = 187
+
+[[Object]]
+	Name = "Saria"
+	Index = 188
+
+[[Object]]
+	Name = "Item Model - Heart Container & Piece of Heart"
+	Index = 189
+
+[[Object]]
+	Name = "Item Model - Quivers"
+	Index = 190
+
+[[Object]]
+	Name = "Item Model - Bomb Bags"
+	Index = 191
+
+[[Object]]
+	Name = "Ingo"
+	Index = 192
+
+[[Object]]
+	Name = "Kotake & Koume"
+	Index = 193
+
+[[Object]]
+	Name = "Death Mountain Trail Objects"
+	Index = 194
+
+[[Object]]
+	Name = "Mido II [Early] (unused)"
+	Index = 195
+
+[[Object]]
+	Name = "Red-Haired Kokiri Boy II [Early] (unused)"
+	Index = 196
+
+[[Object]]
+	Name = "NPC Animations III"
+	Index = 197
+
+[[Object]]
+	Name = "Item Model - Empty Bottle"
+	Index = 198
+
+[[Object]]
+	Name = "Item Model - Deku Stick"
+	Index = 199
+
+[[Object]]
+	Name = "Item Model - Dungeon Map & Stone of Agony"
+	Index = 200
+
+[[Object]]
+	Name = "Goron, Medigoron, Biggoron"
+	Index = 201
+
+[[Object]]
+	Name = "Adult Ruto"
+	Index = 202
+
+[[Object]]
+	Name = "Item Model - Deku Shield"
+	Index = 203
+
+[[Object]]
+	Name = "Deku Tree Sprout"
+	Index = 204
+
+[[Object]]
+	Name = "Item Model - Magic Jars"
+	Index = 205
+
+[[Object]]
+	Name = "Item Model - Bomb"
+	Index = 206
+
+[[Object]]
+	Name = "Goron [Early] (unused)"
+	Index = 207
+
+[[Object]]
+	Name = "Adult Malon"
+	Index = 208
+
+[[Object]]
+	Name = "Item Model - Wallets"
+	Index = 209
+
+[[Object]]
+	Name = "Ingo's Horse & Archery Range Horse"
+	Index = 210
+
+[[Object]]
+	Name = "Twinrova"
+	Index = 211
+
+[[Object]]
+	Name = "Like Like"
+	Index = 212
+
+[[Object]]
+	Name = "Parasitic Tentacle & Tentacle Obstruction"
+	Index = 213
+
+[[Object]]
+	Name = "Anubis & Fire Trap"
+	Index = 214
+
+[[Object]]
+	Name = "Item Model - Gerudo Card"
+	Index = 215
+
+[[Object]]
+	Name = "Item Model - Arrows"
+	Index = 216
+
+[[Object]]
+	Name = "Item Model - Bombchu"
+	Index = 217
+
+[[Object]]
+	Name = "Item Model - Pocket & Weird Eggs"
+	Index = 218
+
+[[Object]]
+	Name = "Item Model - Silver & Golden Scales"
+	Index = 219
+
+[[Object]]
+	Name = "Item Model - Hylian Shield"
+	Index = 220
+
+[[Object]]
+	Name = "Item Model - Hookshot & Longshot"
+	Index = 221
+
+[[Object]]
+	Name = "Item Model - Ocarina of Time"
+	Index = 222
+
+[[Object]]
+	Name = "Item Model - Lon Lon Milk"
+	Index = 223
+
+[[Object]]
+	Name = "Young Malon"
+	Index = 224
+
+[[Object]]
+	Name = "Ganondorf (Boss)"
+	Index = 225
+
+[[Object]]
+	Name = "Bongo Bongo"
+	Index = 226
+
+[[Object]]
+	Name = "Spike Trap [Duplicate] (unused)"
+	Index = 227
+
+[[Object]]
+	Name = "(unused)"
+	Index = 228
+
+[[Object]]
+	Name = "Spike Trap"
+	Index = 229
+
+[[Object]]
+	Name = "Frog"
+	Index = 230
+
+[[Object]]
+	Name = "Item Model - Fairy Slingshot"
+	Index = 231
+
+[[Object]]
+	Name = "Item Model - Boomerang"
+	Index = 232
+
+[[Object]]
+	Name = "Item Model - Fairy Bow"
+	Index = 233
+
+[[Object]]
+	Name = "Item Model - Lens of Truth"
+	Index = 234
+
+[[Object]]
+	Name = "Item Model - Potions"
+	Index = 235
+
+[[Object]]
+	Name = "Kakariko Rooftop Man"
+	Index = 236
+
+[[Object]]
+	Name = "Chamber of the Sages Cutscene Objects"
+	Index = 237
+
+[[Object]]
+	Name = "Item Model - Mirror Shield"
+	Index = 238
+
+[[Object]]
+	Name = "Item Model - Zelda's Letter"
+	Index = 239
+
+[[Object]]
+	Name = "Hyrule Castle Objects"
+	Index = 240
+
+[[Object]]
+	Name = "Spirit Temple Objects"
+	Index = 241
+
+[[Object]]
+	Name = "Item Model - Tunics"
+	Index = 242
+
+[[Object]]
+	Name = "Item Model - Magic Bean"
+	Index = 243
+
+[[Object]]
+	Name = "Item Model - Fish"
+	Index = 244
+
+[[Object]]
+	Name = "Item Model - Poacher's Saw"
+	Index = 245
+
+[[Object]]
+	Name = "Item Model - Megaton Hammer"
+	Index = 246
+
+[[Object]]
+	Name = "Item Model - Reed Whistle (unused)"
+	Index = 247
+
+[[Object]]
+	Name = "Item Model - Giant's Knife & Biggoron's Sword"
+	Index = 248
+
+[[Object]]
+	Name = "Kakariko Village Objects (Shared)"
+	Index = 249
+
+[[Object]]
+	Name = "Mido [Duplicate] (unused)"
+	Index = 250
+
+[[Object]]
+	Name = "Mido"
+	Index = 251
+
+[[Object]]
+	Name = "Red-Haired Kokiri Boy"
+	Index = 252
+
+[[Object]]
+	Name = "Red-Haired Kokiri Girl"
+	Index = 253
+
+[[Object]]
+	Name = "Zora"
+	Index = 254
+
+[[Object]]
+	Name = "King Zora"
+	Index = 255
+
+[[Object]]
+	Name = "Horse-Jumping Fence"
+	Index = 256
+
+[[Object]]
+	Name = "Kokiri Shop Proprietor Animations"
+	Index = 257
+
+[[Object]]
+	Name = "Kokiri Shop Proprietor's Head"
+	Index = 258
+
+[[Object]]
+	Name = "Goron Shop Proprietor Animations"
+	Index = 259
+
+[[Object]]
+	Name = "Zora Shop Proprietor Animations"
+	Index = 260
+
+[[Object]]
+	Name = "Dog Lady"
+	Index = 261
+
+[[Object]]
+	Name = "Iron Knuckle"
+	Index = 262
+
+[[Object]]
+	Name = "Hylian Men I"
+	Index = 263
+
+[[Object]]
+	Name = "Young Hylian Women"
+	Index = 264
+
+[[Object]]
+	Name = "Item Model - Cuccos"
+	Index = 265
+
+[[Object]]
+	Name = "Skull Kid"
+	Index = 266
+
+[[Object]]
+	Name = "Item Model - Ruto's Letter"
+	Index = 267
+
+[[Object]]
+	Name = "Old Hylian Men"
+	Index = 268
+
+[[Object]]
+	Name = "Old Hylian Woman"
+	Index = 269
+
+[[Object]]
+	Name = "Item Model - Fairy Ocarina (unused)"
+	Index = 270
+
+[[Object]]
+	Name = "Potion Shop Granny"
+	Index = 271
+
+[[Object]]
+	Name = "Cucco Lady"
+	Index = 272
+
+[[Object]]
+	Name = "Hylian Men II"
+	Index = 273
+
+[[Object]]
+	Name = "Zora's River Objects"
+	Index = 274
+
+[[Object]]
+	Name = "Zora's Domain Objects"
+	Index = 275
+
+[[Object]]
+	Name = "Freezard"
+	Index = 276
+
+[[Object]]
+	Name = "Carpenter Boss's Wife"
+	Index = 277
+
+[[Object]]
+	Name = "Gerudo in White"
+	Index = 278
+
+[[Object]]
+	Name = "Minigame Points"
+	Index = 279
+
+[[Object]]
+	Name = "Item Model - Iron Boots"
+	Index = 280
+
+[[Object]]
+	Name = "Item Model - Deku Seeds"
+	Index = 281
+
+[[Object]]
+	Name = "Ganondorf's Magic Blast"
+	Index = 282
+
+[[Object]]
+	Name = "Stone Elevator Pillar (unused)"
+	Index = 283
+
+[[Object]]
+	Name = "Hookshot Pillar & Wall Target"
+	Index = 284
+
+[[Object]]
+	Name = "Stone Moving Deku Tree Platform"
+	Index = 285
+
+[[Object]]
+	Name = "Magic Bean Objects"
+	Index = 286
+
+[[Object]]
+	Name = "Rolling Boulder"
+	Index = 287
+
+[[Object]]
+	Name = "(unused)"
+	Index = 288
+
+[[Object]]
+	Name = "Carpenter Boss"
+	Index = 289
+
+[[Object]]
+	Name = "Carpenters"
+	Index = 290
+
+[[Object]]
+	Name = "(unused)"
+	Index = 291
+
+[[Object]]
+	Name = "Cucco Chick (unused)"
+	Index = 292
+
+[[Object]]
+	Name = "Dark Link's Illusion Room"
+	Index = 293
+
+[[Object]]
+	Name = "Medigoron Animations"
+	Index = 294
+
+[[Object]]
+	Name = "Magic Bean Seller"
+	Index = 295
+
+[[Object]]
+	Name = "Carpenter Boss's Son"
+	Index = 296
+
+[[Object]]
+	Name = "Ingo's Ranch Gate"
+	Index = 297
+
+[[Object]]
+	Name = "Sun Switch"
+	Index = 298
+
+[[Object]]
+	Name = "Grass"
+	Index = 299
+
+[[Object]]
+	Name = "Pot"
+	Index = 300
+
+[[Object]]
+	Name = "Item Model - Silver & Golden Gauntlets"
+	Index = 301
+
+[[Object]]
+	Name = "Item Model - N Coins (unused)"
+	Index = 302
+
+[[Object]]
+	Name = "Square Signpost"
+	Index = 303
+
+[[Object]]
+	Name = "Ganon's Castle Exterior Objects"
+	Index = 304
+
+[[Object]]
+	Name = "Kaepora Gaebora"
+	Index = 305
+
+[[Object]]
+	Name = "Lake Scientist"
+	Index = 306
+
+[[Object]]
+	Name = "Windmill Man"
+	Index = 307
+
+[[Object]]
+	Name = "Item Model - Keaton Mask"
+	Index = 308
+
+[[Object]]
+	Name = "Item Model - Redead Mask"
+	Index = 309
+
+[[Object]]
+	Name = "Item Model - Spooky Mask"
+	Index = 310
+
+[[Object]]
+	Name = "Item Model - Bunny Hood"
+	Index = 311
+
+[[Object]]
+	Name = "Item Model - Mask of Truth"
+	Index = 312
+
+[[Object]]
+	Name = "Ganon's Tower Objects"
+	Index = 313
+
+[[Object]]
+	Name = "Water Spout (Small)"
+	Index = 314
+
+[[Object]]
+	Name = "Water Spout (Large)"
+	Index = 315
+
+[[Object]]
+	Name = "Running Man"
+	Index = 316
+
+[[Object]]
+	Name = "Fado"
+	Index = 317
+
+[[Object]]
+	Name = "Happy Mask Salesman"
+	Index = 318
+
+[[Object]]
+	Name = "Item Model - Eyedrops"
+	Index = 319
+
+[[Object]]
+	Name = "Item Model - Odd Potion"
+	Index = 320
+
+[[Object]]
+	Name = "Item Model - Odd Mushroom"
+	Index = 321
+
+[[Object]]
+	Name = "Item Model - Claim Check"
+	Index = 322
+
+[[Object]]
+	Name = "Item Model - Broken Goron's Sword & Giant's Knife"
+	Index = 323
+
+[[Object]]
+	Name = "Carpet Merchant"
+	Index = 324
+
+[[Object]]
+	Name = "Graveyard Boy"
+	Index = 325
+
+[[Object]]
+	Name = "Item Model - Prescription"
+	Index = 326
+
+[[Object]]
+	Name = "Item Model - Goron Bracelet"
+	Index = 327
+
+[[Object]]
+	Name = "Item Model - SOLD OUT"
+	Index = 328
+
+[[Object]]
+	Name = "Item Model - Eyeball Frog"
+	Index = 329
+
+[[Object]]
+	Name = "Title Logo"
+	Index = 330
+
+[[Object]]
+	Name = "Thieves' Hideout Cell Door"
+	Index = 331
+
+[[Object]]
+	Name = "Ganon's Tower Exterior (Collapsing) Objects"
+	Index = 332
+
+[[Object]]
+	Name = "Death Mountain Eruption Effects"
+	Index = 333
+
+[[Object]]
+	Name = "Adult Zelda Animations I"
+	Index = 334
+
+[[Object]]
+	Name = "Adult Zelda Animations II"
+	Index = 335
+
+[[Object]]
+	Name = "Item Model - Goron Mask"
+	Index = 336
+
+[[Object]]
+	Name = "Item Model - Zora Mask"
+	Index = 337
+
+[[Object]]
+	Name = "Item Model - Gerudo Mask"
+	Index = 338
+
+[[Object]]
+	Name = "Ganon"
+	Index = 339
+
+[[Object]]
+	Name = "Pierre & Bonooru"
+	Index = 340
+
+[[Object]]
+	Name = "Treasure Chest Shop Proprietor"
+	Index = 341
+
+[[Object]]
+	Name = "Ganon's Tower Door Bars"
+	Index = 342
+
+[[Object]]
+	Name = "Item Model - Hover Boots"
+	Index = 343
+
+[[Object]]
+	Name = "Item Model - Magic Arrows"
+	Index = 344
+
+[[Object]]
+	Name = "Potion Shop Proprietor"
+	Index = 345
+
+[[Object]]
+	Name = "Ending Cutscene Animations"
+	Index = 346
+
+[[Object]]
+	Name = "Fishing Pond Objects"
+	Index = 347
+
+[[Object]]
+	Name = "Item Model - Gold Skulltula Token"
+	Index = 348
+
+[[Object]]
+	Name = "Item Model - Goddess Spells"
+	Index = 349
+
+[[Object]]
+	Name = "Skulltula House Residents"
+	Index = 350
+
+[[Object]]
+	Name = "Big Octo"
+	Index = 351
+
+[[Object]]
+	Name = "Bombchu Bowling Employee"
+	Index = 352
+
+[[Object]]
+	Name = "Sacred Forest Meadow Objects"
+	Index = 353
+
+[[Object]]
+	Name = "Gerudo's Fortress Objects"
+	Index = 354
+
+[[Object]]
+	Name = "Bombable Boulder"
+	Index = 355
+
+[[Object]]
+	Name = "Hint-Giving Deku Scrub"
+	Index = 356
+
+[[Object]]
+	Name = "Bombchu Shop Proprietor"
+	Index = 357
+
+[[Object]]
+	Name = "Hyrule Field Objects (Adult)"
+	Index = 358
+
+[[Object]]
+	Name = "Gerudo in Purple"
+	Index = 359
+
+[[Object]]
+	Name = "Business Scrub"
+	Index = 360
+
+[[Object]]
+	Name = "Gerudo Fighter & Second-in-Command"
+	Index = 361
+
+[[Object]]
+	Name = "Cucco-Chasing Girl"
+	Index = 362
+
+[[Object]]
+	Name = "Dog"
+	Index = 363
+
+[[Object]]
+	Name = "Destructable Iron Knuckle Objects"
+	Index = 364
+
+[[Object]]
+	Name = "Spirit Temple Door & Iron Bars"
+	Index = 365
+
+[[Object]]
+	Name = "(unused)"
+	Index = 366
+
+[[Object]]
+	Name = "Desert Colossus Objects"
+	Index = 367
+
+[[Object]]
+	Name = "Large Wooden Crate"
+	Index = 368
+
+[[Object]]
+	Name = "Forest Stage Judge"
+	Index = 369
+
+[[Object]]
+	Name = "Forest Stage Patron"
+	Index = 370
+
+[[Object]]
+	Name = "Item Model - Blue Fire"
+	Index = 371
+
+[[Object]]
+	Name = "Item Model - Bug"
+	Index = 372
+
+[[Object]]
+	Name = "Item Model - Butterfly (unused)"
+	Index = 373
+
+[[Object]]
+	Name = "Item Model - Poe Soul"
+	Index = 374
+
+[[Object]]
+	Name = "Item Model - Fairy's Spirit"
+	Index = 375
+
+[[Object]]
+	Name = "Bombchu Bowling Alley Barriers"
+	Index = 376
+
+[[Object]]
+	Name = "Inside Ganon's Castle Objects"
+	Index = 377
+
+[[Object]]
+	Name = "Death Mountain Cloud Rings"
+	Index = 378
+
+[[Object]]
+	Name = "Item Model - Bullet Bags"
+	Index = 379
+
+[[Object]]
+	Name = "Ganondorf Animations I"
+	Index = 380
+
+[[Object]]
+	Name = "Ganondorf Animations II"
+	Index = 381
+
+[[Object]]
+	Name = "Ganondorf Animations III"
+	Index = 382
+
+[[Object]]
+	Name = "Item Model - Rupees"
+	Index = 383
+
+[[Object]]
+	Name = "Kakariko Village Objects (Adult)"
+	Index = 384
+
+[[Object]]
+	Name = "Kakariko Village Objects (Child)"
+	Index = 385
+
+[[Object]]
+	Name = "Honey & Darling, Haggling Townspeople"
+	Index = 386
+
+[[Object]]
+	Name = "Wolfos"
+	Index = 387
+
+[[Object]]
+	Name = "Stalchild"
+	Index = 388
+
+[[Object]]
+	Name = "Ganon's Lair Destructable Rubble"
+	Index = 389
+
+[[Object]]
+	Name = "Ganon's Lair Destructable Rubble Fragment"
+	Index = 390
+
+[[Object]]
+	Name = "Shadow Temple Door & Shutter"
+	Index = 391
+
+[[Object]]
+	Name = "Gossip Stone"
+	Index = 392
+
+[[Object]]
+	Name = "Poe Collector"
+	Index = 393
+
+[[Object]]
+	Name = "Dodongo's Cavern Bombable Wall"
+	Index = 394
+
+[[Object]]
+	Name = "Cow"
+	Index = 395
+
+[[Object]]
+	Name = "Fat Woman in Blue & Yellow Vest"
+	Index = 396
+
+[[Object]]
+	Name = "Item Model - Kokiri Sword"
+	Index = 397
+
+[[Object]]
+	Name = "Door Mimic"
+	Index = 398
+
+[[Object]]
+	Name = "Royal Family's Tomb Door"
+	Index = 399
+
+[[Object]]
+	Name = "Time Block"
+	Index = 400
+
+[[Object]]
+	Name = "Young Zelda"
+	Index = 401
