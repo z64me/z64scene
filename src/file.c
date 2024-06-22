@@ -198,32 +198,33 @@ sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains,
 		sb_push(result, FileListHasPrefixId);
 	
 	sb_foreach(list, {
-		if (contains && !strstr(*each, contains))
+		char *str = *each;
+		char *match = 0;
+		if (contains && !(match = strstr(str, contains)))
 			continue;
-		if (excludes && strstr(*each, excludes))
+		if (excludes && strstr(str, excludes))
 			continue;
-		sb_push(result, *each);
 		
-		// add id prefix
-		if (hasPrefixId && contains)
+		if (match)
 		{
-			char *str = *each;
-			char *match = strstr(str, contains);
+			match += strlen(contains);
+			while (!isalnum(*match)) ++match;
 			
-			if (match)
+			// add id prefix
+			int v;
+			if (hasPrefixId && sscanf(match, "%i", &v) == 1)
 			{
-				match += strlen(contains);
-				while (!isalnum(*match)) ++match;
-				
-				int v;
-				if (sscanf(match, "%i", &v) == 1)
-				{
-					uint8_t *prefix = (void*)(str - 2);
-					prefix[0] = (v >> 8);
-					prefix[1] = v & 0xff;
-				}
+				uint8_t *prefix = (void*)(str - 2);
+				prefix[0] = (v >> 8);
+				prefix[1] = v & 0xff;
 			}
+			
+			// ignore subdirectories
+			if (strchr(match, '/'))
+				continue;
 		}
+		
+		sb_push(result, str);
 	});
 	
 	return result;
