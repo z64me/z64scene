@@ -329,6 +329,30 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	return merged;
 }
 
+int FileListFindIndexOfId(sb_array(char *, list), int id)
+{
+	// TODO could support this eventually, just not important right now
+	if (!sb_contains_ref(list, FileListHasPrefixId))
+		Die("FileListFindIndexOfId() doesn't support file lists w/o prefixes");
+	
+	sb_foreach(list, {
+		if (FileListFilePrefix(*each) == id)
+			return eachIndex;
+	})
+	
+	return -1;
+}
+
+const char *FileListFindPathToId(sb_array(char *, list), int id)
+{
+	int index = FileListFindIndexOfId(list, id);
+	
+	if (index < 0)
+		return 0;
+	
+	return list[index];
+}
+
 void FileListPrintAll(sb_array(char *, list))
 {
 	// prefixes

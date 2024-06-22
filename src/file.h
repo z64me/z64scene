@@ -32,6 +32,8 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 sb_array(char *, FileListCopy)(sb_array(char *, list));
 void FileListFree(sb_array(char *, list));
 void FileListPrintAll(sb_array(char *, list));
+int FileListFindIndexOfId(sb_array(char *, list), int id);
+const char *FileListFindPathToId(sb_array(char *, list), int id);
 #define FILE_LIST_FILE_ID_PREFIX_LEN 2
 #define FileListFilePrefix(STRING) \
 	(((((uint8_t*)(STRING)) - FILE_LIST_FILE_ID_PREFIX_LEN)[0] << 8) \

@@ -29,6 +29,14 @@ int main(int argc, char *argv[])
 		
 		FileListPrintAll(project->foldersObject);
 		
+		const char *objdir = FileListFindPathToId(project->foldersObject, 20);
+		if (objdir)
+		{
+			sb_array(char *, files) = FileListFromDirectory(objdir, 1, true, false, false);
+			FileListPrintAll(files);
+			FileListFree(files);
+		}
+		
 		ProjectFree(project);
 		
 		return 0;
