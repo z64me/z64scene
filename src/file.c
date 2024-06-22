@@ -293,16 +293,24 @@ sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, 
 	return result;
 }
 
-sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char *contains)
+sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char *contains, const char *vanilla)
 {
 	char filterA[64];
 	char filterB[64];
+	char vanillaSlash[64];
+	
+	if (!vanilla || !*vanilla)
+	{
+		snprintf(filterA, sizeof(filterA), "/%s/", contains);
+		return FileListFilterBy(list, filterA, 0);
+	}
 	
 	snprintf(filterA, sizeof(filterA), "/%s/", contains);
-	snprintf(filterB, sizeof(filterB), "/%s/.vanilla/", contains);
+	snprintf(filterB, sizeof(filterB), "/%s/%s/", contains, vanilla);
+	snprintf(vanillaSlash, sizeof(vanillaSlash), "/%s/", vanilla);
 	
 	sb_array(char *, objectsVanilla) = FileListFilterBy(list, filterB, 0);
-	sb_array(char *, objects) = FileListFilterBy(list, filterA, "/.vanilla/");
+	sb_array(char *, objects) = FileListFilterBy(list, filterA, vanillaSlash);
 	sb_array(char *, merged) = FileListMergeVanilla(objects, objectsVanilla);
 	
 	//fprintf(stderr, "objectsVanilla = %p\n", objectsVanilla);

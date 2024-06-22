@@ -11,6 +11,7 @@
 
 #include "misc.h"
 #include "test.h"
+#include "project.h"
 
 extern void WindowMainLoop(struct Scene *scene);
 
@@ -21,6 +22,18 @@ int main(int argc, char *argv[])
 	// test wren
 	TestWren();
 	
+	// project loader test
+	if (true)
+	{
+		struct Project *project = ProjectNewFromFilename(argv[1]);
+		
+		FileListPrintAll(project->foldersObject);
+		
+		ProjectFree(project);
+		
+		return 0;
+	}
+	
 	// project directory -> file/folder list test
 	if (false)
 	{
@@ -28,7 +41,7 @@ int main(int argc, char *argv[])
 		
 		if (folders)
 		{
-			sb_array(char *, objects) = FileListFilterByWithVanilla(folders, "object");
+			sb_array(char *, objects) = FileListFilterByWithVanilla(folders, "object", ".vanilla");
 			
 			FileListPrintAll(objects);
 			
