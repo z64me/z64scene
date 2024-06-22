@@ -18,6 +18,7 @@
 static char sFileError[2048];
 FILE_LIST_DEFINE_PREFIX(FileListHasPrefixId)
 FILE_LIST_DEFINE_PREFIX(FileListAttribIsHead) // owns the strings it references
+FILE_LIST_DEFINE_PREFIX(FileListAttribIsSortedById) // specifies file list is sorted by id
 #define FILE_LIST_ON_PREFIX(STRING, CODE) \
 	if ((STRING) == FileListHasPrefixId \
 		|| (STRING) == FileListAttribIsHead \
@@ -193,6 +194,24 @@ sb_array(char *, FileListFromDirectory)(const char *path, int depth, bool wantFi
 	return result;
 }
 
+sb_array(char *, FileListSortById)(sb_array(char *, list))
+{
+	if (!sb_contains_ref(list, FileListAttribIsSortedById))
+		sb_push(list, FileListAttribIsSortedById);
+	
+	int ascending(const void *a, const void *b)
+	{
+		int idA = FileListFilePrefix(*(const char**)a);
+		int idB = FileListFilePrefix(*(const char**)b);
+		
+		return idA - idB;
+	}
+	
+	qsort(list, sb_count(list), sizeof(*list), ascending);
+	
+	return list;
+}
+
 sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains, const char *excludes)
 {
 	sb_array(char *, result) = 0;
@@ -257,17 +276,26 @@ sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, 
 	// compare id's = faster
 	if (hasPrefixId)
 	{
+		// sort list by id so we can use binary search
+		FileListSortById(list);
+		
 		sb_foreach(vanilla, {
 			uint16_t vanillaPrefix = FileListFilePrefix(*each);
 			if (vanillaPrefix == 0)
 				continue;
 			bool skip = false;
+			// new method using binary search
+			if (FileListFindIndexOfId(list, vanillaPrefix) >= 0)
+				skip = true;
+			// old method using linear search
+			/*
 			sb_foreach(list, {
 				if (FileListFilePrefix(*each) == vanillaPrefix) {
 					skip = true;
 					break;
 				}
 			})
+			*/
 			if (skip == false)
 				sb_push(result, *each);
 		})
@@ -307,7 +335,7 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	if (!vanilla || !*vanilla)
 	{
 		snprintf(filterA, sizeof(filterA), "/%s/", contains);
-		return FileListFilterBy(list, filterA, 0);
+		return FileListSortById(FileListFilterBy(list, filterA, 0));
 	}
 	
 	snprintf(filterA, sizeof(filterA), "/%s/", contains);
@@ -326,7 +354,7 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	sb_free(objectsVanilla);
 	sb_free(objects);
 	
-	return merged;
+	return FileListSortById(merged);
 }
 
 int FileListFindIndexOfId(sb_array(char *, list), int id)
@@ -335,6 +363,30 @@ int FileListFindIndexOfId(sb_array(char *, list), int id)
 	if (!sb_contains_ref(list, FileListHasPrefixId))
 		Die("FileListFindIndexOfId() doesn't support file lists w/o prefixes");
 	
+	// binary search
+	if (sb_contains_ref(list, FileListAttribIsSortedById))
+	{
+		int left = 0;
+		int right = sb_count(list) - 1;
+		
+		while (left <= right)
+		{
+			int mid = left + (right - left) / 2;
+			int value = FileListFilePrefix(list[mid]);
+			
+			if (value == id)
+				return mid;
+			
+			if (value < id)
+				left = mid + 1;
+			else
+				right = mid - 1;
+		}
+		
+		return -1;
+	}
+	
+	// linear search
 	sb_foreach(list, {
 		if (FileListFilePrefix(*each) == id)
 			return eachIndex;

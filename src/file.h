@@ -34,9 +34,10 @@ void FileListFree(sb_array(char *, list));
 void FileListPrintAll(sb_array(char *, list));
 int FileListFindIndexOfId(sb_array(char *, list), int id);
 const char *FileListFindPathToId(sb_array(char *, list), int id);
+sb_array(char *, FileListSortById)(sb_array(char *, list));
 #define FILE_LIST_FILE_ID_PREFIX_LEN 2
 #define FileListFilePrefix(STRING) \
-	(((((uint8_t*)(STRING)) - FILE_LIST_FILE_ID_PREFIX_LEN)[0] << 8) \
-	| (((uint8_t*)(STRING)) - FILE_LIST_FILE_ID_PREFIX_LEN)[1])
+	(((((const uint8_t*)(STRING)) - FILE_LIST_FILE_ID_PREFIX_LEN)[0] << 8) \
+	| (((const uint8_t*)(STRING)) - FILE_LIST_FILE_ID_PREFIX_LEN)[1])
 
 #endif // FILE_H_INCLUDED
