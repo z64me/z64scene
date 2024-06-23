@@ -114,6 +114,14 @@ static ObjectDatabase::Entry ObjectDatabaseEntryFromToml(toml::value tomlObject)
 	return entry;
 }
 
+ActorDatabase::Entry TomlLoadActorDatabaseEntry(const char *tomlPath)
+{
+	auto data = toml::parse(tomlPath);
+	auto actor = ActorDatabaseEntryFromToml(data);
+	// TODO no toml::free()?
+	return actor;
+}
+
 ActorDatabase TomlLoadActorDatabase(const char *tomlPath)
 {
 	auto data = toml::parse(ExePath(tomlPath));

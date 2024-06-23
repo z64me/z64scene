@@ -7,10 +7,13 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <vector>
 #include <string>
 #include <map>
+
+#include "project.h"
 
 struct ActorDatabase
 {
@@ -78,7 +81,7 @@ struct ActorDatabase
 			}
 		};
 		
-		const char             *name;
+		char                   *name;
 		uint16_t                index;
 		std::vector<uint16_t>   objects;
 		std::vector<Property>   properties;
@@ -98,6 +101,8 @@ struct ActorDatabase
 		// make sure it will fit
 		if (entry.index >= entries.size())
 			entries.resize(entry.index + 1);
+		
+		// TODO if already occupied, do cleanup
 		
 		entries[entry.index] = entry;
 	}
@@ -130,7 +135,8 @@ struct ObjectDatabase
 {
 	struct Entry
 	{
-		const char *name;
+		char *name;
+		char *zobjPath;
 		uint16_t index;
 		std::map<std::string, uint32_t> symbolAddresses;
 		bool isEmpty = false;
@@ -143,6 +149,8 @@ struct ObjectDatabase
 		// make sure it will fit
 		if (entry.index >= entries.size())
 			entries.resize(entry.index + 1);
+		
+		// TODO if already occupied, do cleanup
 		
 		entries[entry.index] = entry;
 	}
@@ -174,3 +182,5 @@ struct ObjectDatabase
 void TomlTest(void);
 ActorDatabase TomlLoadActorDatabase(const char *tomlPath);
 ObjectDatabase TomlLoadObjectDatabase(const char *tomlPath);
+void TomlInjectDataFromProject(Project *project, ActorDatabase *actorDb, ObjectDatabase *objectDb);
+ActorDatabase::Entry TomlLoadActorDatabaseEntry(const char *tomlPath);
