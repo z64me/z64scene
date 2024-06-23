@@ -220,7 +220,18 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 		auto &entry = objectDb->GetEntry(id);
 		DeriveNameFromFolderName(&entry.name, path);
 		
+		const char *zobjFilename = FindMatchingFile(
+			path
+			, project->type == PROJECT_TYPE_Z64ROM
+				? "object.zobj"
+				: "zobj.zobj"
+		);
+		if (zobjFilename)
+			entry.zobjPath = strdup(zobjFilename);
+		
 		fprintf(stderr, "derived object id %04x name = '%s'\n", id, entry.name);
+		if (entry.zobjPath)
+			fprintf(stderr, " with filename = '%s'\n", entry.zobjPath);
 	})
 }
 
