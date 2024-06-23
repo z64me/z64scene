@@ -33,6 +33,16 @@ class Draw { \
 	foreign static SetScale(scale) \n \
 } \
 \n \
+class props__hooks { \
+	/* need to generate getter/setter for each actor property */ \
+	Hello { _Hello }/* get */ \n \
+	Hello=(v) { _Hello = v }/* set */ \n \
+	construct new() { \n \
+	} \n \
+} \
+\n \
+var Props = props__hooks.new() \n \
+\n \
 "
 
 #define CODE_AS_WRENHOOK(...) WRENHOOK_PREFIXES "class hooks { static draw() { \n " # __VA_ARGS__ " } } "
@@ -140,6 +150,7 @@ void TestWren(void)
 		System.print("test %(World.Xpos) %(World.Xpos / 2) %(World.Xpos >> 1) ")
 		Draw.SetScale(1.23)
 		Draw.SetScale(1.23, 4.56, 7.89)
+		System.print("Props.Hello = %(Props.Hello) ")
 	)" );
 	fprintf(stderr, "script = %s\n", script);
 	
@@ -168,8 +179,21 @@ void TestWren(void)
 		WrenHandle *class = wrenGetSlotHandle(vm, 0);
 		WrenHandle *handle = wrenMakeCallHandle(vm, "draw()");
 		
+		// get the setter
+		wrenEnsureSlots(vm, 2);
+		wrenGetVariable(vm, module, "Props", 0);
+		WrenHandle *propsVar = wrenGetSlotHandle(vm, 0);
+		WrenHandle *propsSetHello = wrenMakeCallHandle(vm, "Hello=(_)");
+		
 		// use handles
 		for (int i = 0; i < 10; ++i) {
+			// use the setter
+			wrenEnsureSlots(vm, 2);
+			wrenSetSlotHandle(vm, 0, propsVar);
+			wrenSetSlotDouble(vm, 1, i);
+			wrenCall(vm, propsSetHello);
+			// and the main func
+			wrenEnsureSlots(vm, 1);
 			wrenSetSlotHandle(vm, 0, class); // is necessary each time
 			if (wrenCall(vm, handle) != WREN_RESULT_SUCCESS)
 				fprintf(stderr, "failed to invoke function\n");
@@ -178,6 +202,8 @@ void TestWren(void)
 		// free handles
 		wrenReleaseHandle(vm, class);
 		wrenReleaseHandle(vm, handle);
+		wrenReleaseHandle(vm, propsVar);
+		wrenReleaseHandle(vm, propsSetHello);
 	}
 	fprintf(stderr, "done\n");
 	
