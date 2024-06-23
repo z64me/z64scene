@@ -12,6 +12,32 @@ extern "C" {
 #include "file.h"
 };
 
+#define STRTOK_LOOP(STRING, DELIM) \
+	for (char *next, *each = strtok(STRING, DELIM) \
+		; each && (next = strtok(0, DELIM)) \
+		; each = next \
+	)
+
+const char *FindMatchingFile(const char *path, const char *defaultFilename)
+{
+	static char workbuf[1024];
+	
+	// cheaper
+	snprintf(workbuf, sizeof(workbuf), "%s/%s", path, defaultFilename);
+	if (FileExists(workbuf))
+		return workbuf;
+	
+	// more exhaustive
+	sb_array(char *, files) = FileListFromDirectory(path, 1, true, false, false);
+	sb_array(char *, filtered) = FileListFilterBy(files, strrchr(defaultFilename, '.'), 0);
+	workbuf[0] = '\0';
+	if (sb_count(filtered))
+		strcpy(workbuf, filtered[0]);
+	FileListFree(filtered);
+	FileListFree(files);
+	return workbuf[0] ? workbuf : 0;
+}
+
 static void DeriveNameFromFolderName(char **dst, const char *src)
 {
 	const char *tmp;
@@ -39,11 +65,17 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 	
 	sb_foreach(project->foldersActorSrc, {
 		const char *path = *each;
+		const char *pathBinary = path;
 		uint16_t id = FileListFilePrefix(path);
 		bool useTomlName = false;
 		
 		if (!id)
 			continue;
+		
+		// z64rom stores compiled overlays in another folder
+		if (project->type == PROJECT_TYPE_Z64ROM
+			&& !(pathBinary = FileListFindPathToId(project->foldersActor, id))
+		) continue;
 		
 		// load actor toml, if present
 		snprintf(tomlPath, sizeof(tomlPath), "%s/actor.toml", path);
@@ -54,14 +86,84 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 			// if toml contains name, use that
 			if (tmp.name)
 				useTomlName = true;
-			// could also derive object dependency from
-			// zovl, but assume they're all in the toml
 		}
 		
 		// update actor name to match folder name
 		auto &entry = actorDb->GetEntry(id);
 		if (useTomlName == false)
 			DeriveNameFromFolderName(&entry.name, path);
+		
+		// if no object dependency, derive it from zovl
+		if (entry.objects.size() == 0
+			|| (entry.objects.size() == 1
+				&& entry.objects[0] == 0x0001
+			)
+		)
+		{
+			const char *delim = "\r\n\t =";
+			uint32_t vram = 0;
+			uint32_t ivar = 0;
+			
+			if (project->type == PROJECT_TYPE_ZZRTL) {
+				snprintf(tomlPath, sizeof(tomlPath), "%s/conf.txt", path);
+				if (FileExists(tomlPath)) {
+					File *file = FileFromFilename(tomlPath);
+					STRTOK_LOOP((char*)file->data, delim) {
+						if (!strcmp(each, "vram")) sscanf(next, "%x", &vram);
+						if (!strcmp(each, "ivar")) sscanf(next, "%x", &ivar);
+					}
+					FileFree(file);
+				}
+				// ivar override
+				snprintf(tomlPath, sizeof(tomlPath), "%s/ZzrtlInitVars.txt", path);
+				if (FileExists(tomlPath)) {
+					File *file = FileFromFilename(tomlPath);
+					sscanf((char*)file->data, "%x", &ivar);
+					FileFree(file);
+				}
+			}
+			else if (project->type == PROJECT_TYPE_Z64ROM) {
+				snprintf(tomlPath, sizeof(tomlPath), "%s/config.toml", pathBinary);
+				if (FileExists(tomlPath)) {
+					File *file = FileFromFilename(tomlPath);
+					STRTOK_LOOP((char*)file->data, delim) {
+						if (!strcmp(each, "vram_addr")) sscanf(next, "%x", &vram);
+						if (!strcmp(each, "init_vars")) sscanf(next, "%x", &ivar);
+					}
+					FileFree(file);
+				}
+			}
+			
+			// safety
+			if (vram >= 0x80800000 && ivar >= 0x80800000
+				&& vram < 0x81000000 && ivar < 0x81000000
+				&& ivar > vram
+			) {
+				const char *zovlFilename = FindMatchingFile(
+					pathBinary
+					, project->type == PROJECT_TYPE_Z64ROM
+						? "actor.zovl"
+						: "overlay.zovl"
+				);
+				
+				// found an overlay
+				if (zovlFilename) {
+					File *file = FileFromFilename(zovlFilename);
+					ivar -= vram;
+					// initialization data is within the file
+					if (ivar + 0x20 < file->size) {
+						const uint8_t *data = (const uint8_t*)file->data;
+						data += ivar;
+						uint16_t objId = (data[8] << 8) | data[9];
+						if (entry.objects.size() == 0)
+							entry.objects.emplace_back(objId);
+						else
+							entry.objects[0] = objId;
+					}
+					FileFree(file);
+				}
+			}
+		}
 	})
 }
 

@@ -73,8 +73,13 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 {
 	ActorDatabase::Entry entry = {0};
 	
-	entry.name = TOML_CSTRING(tomlActor["Name"]);
-	entry.index = TOML_INT(tomlActor["Index"]);
+	if (tomlActor.contains("Name")
+		&& tomlActor["Name"].is_string()
+	) entry.name = TOML_CSTRING(tomlActor["Name"]);
+	
+	if (tomlActor.contains("Index")
+		&& tomlActor["Index"].is_string()
+	) entry.index = TOML_INT(tomlActor["Index"]);
 	
 	if (tomlActor.contains("Category")
 		&& tomlActor["Category"].is_string()
