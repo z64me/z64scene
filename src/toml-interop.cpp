@@ -74,7 +74,17 @@ static void DeriveNameFromFolderName(char **dst, const char *src)
 
 static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb)
 {
-	// TODO support deleting actors that don't exist in project
+	// support deleting actors that don't exist in project
+	sb_array(char*, foldersActor) = project->foldersActor;
+	for (int i = -1; i < sb_count(foldersActor); ++i)
+	{
+		const char *each = i >= 0 ? foldersActor[i] : 0;
+		const char *next = (i + 1 < sb_count(foldersActor)) ? foldersActor[i + 1] : 0;
+		int start = each ? FileListFilePrefix(each) : 0;
+		int end = next ? FileListFilePrefix(next) : actorDb->entries.size();
+		for (int unrefd = start + 1; unrefd < end; ++unrefd)
+			actorDb->RemoveEntry(unrefd);
+	}
 	
 	char tomlPath[1024];
 	
@@ -200,7 +210,17 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 
 static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objectDb)
 {
-	// TODO support deleting objects that don't exist in project
+	// support deleting objects that don't exist in project
+	sb_array(char*, foldersObject) = project->foldersObject;
+	for (int i = -1; i < sb_count(foldersObject); ++i)
+	{
+		const char *each = i >= 0 ? foldersObject[i] : 0;
+		const char *next = (i + 1 < sb_count(foldersObject)) ? foldersObject[i + 1] : 0;
+		int start = each ? FileListFilePrefix(each) : 0;
+		int end = next ? FileListFilePrefix(next) : objectDb->entries.size();
+		for (int unrefd = start + 1; unrefd < end; ++unrefd)
+			objectDb->RemoveEntry(unrefd);
+	}
 	
 	sb_foreach(project->foldersObject, {
 		const char *path = *each;

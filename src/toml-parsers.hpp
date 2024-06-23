@@ -122,6 +122,19 @@ struct ActorDatabase
 		return entries[index];
 	}
 	
+	void RemoveEntry(uint16_t index)
+	{
+		auto tmp = GetEntry(index);
+		
+		if (tmp.name)
+			free(tmp.name);
+		
+		tmp.name = 0;
+		tmp.isEmpty = true;
+		tmp.objects = std::vector<uint16_t>();
+		tmp.properties = std::vector<Entry::Property>();
+	}
+	
 	const char *GetActorName(uint16_t index)
 	{
 		auto entry = GetEntry(index);
@@ -168,6 +181,21 @@ struct ObjectDatabase
 		}
 		
 		return entries[index];
+	}
+	
+	void RemoveEntry(uint16_t index)
+	{
+		auto tmp = GetEntry(index);
+		
+		if (tmp.name)
+			free(tmp.name);
+		if (tmp.zobjPath)
+			free(tmp.zobjPath);
+		
+		tmp.name = 0;
+		tmp.zobjPath = 0;
+		tmp.isEmpty = true;
+		tmp.symbolAddresses = std::map<std::string, uint32_t>();
 	}
 	
 	const char *GetObjectName(uint16_t index)
