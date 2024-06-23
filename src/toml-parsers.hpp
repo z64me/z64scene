@@ -152,6 +152,7 @@ struct ObjectDatabase
 	{
 		char *name;
 		char *zobjPath;
+		char *symsPath;
 		uint16_t index;
 		std::map<std::string, uint32_t> symbolAddresses;
 		bool isEmpty = false;
@@ -191,9 +192,12 @@ struct ObjectDatabase
 			free(tmp.name);
 		if (tmp.zobjPath)
 			free(tmp.zobjPath);
+		if (tmp.symsPath)
+			free(tmp.symsPath);
 		
 		tmp.name = 0;
 		tmp.zobjPath = 0;
+		tmp.symsPath = 0;
 		tmp.isEmpty = true;
 		tmp.symbolAddresses = std::map<std::string, uint32_t>();
 	}

@@ -70,10 +70,13 @@ struct File *FileFromFilename(const char *filename)
 		Die("error reading contents of '%s'", filename);
 	if (fclose(fp)) Die("error closing file '%s' after reading", filename);
 	result->filename = Strdup(filename);
-	result->shortname = Strdup(MAX3(
-		strrchr(filename, '/') + 1
-		, strrchr(filename, '\\') + 1
-		, filename
+	// slash direction normalization
+	for (char *tmp = result->filename; *tmp; ++tmp)
+		if (*tmp == '\\')
+			*tmp = '/';
+	result->shortname = Strdup(MAX(
+		strrchr(result->filename, '/') + 1
+		, result->filename
 	));
 	
 	return result;

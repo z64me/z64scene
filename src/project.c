@@ -89,6 +89,10 @@ struct Project *ProjectNewFromFilename(const char *filename)
 	proj->folder[strlen(file->filename) - strlen(file->shortname)] = '\0';
 	proj->foldersAll = FileListFromDirectory(proj->folder, 0, false, true, true);
 	
+	// trim trailing '/' if present
+	if (proj->folder[strlen(proj->folder) - 1] == '/')
+		proj->folder[strlen(proj->folder) - 1] = '\0';
+	
 	// z64rom project
 	if (file->size >= 10
 		&& !memcmp(file->data, "[project]", 9)

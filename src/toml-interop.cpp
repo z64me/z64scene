@@ -252,6 +252,23 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 		fprintf(stderr, "derived object id %04x name = '%s'\n", id, entry.name);
 		if (entry.zobjPath)
 			fprintf(stderr, " with filename = '%s'\n", entry.zobjPath);
+		
+		// symbols
+		if (project->type == PROJECT_TYPE_ZZRTL) {
+			const char *tmp = FindMatchingFile(path, "syms.ld");
+			if (tmp)
+				entry.symsPath = strdup(tmp);
+		} else if (project->type == PROJECT_TYPE_Z64ROM) {
+			const char *tmp;
+			// '/path/to/actor/0x0123 - My Actor' -> 'project/include/objects/0x0123 - My Actor.ld'
+			if ((tmp = strrchr(path, '/')) && ++tmp) {
+				char work[1024];
+				snprintf(work, sizeof(work), "%s/include/objects/%s.ld", project->folder, tmp);
+				entry.symsPath = strdup(work);
+			}
+		}
+		if (entry.symsPath)
+			fprintf(stderr, "object syms at '%s'\n", entry.symsPath);
 	})
 }
 
