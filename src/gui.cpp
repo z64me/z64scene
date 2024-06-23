@@ -61,6 +61,7 @@ struct GuiSettings
 	
 	ActorDatabase actorDatabase;
 	ObjectDatabase objectDatabase;
+	Project *project;
 	
 	// combo boxes can be volatile as sizes change
 	// when loading different scenes for editing
@@ -1168,6 +1169,30 @@ static void DrawMenuBar(void)
 			ImGui::Separator();
 			if (ImGui::MenuItem("Exit", "Ctrl+Q"))
 			{
+			}
+			ImGui::EndMenu();
+		}
+		if (ImGui::BeginMenu("Profile"))
+		{
+			if (ImGui::MenuItem("Load zzrtl/z64rom project"))
+			{
+				const char *fn;
+				
+				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "z64 romhack projects\0*.rtl;*.zzrpl;*.toml\0", NULL, NULL);
+				
+				if (fn)
+				{
+					gGuiSettings.project = ProjectNewFromFilename(fn);
+					
+					// assume oot for now
+					gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+					gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+					TomlInjectDataFromProject(
+						gGuiSettings.project
+						, &gGuiSettings.actorDatabase
+						, &gGuiSettings.objectDatabase
+					);
+				}
 			}
 			ImGui::EndMenu();
 		}

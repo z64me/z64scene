@@ -74,6 +74,8 @@ static void DeriveNameFromFolderName(char **dst, const char *src)
 
 static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb)
 {
+	// TODO support deleting actors that don't exist in project
+	
 	char tomlPath[1024];
 	
 	sb_foreach(project->foldersActorSrc, {
@@ -198,6 +200,8 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 
 static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objectDb)
 {
+	// TODO support deleting objects that don't exist in project
+	
 	sb_foreach(project->foldersObject, {
 		const char *path = *each;
 		uint16_t id = FileListFilePrefix(path);

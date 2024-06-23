@@ -13,7 +13,9 @@
 #include <string>
 #include <map>
 
+extern "C" {
 #include "project.h"
+}
 
 struct ActorDatabase
 {
