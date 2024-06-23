@@ -16,6 +16,7 @@ extern "C" {
 #include <stb_image.h>
 #include <stb_image_write.h>
 #include "noc_file_dialog.h"
+#include "project.h"
 }
 
 #if 1 // region: helper macros
@@ -1318,5 +1319,17 @@ extern "C" void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, floa
 extern "C" void GuiPushModal(const char *message)
 {
 	gGuiSettings.PushModal(message);
+}
+
+// for testing all the things
+extern "C" void GuiTest(Project *project)
+{
+	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+	gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+	
+	TomlInjectDataFromProject(project
+		, &gGuiSettings.actorDatabase
+		, &gGuiSettings.objectDatabase
+	);
 }
 

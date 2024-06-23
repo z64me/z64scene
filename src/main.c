@@ -14,6 +14,7 @@
 #include "project.h"
 
 extern void WindowMainLoop(struct Scene *scene);
+extern void GuiTest(struct Project *project);
 
 int main(int argc, char *argv[])
 {
@@ -26,9 +27,11 @@ int main(int argc, char *argv[])
 	if (false)
 	{
 		struct Project *project = ProjectNewFromFilename(argv[1]);
+		ExePath(argv[0]);
 		
 		FileListPrintAll(project->foldersObject);
 		
+		/*
 		const char *objdir = FileListFindPathToId(project->foldersObject, 20);
 		if (objdir)
 		{
@@ -36,6 +39,9 @@ int main(int argc, char *argv[])
 			FileListPrintAll(files);
 			FileListFree(files);
 		}
+		*/
+		
+		GuiTest(project);
 		
 		ProjectFree(project);
 		

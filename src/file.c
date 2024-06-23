@@ -216,6 +216,7 @@ sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains,
 {
 	sb_array(char *, result) = 0;
 	bool hasPrefixId = sb_contains_ref(list, FileListHasPrefixId);
+	int containsLen = contains ? strlen(contains) : 0;
 	
 	if (hasPrefixId)
 		sb_push(result, FileListHasPrefixId);
@@ -228,9 +229,14 @@ sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains,
 		if (excludes && strstr(str, excludes))
 			continue;
 		
+		// match is at end of string, skip extra filtering (thanks valgrind)
+		if (containsLen && strlen(match) == containsLen)
+			match = 0;
+		
+		// extra filtering etc
 		if (match)
 		{
-			match += strlen(contains);
+			match += containsLen;
 			while (!isalnum(*match)) ++match;
 			
 			// add id prefix
@@ -276,9 +282,6 @@ sb_array(char *, FileListMergeVanilla)(sb_array(char *, list), sb_array(char *, 
 	// compare id's = faster
 	if (hasPrefixId)
 	{
-		// sort list by id so we can use binary search
-		FileListSortById(list);
-		
 		sb_foreach(vanilla, {
 			uint16_t vanillaPrefix = FileListFilePrefix(*each);
 			if (vanillaPrefix == 0)
@@ -342,8 +345,9 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	snprintf(filterB, sizeof(filterB), "/%s/%s/", contains, vanilla);
 	snprintf(vanillaSlash, sizeof(vanillaSlash), "/%s/", vanilla);
 	
-	sb_array(char *, objectsVanilla) = FileListFilterBy(list, filterB, 0);
-	sb_array(char *, objects) = FileListFilterBy(list, filterA, vanillaSlash);
+	// lists are sorted by id so we can use binary search
+	sb_array(char *, objectsVanilla) = FileListSortById(FileListFilterBy(list, filterB, 0));
+	sb_array(char *, objects) = FileListSortById(FileListFilterBy(list, filterA, vanillaSlash));
 	sb_array(char *, merged) = FileListMergeVanilla(objects, objectsVanilla);
 	
 	//fprintf(stderr, "objectsVanilla = %p\n", objectsVanilla);
@@ -351,8 +355,8 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	//fprintf(stderr, "merged = %p\n", merged);
 	//FileListPrintAll(merged);
 	
-	sb_free(objectsVanilla);
-	sb_free(objects);
+	FileListFree(objectsVanilla);
+	FileListFree(objects);
 	
 	return FileListSortById(merged);
 }

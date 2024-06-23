@@ -28,11 +28,24 @@ const char *FindMatchingFile(const char *path, const char *defaultFilename)
 		return workbuf;
 	
 	// more exhaustive
+	const char *extension = strrchr(defaultFilename, '.');
+	int extensionLen = strlen(extension);
 	sb_array(char *, files) = FileListFromDirectory(path, 1, true, false, false);
-	sb_array(char *, filtered) = FileListFilterBy(files, strrchr(defaultFilename, '.'), 0);
+	sb_array(char *, filtered) = FileListFilterBy(files, extension, 0);
 	workbuf[0] = '\0';
-	if (sb_count(filtered))
-		strcpy(workbuf, filtered[0]);
+	// TODO FileListFilterBy() filtering by extension so no loop necessary
+	//if (sb_count(filtered))
+	//	strcpy(workbuf, filtered[0]);
+	sb_foreach(filtered, {
+		const char *tmp = *each;
+		// guarantees extension at end of filename, so no .extension.bak
+		if ((tmp = strstr(tmp, extension))
+			&& strlen(tmp) == extensionLen
+		) {
+			strcpy(workbuf, *each);
+			break;
+		}
+	})
 	FileListFree(filtered);
 	FileListFree(files);
 	return workbuf[0] ? workbuf : 0;
@@ -43,7 +56,7 @@ static void DeriveNameFromFolderName(char **dst, const char *src)
 	const char *tmp;
 	// '/path/to/actor/0x0123 - My Actor' -> 'My Actor'
 	if ((tmp = strrchr(src, '/'))
-		&& (tmp = strchr(src, '-'))
+		&& (tmp = strchr(tmp, '-'))
 	) {
 		if (*dst) {
 			free(*dst);
@@ -91,7 +104,21 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 		// update actor name to match folder name
 		auto &entry = actorDb->GetEntry(id);
 		if (useTomlName == false)
+		{
 			DeriveNameFromFolderName(&entry.name, path);
+			
+			fprintf(stderr, "derived actor id %04x name = '%s'\n", id, entry.name);
+		}
+		
+		/*
+		if (useTomlName == true)
+		{
+			fprintf(stderr, "tomlName = '%s'\n", entry.name);
+			fprintf(stderr, "objects.size = %d\n", entry.objects.size());
+			fprintf(stderr, "objects.[0] = %d\n", entry.objects[0]);
+			exit(0);
+		}
+		*/
 		
 		// if no object dependency, derive it from zovl
 		if (entry.objects.size() == 0
@@ -137,17 +164,18 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 			// safety
 			if (vram >= 0x80800000 && ivar >= 0x80800000
 				&& vram < 0x81000000 && ivar < 0x81000000
-				&& ivar > vram
+				&& ivar >= vram
 			) {
 				const char *zovlFilename = FindMatchingFile(
 					pathBinary
 					, project->type == PROJECT_TYPE_Z64ROM
-						? "actor.zovl"
-						: "overlay.zovl"
+						? "overlay.zovl"
+						: "actor.zovl"
 				);
 				
 				// found an overlay
 				if (zovlFilename) {
+					fprintf(stderr, "zovlFilename = '%s'\n", zovlFilename);
 					File *file = FileFromFilename(zovlFilename);
 					ivar -= vram;
 					// initialization data is within the file
@@ -155,6 +183,7 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 						const uint8_t *data = (const uint8_t*)file->data;
 						data += ivar;
 						uint16_t objId = (data[8] << 8) | data[9];
+						fprintf(stderr, "derived object dependency %04x\n", objId);
 						if (entry.objects.size() == 0)
 							entry.objects.emplace_back(objId);
 						else
@@ -186,6 +215,8 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 		// update object name to match folder name
 		auto &entry = objectDb->GetEntry(id);
 		DeriveNameFromFolderName(&entry.name, path);
+		
+		fprintf(stderr, "derived object id %04x name = '%s'\n", id, entry.name);
 	})
 }
 
