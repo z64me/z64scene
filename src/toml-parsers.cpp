@@ -81,6 +81,15 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 		&& tomlActor["Index"].is_integer()
 	) entry.index = TOML_INT(tomlActor["Index"]);
 	
+	if (tomlActor.contains("RenderCode")
+		&& tomlActor["RenderCode"].is_string()
+	)
+	{
+		const toml::source_location loc = tomlActor["RenderCode"].location();
+		entry.rendercodeLineNumberInToml = loc.line();
+		entry.rendercode = TOML_CSTRING(tomlActor["RenderCode"]);
+	}
+	
 	if (tomlActor.contains("Category")
 		&& tomlActor["Category"].is_string()
 	)

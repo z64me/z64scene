@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <iostream>
 #include <vector>
@@ -24,6 +25,8 @@ extern "C" {
 		; each && (next = strtok(0, DELIM)) \
 		; each = next \
 	)
+
+#define STRCATF(DST, FMT, ...) { sprintf(DST, FMT, ##__VA_ARGS__); DST += strlen(DST); }
 
 struct ActorDatabase
 {
@@ -89,6 +92,21 @@ struct ActorDatabase
 				*which &= ~mask;
 				*which |= v;
 			}
+			
+			const char *QuickSanitizedName(void)
+			{
+				static char work[256];
+				const char *src = name;
+				for (char *dst = work; ; ++dst, ++src)
+				{
+					*dst = *src;
+					if (!*dst)
+						break;
+					if (!isalnum(*dst))
+						--dst;
+				}
+				return work;
+			}
 		};
 		
 		char                   *name;
@@ -97,10 +115,77 @@ struct ActorDatabase
 		std::vector<Property>   properties;
 		bool isEmpty = false;
 		int categoryInt = -1;
+		char *rendercode = 0;
+		uint32_t rendercodeLineNumberInToml = 0;
+		uint32_t rendercodeLineNumberOffset = 0;
+		// compilation errors should report:
+		// (lineError - rendercodeLineNumberOffset) + rendercodeLineNumberInToml
 		
 		void AddProperty(Property property)
 		{
 			properties.emplace_back(property);
+		}
+		
+		const char *RenderCodeGen(
+			std::map<std::string, uint32_t> GetObjectSymbolAddresses(uint16_t objId)
+		)
+		{
+			if (!rendercode)
+				return 0;
+			
+			static char *work = 0;
+			
+			if (!work)
+				work = (char*)malloc(4096);
+			
+			char *buf = work;
+			*buf = '\0';
+			STRCATF(buf, "%s", R"(
+				class World {
+					foreign static Xpos
+					foreign static Ypos
+					foreign static Zpos
+				}
+				class Draw {
+					foreign static SetScale(xscale, yscale, zscale)
+					foreign static SetScale(scale)
+				}
+			)");
+			
+			// properties
+			STRCATF(buf, "%s", R"(
+				class props__hooks {
+			)");
+			for (auto &option : properties) {
+				const char *name = option.QuickSanitizedName();
+				STRCATF(buf, "%s { _%s }\n", name, name);
+				STRCATF(buf, "%s=(v) { _%s = v }\n", name, name);
+			}
+			STRCATF(buf, "%s", R"(
+				construct new() { }
+				}
+				var Props = props__hooks.new()
+			)");
+			
+			// constants
+			for (int i = 0; i < objects.size(); ++i)
+			{
+				auto symbolAddresses = GetObjectSymbolAddresses(objects[i]);
+				
+				for (const auto &sym : symbolAddresses)
+					STRCATF(buf, "var %s = 0x%08x\n", sym.first.c_str(), sym.second);
+			}
+			
+			// render code offset
+			rendercodeLineNumberOffset = 1;
+			for (char *tmp = work; *tmp; ++tmp)
+				if (*tmp == '\n')
+					rendercodeLineNumberOffset += 1;
+			
+			// rendercode
+			STRCATF(buf, "class hooks { static draw() { \n %s \n } } ", rendercode);
+			
+			return work;
 		}
 	};
 	
@@ -137,7 +222,11 @@ struct ActorDatabase
 		if (tmp.name)
 			free(tmp.name);
 		
+		if (tmp.rendercode)
+			free(tmp.rendercode);
+		
 		tmp.name = 0;
+		tmp.rendercode = 0;
 		tmp.isEmpty = true;
 		tmp.objects = std::vector<uint16_t>();
 		tmp.properties = std::vector<Entry::Property>();

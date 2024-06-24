@@ -233,6 +233,35 @@ static GuiInterop *gGui;
 
 #if 1 // region: private functions
 
+std::map<std::string, uint32_t> GetObjectSymbolAddresses(uint16_t objId)
+{
+	return gGuiSettings.objectDatabase.GetEntry(objId).symbolAddresses;
+}
+
+static void TestAllActorRenderCodeGen(void)
+{
+	for (auto &entry : gGuiSettings.actorDatabase.entries)
+	{
+		if (entry.isEmpty)
+			continue;
+		
+		const char *tmp = entry.RenderCodeGen(GetObjectSymbolAddresses);
+		if (tmp)
+		{
+			fprintf(stderr,
+				"-------- codegen --------\n"
+				"tomlLineStart = %d\n"
+				"offsetLineStart = %d\n"
+				"%s\n"
+				"---------- end ----------\n"
+				, entry.rendercodeLineNumberInToml
+				, entry.rendercodeLineNumberOffset
+				, tmp
+			);
+		}
+	}
+}
+
 // Helper to display a little (?) mark which shows a tooltip when hovered.
 // In your own code you may want to display an actual icon if you are using a merged icon fonts (see docs/FONTS.md)
 static void HelpMarker(const char *desc)
@@ -1249,6 +1278,7 @@ extern "C" void GuiInit(GLFWwindow *window)
 	//TomlTest();
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
 	gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+	TestAllActorRenderCodeGen();
 	
 	// test modals
 	return;
@@ -1363,5 +1393,8 @@ extern "C" void GuiTest(Project *project)
 		obj.TryLoadSyms();
 		obj.PrintAllSyms();
 	}
+	
+	// codegen test
+	TestAllActorRenderCodeGen();
 }
 

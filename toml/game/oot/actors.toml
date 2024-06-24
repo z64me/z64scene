@@ -31,6 +31,9 @@
 	Index = 2
 	Category = "5"
 	Objects = [50]
+	RenderCode = """
+		System.print("Hello, world!")
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
