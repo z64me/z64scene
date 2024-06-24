@@ -18,6 +18,7 @@
 extern "C" {
 #include "project.h"
 #include "file.h"
+#include "rendercode.h"
 }
 
 #define STRTOK_LOOP(STRING, DELIM) \
@@ -44,6 +45,8 @@ struct ActorDatabase
 			const char          *name;
 			uint16_t             mask;
 			std::vector<Combo>   combos;
+			WrenHandle *slotHandle = 0;
+			WrenHandle *callHandle = 0;
 			
 			void AddCombo(uint16_t value, const char *label)
 			{
@@ -93,7 +96,7 @@ struct ActorDatabase
 				*which |= v;
 			}
 			
-			const char *QuickSanitizedName(void)
+			const char *QuickSanitizedName(const char *suffix = 0)
 			{
 				static char work[256];
 				const char *src = name;
@@ -105,6 +108,8 @@ struct ActorDatabase
 					if (!isalnum(*dst))
 						--dst;
 				}
+				if (suffix)
+					strcat(work, suffix);
 				return work;
 			}
 		};
@@ -115,9 +120,10 @@ struct ActorDatabase
 		std::vector<Property>   properties;
 		bool isEmpty = false;
 		int categoryInt = -1;
-		char *rendercode = 0;
+		char *rendercodeToml = 0;
 		uint32_t rendercodeLineNumberInToml = 0;
 		uint32_t rendercodeLineNumberOffset = 0;
+		ActorRenderCode rendercode = {};
 		// compilation errors should report:
 		// (lineError - rendercodeLineNumberOffset) + rendercodeLineNumberInToml
 		
@@ -130,7 +136,7 @@ struct ActorDatabase
 			std::map<std::string, uint32_t> GetObjectSymbolAddresses(uint16_t objId)
 		)
 		{
-			if (!rendercode)
+			if (!rendercodeToml)
 				return 0;
 			
 			static char *work = 0;
@@ -183,9 +189,44 @@ struct ActorDatabase
 					rendercodeLineNumberOffset += 1;
 			
 			// rendercode
-			STRCATF(buf, "class hooks { static draw() { \n %s \n } } ", rendercode);
+			STRCATF(buf, "class hooks { static draw() { \n %s \n } } ", rendercodeToml);
 			
 			return work;
+		}
+		
+		void CreateRenderCodeHandles(void)
+		{
+			if (rendercode.type != ACTOR_RENDER_CODE_TYPE_VM)
+				return;
+			
+			WrenVM *vm = rendercode.vm;
+			const char* module = "main";
+			for (auto &prop : properties)
+			{
+				wrenEnsureSlots(vm, 2);
+				wrenGetVariable(vm, module, "Props", 0);
+				
+				prop.slotHandle = wrenGetSlotHandle(vm, 0);
+				prop.callHandle = wrenMakeCallHandle(vm, prop.QuickSanitizedName("=(_)"));
+				
+				sb_push(rendercode.vmHandles, prop.slotHandle);
+				sb_push(rendercode.vmHandles, prop.callHandle);
+			}
+		}
+		
+		void ApplyRenderCodeProperties(uint16_t params, uint16_t xrot, uint16_t yrot, uint16_t zrot)
+		{
+			if (rendercode.type != ACTOR_RENDER_CODE_TYPE_VM)
+				return;
+			
+			WrenVM *vm = rendercode.vm;
+			for (auto &prop : properties)
+			{
+				wrenEnsureSlots(vm, 2);
+				wrenSetSlotHandle(vm, 0, prop.slotHandle);
+				wrenSetSlotDouble(vm, 1, prop.Extract(params, xrot, yrot, zrot));
+				wrenCall(vm, prop.callHandle);
+			}
 		}
 	};
 	
@@ -222,11 +263,12 @@ struct ActorDatabase
 		if (tmp.name)
 			free(tmp.name);
 		
-		if (tmp.rendercode)
-			free(tmp.rendercode);
+		if (tmp.rendercodeToml)
+			free(tmp.rendercodeToml);
 		
 		tmp.name = 0;
-		tmp.rendercode = 0;
+		tmp.rendercodeToml = 0;
+		tmp.rendercode = (ActorRenderCode){};
 		tmp.isEmpty = true;
 		tmp.objects = std::vector<uint16_t>();
 		tmp.properties = std::vector<Entry::Property>();

@@ -57,6 +57,9 @@ int GuiHasFocusMouse(void);
 int GuiHasFocusKeyboard(void);
 void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
 void GuiPushModal(const char *message);
+struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id);
+void GuiCreateActorRenderCodeHandles(uint16_t id);
+void GuiApplyActorRenderCodeProperties(struct Instance *inst);
 
 #endif
 

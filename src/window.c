@@ -15,6 +15,7 @@
 #include "texanim.h"
 #include "object.h"
 #include "skelanime.h"
+#include "rendercode.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -1229,6 +1230,141 @@ static void RaycastInstanceList(sb_array(struct Instance, *instanceList), struct
 	});
 }
 
+static void RenderCodeWriteFn(WrenVM* vm, const char* text)
+{
+	fprintf(stderr, "%s", text);
+}
+
+static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
+	const char* module, const int line,
+	const char* msg
+)
+{
+	switch (errorType)
+	{
+		case WREN_ERROR_COMPILE:
+			fprintf(stderr, "[%s line %d] [Error] %s\n", module, line, msg);
+			break;
+		case WREN_ERROR_STACK_TRACE:
+			fprintf(stderr, "[%s line %d] in %s\n", module, line, msg);
+			break;
+		case WREN_ERROR_RUNTIME:
+			fprintf(stderr, "[Runtime Error] %s\n", msg);
+			break;
+	}
+}
+
+static WrenForeignMethodFn RenderCodeBindForeignMethod(
+	WrenVM* vm
+	, const char* module
+	, const char* className
+	, bool isStatic
+	, const char* signature
+)
+{
+#define WREN_UDATA ((struct Instance*)wrenGetUserData(vm))
+#define streq(A, B) !strcmp(A, B)
+	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
+	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.y); }
+	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
+	
+	void DrawSetScale3(WrenVM* vm) {
+		float xscale = wrenGetSlotDouble(vm, 1);
+		float yscale = wrenGetSlotDouble(vm, 2);
+		float zscale = wrenGetSlotDouble(vm, 3);
+		fprintf(stderr, "DrawSetScale3 = %f %f %f\n", xscale, yscale, zscale);
+	}
+	void DrawSetScale1(WrenVM* vm) {
+		float xscale = wrenGetSlotDouble(vm, 1);
+		float yscale = xscale;
+		float zscale = xscale;
+		fprintf(stderr, "DrawSetScale1 = %f %f %f\n", xscale, yscale, zscale);
+	}
+	
+	if (streq(module, "main")) {
+		// no setters, are read-only
+		if (streq(className, "World")) {
+			if (streq(signature, "Xpos")) return WorldGetXpos;
+			else if (streq(signature, "Ypos")) return WorldGetYpos;
+			else if (streq(signature, "Zpos")) return WorldGetZpos;
+			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
+		}
+		else if (streq(className, "Draw")) {
+			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
+			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
+		}
+	}
+	
+	return 0;
+}
+
+// returns true if it drew geometry
+bool RenderCodeGo(struct Instance *inst)
+{
+	struct ActorRenderCode *rc = GuiGetActorRenderCode(inst->id);
+	
+	if (!rc)
+		return false;
+	
+	// run vm
+	if (rc->type == ACTOR_RENDER_CODE_TYPE_VM)
+	{
+		GuiApplyActorRenderCodeProperties(inst);
+		
+		WrenVM *vm = rc->vm;
+		wrenSetUserData(vm, inst);
+		
+		wrenEnsureSlots(vm, 1);
+		wrenSetSlotHandle(vm, 0, rc->slotHandle);
+		
+		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
+			fprintf(stderr, "failed to invoke function\n");
+	}
+	// compile source into vm
+	else if (rc->type == ACTOR_RENDER_CODE_TYPE_SOURCE)
+	{
+		const char *module = "main";
+		WrenConfiguration config;
+		wrenInitConfiguration(&config);
+			config.writeFn = &RenderCodeWriteFn;
+			config.errorFn = &RenderCodeErrorFn;
+			config.bindForeignMethodFn = &RenderCodeBindForeignMethod;
+		WrenVM* vm = wrenNewVM(&config);
+		
+		WrenInterpretResult result = wrenInterpret(vm, module, rc->src);
+		
+		// success
+		if (result == WREN_RESULT_SUCCESS)
+		{
+			rc->type = ACTOR_RENDER_CODE_TYPE_VM;
+			rc->vm = vm;
+			
+			// get handles
+			wrenEnsureSlots(vm, 1);
+			wrenGetVariable(vm, module, "hooks", 0);
+			
+			rc->slotHandle = wrenGetSlotHandle(vm, 0);
+			rc->callHandle = wrenMakeCallHandle(vm, "draw()");
+			
+			sb_push(rc->vmHandles, rc->slotHandle);
+			sb_push(rc->vmHandles, rc->callHandle);
+			
+			GuiCreateActorRenderCodeHandles(inst->id);
+		}
+		// error
+		else
+		{
+			rc->type = ACTOR_RENDER_CODE_TYPE_VM_ERROR;
+			rc->vmErrorMessage = (result == WREN_RESULT_COMPILE_ERROR)
+				? "compile error"
+				: "runtime error"
+			;
+		}
+	}
+	
+	return false;
+}
+
 static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 {
 	float model[16];
@@ -1257,6 +1393,10 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 			for (int i = 0; i < 12; ++i)
 				model[i] *= 0.025f;
 		}
+		
+		// rendercode
+		if (RenderCodeGo(each))
+			continue;
 		
 		n64_mtx_model(model);
 		n64_segment_set(0x06, meshPrismArrow);

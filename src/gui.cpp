@@ -1376,11 +1376,72 @@ extern "C" void GuiPushModal(const char *message)
 	gGuiSettings.PushModal(message);
 }
 
+// gets vm, or source for compilation, if no vm exists yet
+// intended use: C gets src, creates VM, sends back VM
+extern "C" struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id)
+{
+	auto &actor = gGuiSettings.actorDatabase.GetEntry(id);
+	
+	if (actor.isEmpty)
+		return 0;
+	
+	struct ActorRenderCode *rc = &actor.rendercode;
+	
+	if (rc->type == ACTOR_RENDER_CODE_TYPE_UNINITIALIZED)
+	{
+		const char *tmp = actor.RenderCodeGen(GetObjectSymbolAddresses);
+		
+		if (tmp)
+		{
+			rc->type = ACTOR_RENDER_CODE_TYPE_SOURCE;
+			rc->src = tmp;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	
+	return rc;
+}
+
+// each property gets hooks created for it
+extern "C" void GuiCreateActorRenderCodeHandles(uint16_t id)
+{
+	auto &actor = gGuiSettings.actorDatabase.GetEntry(id);
+	
+	if (actor.isEmpty)
+		return;
+	
+	if (actor.rendercode.type == ACTOR_RENDER_CODE_TYPE_VM)
+		actor.CreateRenderCodeHandles();
+}
+
+// populates properties from instance to rendercode VM
+extern "C" void GuiApplyActorRenderCodeProperties(struct Instance *inst)
+{
+	auto &actor = gGuiSettings.actorDatabase.GetEntry(inst->id);
+	
+	if (actor.isEmpty)
+		return;
+	
+	if (actor.rendercode.type == ACTOR_RENDER_CODE_TYPE_VM)
+		actor.ApplyRenderCodeProperties(inst->params, inst->xrot, inst->yrot, inst->zrot);
+}
+
 // for testing all the things
 extern "C" void GuiTest(Project *project)
 {
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
 	gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+	
+	// testing rendercode
+	bool RenderCodeGo(struct Instance *inst);
+	Instance instance = {};
+	instance.id = 0x0002;
+	for (int i = 0; i < 10; ++i)
+		RenderCodeGo(&instance);
+	return;
 	
 	TomlInjectDataFromProject(project
 		, &gGuiSettings.actorDatabase

@@ -32,7 +32,7 @@
 	Category = "5"
 	Objects = [50]
 	RenderCode = """
-		System.print("Hello, world!")
+		System.print("Hello, Stalfos!")
 	"""
 	[[Actor.Property]]
 		Mask = 65535

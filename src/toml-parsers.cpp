@@ -87,7 +87,7 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 	{
 		const toml::source_location loc = tomlActor["RenderCode"].location();
 		entry.rendercodeLineNumberInToml = loc.line();
-		entry.rendercode = TOML_CSTRING(tomlActor["RenderCode"]);
+		entry.rendercodeToml = TOML_CSTRING(tomlActor["RenderCode"]);
 	}
 	
 	if (tomlActor.contains("Category")
