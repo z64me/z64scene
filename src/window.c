@@ -1280,6 +1280,15 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		float zscale = xscale;
 		fprintf(stderr, "DrawSetScale1 = %f %f %f\n", xscale, yscale, zscale);
 	}
+	void DrawUseObjectSlot(WrenVM* vm) {
+		int slot = wrenGetSlotDouble(vm, 1);
+		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
+		void *data = GuiGetObjectDataFromId(objectId);
+		if (data) {
+			gSPSegment(POLY_OPA_DISP++, 0x06, data);
+			gSPSegment(POLY_XLU_DISP++, 0x06, data);
+		}
+	}
 	
 	if (streq(module, "main")) {
 		// no setters, are read-only
@@ -1292,6 +1301,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		else if (streq(className, "Draw")) {
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
 			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
+			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
 		}
 	}
 	

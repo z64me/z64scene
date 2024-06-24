@@ -1429,6 +1429,36 @@ extern "C" void GuiApplyActorRenderCodeProperties(struct Instance *inst)
 		actor.ApplyRenderCodeProperties(inst->params, inst->xrot, inst->yrot, inst->zrot);
 }
 
+extern "C" int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot)
+{
+	auto &actor = gGuiSettings.actorDatabase.GetEntry(actorId);
+	
+	if (actor.isEmpty)
+		return -1;
+	
+	if (slot >= actor.objects.size())
+		return -1;
+	
+	return actor.objects[slot];
+}
+
+extern "C" void *GuiGetObjectDataFromId(int objectId)
+{
+	if (objectId <= 0)
+		return 0;
+	
+	auto &object = gGuiSettings.objectDatabase.GetEntry(objectId);
+	
+	if (object.isEmpty)
+		return 0;
+	
+	if (object.zobjData)
+		return object.zobjData->data;
+	
+	object.TryLoadData();
+	return 0;
+}
+
 // for testing all the things
 extern "C" void GuiTest(Project *project)
 {

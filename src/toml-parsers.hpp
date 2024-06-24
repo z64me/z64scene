@@ -155,6 +155,7 @@ struct ActorDatabase
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)
 					foreign static SetScale(scale)
+					foreign static UseObjectSlot(slot)
 				}
 			)");
 			
@@ -183,13 +184,13 @@ struct ActorDatabase
 			}
 			
 			// render code offset
-			rendercodeLineNumberOffset = 1;
+			rendercodeLineNumberOffset = 2;
 			for (char *tmp = work; *tmp; ++tmp)
 				if (*tmp == '\n')
 					rendercodeLineNumberOffset += 1;
 			
 			// rendercode
-			STRCATF(buf, "class hooks { static draw() { \n %s \n } } ", rendercodeToml);
+			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n %s \n } } ", rendercodeToml);
 			
 			return work;
 		}
@@ -292,9 +293,23 @@ struct ObjectDatabase
 		char *name;
 		char *zobjPath;
 		char *symsPath;
+		File *zobjData = 0;
 		uint16_t index;
 		std::map<std::string, uint32_t> symbolAddresses;
 		bool isEmpty = false;
+		
+		void TryLoadData(void)
+		{
+			if (!zobjPath)
+				return;
+			
+			if (FileExists(zobjPath))
+				zobjData = FileFromFilename(zobjPath);
+			
+			// consider this consumed
+			free(zobjPath);
+			zobjPath = 0;
+		}
 		
 		void TryLoadSyms(void)
 		{
