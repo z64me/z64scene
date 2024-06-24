@@ -5155,6 +5155,10 @@
 	Name = "Crate"
 	Index = 416
 	Category = "1"
+	RenderCode = """
+		Draw.Mesh(0x06000960)
+		//System.print("Hello, Crate!")
+	"""
 	Notes = "0xFFFF = Spawned Skulltula Variable (see actor 0095)\n-FFFF No Skulltula\nX ROTATION +0xFF = Collectible Item Dropped (see actor 0015)\nZ ROTATION +0x3F = Collectible Flag"
 	Objects = [368]
 	[[Actor.Property]]

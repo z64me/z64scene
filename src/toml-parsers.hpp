@@ -156,6 +156,7 @@ struct ActorDatabase
 					foreign static SetScale(xscale, yscale, zscale)
 					foreign static SetScale(scale)
 					foreign static UseObjectSlot(slot)
+					foreign static Mesh(address)
 				}
 			)");
 			
@@ -184,13 +185,13 @@ struct ActorDatabase
 			}
 			
 			// render code offset
-			rendercodeLineNumberOffset = 2;
+			rendercodeLineNumberOffset = 3;
 			for (char *tmp = work; *tmp; ++tmp)
 				if (*tmp == '\n')
 					rendercodeLineNumberOffset += 1;
 			
 			// rendercode
-			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n %s \n } } ", rendercodeToml);
+			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n Draw.SetScale(0.1) \n %s \n } } ", rendercodeToml);
 			
 			return work;
 		}

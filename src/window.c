@@ -22,6 +22,9 @@
 #define NOC_FILE_DIALOG_IMPLEMENTATION
 #include "noc_file_dialog.h"
 
+static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
+static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
+
 // a slanted triangular prism that points in one direction
 unsigned char meshPrismArrow[] = {
 	0x03, 0xe8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0c, 0x00, 0x0c,
@@ -1262,6 +1265,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	, const char* signature
 )
 {
+	static double sXscale = 1;
+	static double sYscale = 1;
+	static double sZscale = 1;
 #define WREN_UDATA ((struct Instance*)wrenGetUserData(vm))
 #define streq(A, B) !strcmp(A, B)
 	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
@@ -1269,16 +1275,16 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
 	
 	void DrawSetScale3(WrenVM* vm) {
-		float xscale = wrenGetSlotDouble(vm, 1);
-		float yscale = wrenGetSlotDouble(vm, 2);
-		float zscale = wrenGetSlotDouble(vm, 3);
-		fprintf(stderr, "DrawSetScale3 = %f %f %f\n", xscale, yscale, zscale);
+		sXscale = wrenGetSlotDouble(vm, 1);
+		sYscale = wrenGetSlotDouble(vm, 2);
+		sZscale = wrenGetSlotDouble(vm, 3);
+		//fprintf(stderr, "DrawSetScale3 = %f %f %f\n", sXscale, sYscale, sZscale);
 	}
 	void DrawSetScale1(WrenVM* vm) {
-		float xscale = wrenGetSlotDouble(vm, 1);
-		float yscale = xscale;
-		float zscale = xscale;
-		fprintf(stderr, "DrawSetScale1 = %f %f %f\n", xscale, yscale, zscale);
+		sXscale = wrenGetSlotDouble(vm, 1);
+		sYscale = sXscale;
+		sZscale = sXscale;
+		//fprintf(stderr, "DrawSetScale1 = %f %f %f\n", sXscale, sYscale, sZscale);
 	}
 	void DrawUseObjectSlot(WrenVM* vm) {
 		int slot = wrenGetSlotDouble(vm, 1);
@@ -1288,6 +1294,21 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			gSPSegment(POLY_OPA_DISP++, 0x06, data);
 			gSPSegment(POLY_XLU_DISP++, 0x06, data);
 		}
+	}
+	void DrawMesh(WrenVM* vm) {
+		uint32_t address = wrenGetSlotDouble(vm, 1);
+		struct Instance *inst = WREN_UDATA;
+		//fprintf(stderr, "address = %08x\n", address);
+		Matrix_Push(); {
+			Matrix_Translate(UnfoldVec3(inst->pos), MTXMODE_NEW);
+			Matrix_RotateY_s(inst->yrot, MTXMODE_APPLY);
+			Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
+			Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
+			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
+			
+			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+		} Matrix_Pop();
+		gSPDisplayList(POLY_OPA_DISP++, address);
 	}
 	
 	if (streq(module, "main")) {
@@ -1302,6 +1323,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
 			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
+			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 		}
 	}
 	
@@ -1327,8 +1349,12 @@ bool RenderCodeGo(struct Instance *inst)
 		wrenEnsureSlots(vm, 1);
 		wrenSetSlotHandle(vm, 0, rc->slotHandle);
 		
+		n64_buffer_init();
+		n64_draw_dlist(gfxDisableXray);
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			fprintf(stderr, "failed to invoke function\n");
+		n64_buffer_flush(false);
+		n64_draw_dlist(gfxEnableXray);
 	}
 	// compile source into vm
 	else if (rc->type == ACTOR_RENDER_CODE_TYPE_SOURCE)
@@ -1765,8 +1791,6 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
-		static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
-		static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
 		static GbiGfx gfxGreen[] = { gsDPSetPrimColor(0, 0, 0, 255, 0, 255), gsSPEndDisplayList() };
 		static GbiGfx gfxRed[] = { gsDPSetPrimColor(0, 0, 255, 0, 0, 255), gsSPEndDisplayList() };
 		n64_draw_dlist(gfxEnableXray);
