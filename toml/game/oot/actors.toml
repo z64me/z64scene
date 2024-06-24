@@ -3296,7 +3296,11 @@
 	Index = 273
 	Category = "6"
 	Notes = "+0x7E00 = Collectible Flag\n+0xFF = Collectible var //See Actor 0015"
-	Objects = [3]
+	Objects = [0x012C, 3]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x060017C0)
+	"""
 	[[Actor.Property]]
 		Mask = 32256
 		Name = "Collectible Flag"
