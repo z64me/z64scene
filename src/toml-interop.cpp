@@ -7,16 +7,6 @@
 //
 
 #include "toml-parsers.hpp"
-extern "C" {
-#include "project.h"
-#include "file.h"
-};
-
-#define STRTOK_LOOP(STRING, DELIM) \
-	for (char *next, *each = strtok(STRING, DELIM) \
-		; each && (next = strtok(0, DELIM)) \
-		; each = next \
-	)
 
 const char *FindMatchingFile(const char *path, const char *defaultFilename)
 {

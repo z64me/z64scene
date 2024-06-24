@@ -1356,5 +1356,12 @@ extern "C" void GuiTest(Project *project)
 		, &gGuiSettings.actorDatabase
 		, &gGuiSettings.objectDatabase
 	);
+	
+	// test
+	{
+		auto &obj = gGuiSettings.objectDatabase.GetEntry(50);
+		obj.TryLoadSyms();
+		obj.PrintAllSyms();
+	}
 }
 

@@ -9,13 +9,21 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
 
 extern "C" {
 #include "project.h"
+#include "file.h"
 }
+
+#define STRTOK_LOOP(STRING, DELIM) \
+	for (char *next, *each = strtok(STRING, DELIM) \
+		; each && (next = strtok(0, DELIM)) \
+		; each = next \
+	)
 
 struct ActorDatabase
 {
@@ -156,6 +164,41 @@ struct ObjectDatabase
 		uint16_t index;
 		std::map<std::string, uint32_t> symbolAddresses;
 		bool isEmpty = false;
+		
+		void TryLoadSyms(void)
+		{
+			if (!symsPath)
+				return;
+			
+			if (FileExists(symsPath))
+			{
+				File *tmp = FileFromFilename(symsPath);
+				STRTOK_LOOP((char*)tmp->data, "\r\n\t =;") {
+					uint32_t v;
+					if (*next == '\0')
+						continue;
+					if (sscanf(next, "%x", &v) != 1)
+						continue;
+					symbolAddresses[each] = v;
+					*next = '\0'; // mark consumed
+				}
+				FileFree(tmp);
+			}
+			else
+				fprintf(stderr, "'%s' doesn't exist\n", symsPath);
+			
+			// consider these consumed
+			free(symsPath);
+			symsPath = 0;
+		}
+		
+		void PrintAllSyms(void)
+		{
+			// print contents
+			for (const auto &sym : symbolAddresses)
+				fprintf(stderr, "%s = 0x%08x;\n", sym.first.c_str(), sym.second);
+				//std::cout << sym.first << " = " << std::hex << sym.second << ";\n";
+		}
 	};
 	
 	std::vector<Entry> entries;
