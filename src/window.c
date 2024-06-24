@@ -1233,16 +1233,20 @@ static void RaycastInstanceList(sb_array(struct Instance, *instanceList), struct
 	});
 }
 
+struct ActorRenderCode *gRenderCodeHandle = 0;
+
 static void RenderCodeWriteFn(WrenVM* vm, const char* text)
 {
 	fprintf(stderr, "%s", text);
 }
 
 static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
-	const char* module, const int line,
+	const char* module, int line,
 	const char* msg
 )
 {
+	line += gRenderCodeHandle->lineErrorOffset;
+	
 	switch (errorType)
 	{
 		case WREN_ERROR_COMPILE:
@@ -1401,6 +1405,7 @@ bool RenderCodeGo(struct Instance *inst)
 	else if (rc->type == ACTOR_RENDER_CODE_TYPE_SOURCE)
 	{
 		const char *module = "main";
+		gRenderCodeHandle = rc;
 		WrenConfiguration config;
 		wrenInitConfiguration(&config);
 			config.writeFn = &RenderCodeWriteFn;

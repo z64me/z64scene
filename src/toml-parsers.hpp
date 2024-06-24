@@ -195,6 +195,11 @@ struct ActorDatabase
 			// rendercode
 			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n Draw.SetScale(0.1) \n %s \n } } ", rendercodeToml);
 			
+			// add to error line number, to report correct line in toml
+			rendercode.lineErrorOffset = 0;
+			rendercode.lineErrorOffset -= rendercodeLineNumberOffset;
+			rendercode.lineErrorOffset += rendercodeLineNumberInToml;
+			
 			return work;
 		}
 		

@@ -29,6 +29,7 @@ struct ActorRenderCode
 		WrenVM *vm;
 		char *vmErrorMessage;
 	};
+	long signed int lineErrorOffset;
 	
 	sb_array(WrenHandle *, vmHandles);
 	WrenHandle *slotHandle;
