@@ -1380,6 +1380,9 @@ extern "C" void GuiPushModal(const char *message)
 // intended use: C gets src, creates VM, sends back VM
 extern "C" struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id)
 {
+	if (!gGuiSettings.project)
+		return 0;
+	
 	auto &actor = gGuiSettings.actorDatabase.GetEntry(id);
 	
 	if (actor.isEmpty)

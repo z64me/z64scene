@@ -1257,6 +1257,7 @@ static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
 	}
 }
 
+static bool gRenderCodeDrewSomething;
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	WrenVM* vm
 	, const char* module
@@ -1316,6 +1317,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		//fprintf(stderr, "address = %08x\n", address);
 		ReadyMatrix(inst, true);
 		gSPDisplayList(POLY_OPA_DISP++, address);
+		gRenderCodeDrewSomething = true;
 	}
 	void DrawSkeleton(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
@@ -1341,6 +1343,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			if (inst->skelanime.limbCount) {
 				SkelAnime_Update(&inst->skelanime, gInput.delta_time_sec * (20.0));
 				SkelAnime_Draw(&inst->skelanime, SKELANIME_TYPE_FLEX);
+				gRenderCodeDrewSomething = true;
 			}
 		}
 		Matrix_Pop();
@@ -1373,6 +1376,8 @@ bool RenderCodeGo(struct Instance *inst)
 	
 	if (!rc)
 		return false;
+	
+	gRenderCodeDrewSomething = false;
 	
 	// run vm
 	if (rc->type == ACTOR_RENDER_CODE_TYPE_VM)
@@ -1434,7 +1439,7 @@ bool RenderCodeGo(struct Instance *inst)
 		}
 	}
 	
-	return false;
+	return gRenderCodeDrewSomething;
 }
 
 static void DrawInstanceList(sb_array(struct Instance, *instanceList))
