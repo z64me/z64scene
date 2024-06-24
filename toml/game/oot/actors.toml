@@ -4634,6 +4634,10 @@
 	Category = "4"
 	Notes = "Text ID 5063, then 5064"
 	Objects = [151]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"

@@ -1268,6 +1268,20 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	static double sXscale = 1;
 	static double sYscale = 1;
 	static double sZscale = 1;
+	static struct Object *sObject = 0;
+	
+	void ReadyMatrix(struct Instance *inst, bool shouldPop) {
+		Matrix_Push(); {
+			Matrix_Translate(UnfoldVec3(inst->pos), MTXMODE_NEW);
+			Matrix_RotateY_s(inst->yrot, MTXMODE_APPLY);
+			Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
+			Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
+			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
+			
+			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+		} if (shouldPop) Matrix_Pop();
+	}
+	
 #define WREN_UDATA ((struct Instance*)wrenGetUserData(vm))
 #define streq(A, B) !strcmp(A, B)
 	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
@@ -1289,8 +1303,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void DrawUseObjectSlot(WrenVM* vm) {
 		int slot = wrenGetSlotDouble(vm, 1);
 		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
-		void *data = GuiGetObjectDataFromId(objectId);
-		if (data) {
+		sObject = GuiGetObjectDataFromId(objectId);
+		if (sObject) {
+			const void *data = sObject->file->data;
 			gSPSegment(POLY_OPA_DISP++, 0x06, data);
 			gSPSegment(POLY_XLU_DISP++, 0x06, data);
 		}
@@ -1299,16 +1314,36 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		uint32_t address = wrenGetSlotDouble(vm, 1);
 		struct Instance *inst = WREN_UDATA;
 		//fprintf(stderr, "address = %08x\n", address);
-		Matrix_Push(); {
-			Matrix_Translate(UnfoldVec3(inst->pos), MTXMODE_NEW);
-			Matrix_RotateY_s(inst->yrot, MTXMODE_APPLY);
-			Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
-			Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
-			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
-			
-			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
-		} Matrix_Pop();
+		ReadyMatrix(inst, true);
 		gSPDisplayList(POLY_OPA_DISP++, address);
+	}
+	void DrawSkeleton(WrenVM* vm) {
+		struct Instance *inst = WREN_UDATA;
+		ReadyMatrix(inst, false);
+		if (sObject) {
+			if (inst->skelanime.limbCount == 0
+				&& sb_count(sObject->skeletons)
+				&& sb_count(sObject->animations)
+			) {
+				uint32_t address = wrenGetSlotDouble(vm, 1);
+				// is index, rather than segment address
+				if (address < 0x01000000) {
+					SkelAnime_Init(
+						&inst->skelanime
+						, sObject
+						, &sObject->skeletons[address]
+						, &sObject->animations[0]
+					);
+					SkelAnime_Update(&inst->skelanime, 0);
+				}
+				// TODO address based skelanime
+			}
+			if (inst->skelanime.limbCount) {
+				SkelAnime_Update(&inst->skelanime, gInput.delta_time_sec * (20.0));
+				SkelAnime_Draw(&inst->skelanime, SKELANIME_TYPE_FLEX);
+			}
+		}
+		Matrix_Pop();
 	}
 	
 	if (streq(module, "main")) {
@@ -1324,6 +1359,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
+			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
 		}
 	}
 	

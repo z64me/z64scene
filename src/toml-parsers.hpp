@@ -19,6 +19,7 @@ extern "C" {
 #include "project.h"
 #include "file.h"
 #include "rendercode.h"
+#include "object.h"
 }
 
 #define STRTOK_LOOP(STRING, DELIM) \
@@ -157,6 +158,7 @@ struct ActorDatabase
 					foreign static SetScale(scale)
 					foreign static UseObjectSlot(slot)
 					foreign static Mesh(address)
+					foreign static Skeleton(addressOrIndex)
 				}
 			)");
 			
@@ -294,7 +296,7 @@ struct ObjectDatabase
 		char *name;
 		char *zobjPath;
 		char *symsPath;
-		File *zobjData = 0;
+		Object *zobjData = 0;
 		uint16_t index;
 		std::map<std::string, uint32_t> symbolAddresses;
 		bool isEmpty = false;
@@ -305,7 +307,7 @@ struct ObjectDatabase
 				return;
 			
 			if (FileExists(zobjPath))
-				zobjData = FileFromFilename(zobjPath);
+				zobjData = ObjectFromFilename(zobjPath);
 			
 			// consider this consumed
 			free(zobjPath);

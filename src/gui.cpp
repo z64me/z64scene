@@ -1442,7 +1442,7 @@ extern "C" int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot)
 	return actor.objects[slot];
 }
 
-extern "C" void *GuiGetObjectDataFromId(int objectId)
+extern "C" struct Object *GuiGetObjectDataFromId(int objectId)
 {
 	if (objectId <= 0)
 		return 0;
@@ -1453,7 +1453,7 @@ extern "C" void *GuiGetObjectDataFromId(int objectId)
 		return 0;
 	
 	if (object.zobjData)
-		return object.zobjData->data;
+		return object.zobjData;
 	
 	object.TryLoadData();
 	return 0;

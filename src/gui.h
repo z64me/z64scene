@@ -61,7 +61,7 @@ struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id);
 void GuiCreateActorRenderCodeHandles(uint16_t id);
 void GuiApplyActorRenderCodeProperties(struct Instance *inst);
 int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot);
-void *GuiGetObjectDataFromId(int objectId);
+struct Object *GuiGetObjectDataFromId(int objectId);
 
 #endif
 

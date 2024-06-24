@@ -18,6 +18,7 @@ struct CutsceneOot;
 #include "stretchy_buffer.h"
 #include "datablobs.h"
 #include "extmath.h"
+#include "skelanime.h"
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -323,6 +324,8 @@ struct Instance
 	struct {
 		uint8_t room;
 	} spawnpoint;
+	
+	SkelAnime skelanime;
 };
 
 struct RoomMeshSimple

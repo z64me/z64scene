@@ -3,7 +3,6 @@
 
 #include "object.h"
 #include "extmath.h"
-#include <n64.h>
 
 typedef struct
 {
