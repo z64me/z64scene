@@ -419,6 +419,10 @@ static ActorDatabase::Entry &InstanceTypeSearch(void)
 	
 	for (auto &entry : gGuiSettings.actorDatabase.entries)
 	{
+		// skip blank/deleted entries
+		if (entry.isEmpty)
+			continue;
+		
 		const char *name = entry.name;
 		
 		// custom filters

@@ -292,7 +292,7 @@ struct ActorDatabase
 	
 	void RemoveEntry(uint16_t index)
 	{
-		auto tmp = GetEntry(index);
+		auto &tmp = GetEntry(index);
 		
 		if (tmp.name)
 			free(tmp.name);
@@ -310,7 +310,7 @@ struct ActorDatabase
 	
 	const char *GetActorName(uint16_t index)
 	{
-		auto entry = GetEntry(index);
+		auto &entry = GetEntry(index);
 		
 		if (!entry.name)
 			return "unknown";
@@ -408,7 +408,7 @@ struct ObjectDatabase
 	
 	void RemoveEntry(uint16_t index)
 	{
-		auto tmp = GetEntry(index);
+		auto &tmp = GetEntry(index);
 		
 		if (tmp.name)
 			free(tmp.name);
@@ -426,7 +426,7 @@ struct ObjectDatabase
 	
 	const char *GetObjectName(uint16_t index)
 	{
-		auto entry = GetEntry(index);
+		auto &entry = GetEntry(index);
 		
 		if (!entry.name)
 			return "unknown";
