@@ -106,8 +106,17 @@ struct ActorDatabase
 					*dst = *src;
 					if (!*dst)
 						break;
-					if (!isalnum(*dst))
-						--dst;
+					// whitespace is excluded
+					// underscores are allowed
+					// break on any other non-alphanumeric chars
+					if (!isalnum(*dst)) {
+						if (strchr(" \t", *dst))
+							--dst;
+						else if (*dst != '_') {
+							*dst = 0;
+							break;
+						}
+					}
 				}
 				if (suffix)
 					strcat(work, suffix);
