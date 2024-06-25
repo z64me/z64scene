@@ -1369,6 +1369,26 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		gSPDisplayList(POLY_OPA_DISP++, address);
 		gRenderCodeDrewSomething = true;
 	}
+	void DrawSetPrimColor3(WrenVM* vm) {
+		gDPSetPrimColor(POLY_OPA_DISP++,
+			0, // minlevel
+			0, // lodfrac
+			wrenGetSlotDouble(vm, 1), // r
+			wrenGetSlotDouble(vm, 2), // g
+			wrenGetSlotDouble(vm, 3), // b
+			255 // a
+		);
+	}
+	void DrawSetPrimColor4(WrenVM* vm) {
+		gDPSetPrimColor(POLY_OPA_DISP++,
+			0, // minlevel
+			0, // lodfrac
+			wrenGetSlotDouble(vm, 1), // r
+			wrenGetSlotDouble(vm, 2), // g
+			wrenGetSlotDouble(vm, 3), // b
+			wrenGetSlotDouble(vm, 4) // a
+		);
+	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, sins(v) * (1.0 / 32767.0));
@@ -1425,6 +1445,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
 			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
+			else if (streq(signature, "SetPrimColor(_,_,_)")) return DrawSetPrimColor3;
+			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
 		}
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;

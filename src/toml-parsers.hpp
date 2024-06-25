@@ -162,6 +162,8 @@ struct ActorDatabase
 					foreign static Mesh(address)
 					foreign static Skeleton(addressOrIndex)
 					foreign static SetLocalPosition(xpos, ypos, zpos)
+					foreign static SetPrimColor(r, g, b)
+					foreign static SetPrimColor(r, g, b, a)
 				}
 				class Math {
 					foreign static SinS(s16angle)
