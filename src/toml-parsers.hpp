@@ -186,13 +186,21 @@ struct ActorDatabase
 			)");
 			
 			// constants
+			STRCATF(buf, "%s", R"(
+				class Syms_ {
+			)");
 			for (int i = 0; i < objects.size(); ++i)
 			{
 				auto symbolAddresses = GetObjectSymbolAddresses(objects[i]);
 				
 				for (const auto &sym : symbolAddresses)
-					STRCATF(buf, "var %s = 0x%08x\n", sym.first.c_str(), sym.second);
+					STRCATF(buf, "%s { 0x%08x }\n", sym.first.c_str(), sym.second);
 			}
+			STRCATF(buf, "%s", R"(
+					construct new() { }
+				}
+				var Syms = Syms_.new()
+			)");
 			
 			// render code offset
 			rendercodeLineNumberOffset = 4;

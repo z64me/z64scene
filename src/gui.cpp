@@ -1393,6 +1393,14 @@ extern "C" struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id)
 	
 	if (rc->type == ACTOR_RENDER_CODE_TYPE_UNINITIALIZED)
 	{
+		for (auto objectId : actor.objects)
+		{
+			auto &object = gGuiSettings.objectDatabase.GetEntry(objectId);
+			
+			object.TryLoadSyms();
+			object.PrintAllSyms();
+		}
+		
 		const char *tmp = actor.RenderCodeGen(GetObjectSymbolAddresses);
 		
 		if (tmp)

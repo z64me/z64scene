@@ -253,7 +253,7 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 			// '/path/to/actor/0x0123 - My Actor' -> 'project/include/objects/0x0123 - My Actor.ld'
 			if ((tmp = strrchr(path, '/')) && ++tmp) {
 				char work[1024];
-				snprintf(work, sizeof(work), "%s/include/objects/%s.ld", project->folder, tmp);
+				snprintf(work, sizeof(work), "%s/include/object/%s.ld", project->folder, tmp);
 				entry.symsPath = strdup(work);
 			}
 		}

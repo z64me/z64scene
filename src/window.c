@@ -1477,6 +1477,8 @@ bool RenderCodeGo(struct Instance *inst)
 		
 		WrenInterpretResult result = wrenInterpret(vm, module, rc->src);
 		
+		//fprintf(stderr, "src\n\n\n %s \n\n\n", rc->src);
+		
 		// success
 		if (result == WREN_RESULT_SUCCESS)
 		{
