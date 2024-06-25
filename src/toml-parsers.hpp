@@ -159,6 +159,11 @@ struct ActorDatabase
 					foreign static UseObjectSlot(slot)
 					foreign static Mesh(address)
 					foreign static Skeleton(addressOrIndex)
+					foreign static SetLocalPosition(xpos, ypos, zpos)
+				}
+				class Math {
+					foreign static SinS(s16angle)
+					foreign static CosS(s16angle)
 				}
 			)");
 			
@@ -187,13 +192,16 @@ struct ActorDatabase
 			}
 			
 			// render code offset
-			rendercodeLineNumberOffset = 3;
+			rendercodeLineNumberOffset = 4;
 			for (char *tmp = work; *tmp; ++tmp)
 				if (*tmp == '\n')
 					rendercodeLineNumberOffset += 1;
 			
 			// rendercode
-			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n Draw.SetScale(0.1) \n %s \n } } ", rendercodeToml);
+			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n "
+				"Draw.SetLocalPosition(0, 0, 0) \n Draw.SetScale(0.1) \n %s \n } } "
+				, rendercodeToml
+			);
 			
 			// add to error line number, to report correct line in toml
 			rendercode.lineErrorOffset = 0;

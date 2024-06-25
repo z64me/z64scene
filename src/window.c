@@ -1273,11 +1273,19 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	static double sXscale = 1;
 	static double sYscale = 1;
 	static double sZscale = 1;
+	static double sXposLocal = 0;
+	static double sYposLocal = 0;
+	static double sZposLocal = 0;
 	static struct Object *sObject = 0;
 	
 	void ReadyMatrix(struct Instance *inst, bool shouldPop) {
 		Matrix_Push(); {
-			Matrix_Translate(UnfoldVec3(inst->pos), MTXMODE_NEW);
+			Matrix_Translate(
+				inst->pos.x + sXposLocal
+				, inst->pos.y + sYposLocal
+				, inst->pos.z + sZposLocal
+				, MTXMODE_NEW
+			);
 			Matrix_RotateY_s(inst->yrot, MTXMODE_APPLY);
 			Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
 			Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
@@ -1311,9 +1319,22 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		sObject = GuiGetObjectDataFromId(objectId);
 		if (sObject) {
 			const void *data = sObject->file->data;
-			gSPSegment(POLY_OPA_DISP++, 0x06, data);
-			gSPSegment(POLY_XLU_DISP++, 0x06, data);
+			int segment =
+				objectId == 0x0001
+					? 0x04
+					: objectId <= 0x0003
+						? 0x05
+						: 0x06
+			;
+			// TODO also allow objects to specify their own segments
+			gSPSegment(POLY_OPA_DISP++, segment, data);
+			gSPSegment(POLY_XLU_DISP++, segment, data);
 		}
+	}
+	void DrawSetLocalPosition(WrenVM* vm) {
+		sXposLocal = wrenGetSlotDouble(vm, 1);
+		sYposLocal = wrenGetSlotDouble(vm, 2);
+		sZposLocal = wrenGetSlotDouble(vm, 3);
 	}
 	void DrawMesh(WrenVM* vm) {
 		uint32_t address = wrenGetSlotDouble(vm, 1);
@@ -1323,6 +1344,15 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		gSPDisplayList(POLY_OPA_DISP++, address);
 		gRenderCodeDrewSomething = true;
 	}
+	void MathSinS(WrenVM* vm) {
+		double v = wrenGetSlotDouble(vm, 1);
+		wrenSetSlotDouble(vm, 0, sins(v) * (1.0 / 32767.0));
+	}
+	void MathCosS(WrenVM* vm) {
+		double v = wrenGetSlotDouble(vm, 1);
+		wrenSetSlotDouble(vm, 0, coss(v) * (1.0 / 32767.0));
+	}
+	
 	void DrawSkeleton(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		ReadyMatrix(inst, false);
@@ -1367,6 +1397,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
+			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
+		}
+		else if (streq(className, "Math")) {
+			if (streq(signature, "SinS(_)")) return MathSinS;
+			else if (streq(signature, "CosS(_)")) return MathCosS;
 		}
 	}
 	

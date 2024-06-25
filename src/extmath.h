@@ -25,6 +25,9 @@ typedef double f64;
 
 #if 1 // region: misc
 
+int16_t sins(uint16_t x);
+int16_t coss(uint16_t angle);
+
 #define SQ(x)   ((x) * (x))
 #define SinS(x) sinf(BinToRad((s16)(x)))
 #define CosS(x) cosf(BinToRad((s16)(x)))
