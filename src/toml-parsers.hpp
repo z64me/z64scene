@@ -152,6 +152,9 @@ struct ActorDatabase
 					foreign static Xpos
 					foreign static Ypos
 					foreign static Zpos
+					foreign static Xrot
+					foreign static Yrot
+					foreign static Zrot
 					foreign static PositionChanged
 					foreign static PropertyChanged
 				}
@@ -162,6 +165,7 @@ struct ActorDatabase
 					foreign static Mesh(address)
 					foreign static Skeleton(addressOrIndex)
 					foreign static SetLocalPosition(xpos, ypos, zpos)
+					foreign static SetGlobalRotation(xrot, yrot, zrot)
 					foreign static SetPrimColor(r, g, b)
 					foreign static SetPrimColor(r, g, b, a)
 				}

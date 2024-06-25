@@ -1263,6 +1263,9 @@ static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
 }
 
 static bool gRenderCodeDrewSomething;
+static double sXrotGlobal = 0;
+static double sYrotGlobal = 0;
+static double sZrotGlobal = 0;
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	WrenVM* vm
 	, const char* module
@@ -1287,9 +1290,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 				, inst->pos.z + sZposLocal
 				, MTXMODE_NEW
 			);
-			Matrix_RotateY_s(inst->yrot, MTXMODE_APPLY);
-			Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
-			Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
+			Matrix_RotateY_s(sYrotGlobal, MTXMODE_APPLY);
+			Matrix_RotateX_s(sXrotGlobal, MTXMODE_APPLY);
+			Matrix_RotateZ_s(sZrotGlobal, MTXMODE_APPLY);
 			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
 			
 			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
@@ -1301,6 +1304,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
 	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.y); }
 	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
+	void WorldGetXrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->xrot); }
+	void WorldGetYrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->yrot); }
+	void WorldGetZrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->zrot); }
 	void WorldGetPositionChanged(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		const float threshold = 0.01f;
@@ -1360,6 +1366,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		sXposLocal = wrenGetSlotDouble(vm, 1);
 		sYposLocal = wrenGetSlotDouble(vm, 2);
 		sZposLocal = wrenGetSlotDouble(vm, 3);
+	}
+	void DrawSetGlobalRotation(WrenVM* vm) {
+		sXrotGlobal = wrenGetSlotDouble(vm, 1);
+		sYrotGlobal = wrenGetSlotDouble(vm, 2);
+		sZrotGlobal = wrenGetSlotDouble(vm, 3);
 	}
 	void DrawMesh(WrenVM* vm) {
 		uint32_t address = wrenGetSlotDouble(vm, 1);
@@ -1434,6 +1445,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			if (streq(signature, "Xpos")) return WorldGetXpos;
 			else if (streq(signature, "Ypos")) return WorldGetYpos;
 			else if (streq(signature, "Zpos")) return WorldGetZpos;
+			else if (streq(signature, "Xrot")) return WorldGetXrot;
+			else if (streq(signature, "Yrot")) return WorldGetYrot;
+			else if (streq(signature, "Zrot")) return WorldGetZrot;
 			else if (streq(signature, "PositionChanged")) return WorldGetPositionChanged;
 			else if (streq(signature, "PropertyChanged")) return WorldGetPropertyChanged;
 			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
@@ -1445,6 +1459,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
 			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
+			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;
 			else if (streq(signature, "SetPrimColor(_,_,_)")) return DrawSetPrimColor3;
 			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
 		}
@@ -1480,6 +1495,9 @@ bool RenderCodeGo(struct Instance *inst)
 		
 		n64_buffer_clear();
 		n64_draw_dlist(gfxDisableXray);
+		sXrotGlobal = inst->xrot;
+		sYrotGlobal = inst->yrot;
+		sZrotGlobal = inst->zrot;
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			fprintf(stderr, "failed to invoke function\n");
 		n64_buffer_flush(false);
