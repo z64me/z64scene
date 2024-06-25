@@ -4261,12 +4261,8 @@
 		var type = Props.Appearance
 		var myMeshRock = 0x0500A880
 		var myMeshShrub = 0x0500B9D0
-		var yoffset = 30
 		
 		// TODO use different DL addresses for different game versions
-		
-		// TODO setting this to 0 until raycast is set up
-		yoffset = 0
 		
 		// mesh
 		var mesh = 0
@@ -4277,39 +4273,55 @@
 			Draw.SetScale(0.4)
 		}
 		
-		// scattered shrubs
-		if (type == 1) {
-			var pairs = [
-				[ 40, 0x0666 ], [ 40, 0x2CCC ], [ 40, 0x5999 ],
-				[ 40, 0x8666 ], [ 20, 0xC000 ], [ 80, 0x1333 ],
-				[ 80, 0x4000 ], [ 80, 0x6CCC ], [ 80, 0x9333 ],
-				[ 80, 0xACCC ], [ 80, 0xC666 ], [ 60, 0xE000 ],
-			]
-			for (i in 0...pairs.count) {
-				var pair = pairs[i]
-				var distance = pair[0]
-				var angle = pair[1]
-				Draw.SetLocalPosition(
-					distance * Math.CosS(angle),
-					yoffset,
-					distance * Math.SinS(angle)
-				)
-				Draw.Mesh(mesh)
+		// determine positions
+		if (World.PositionChanged || World.PropertyChanged) {
+			//System.print("update positions")
+			var positions = []
+			
+			// scattered shrubs
+			if (type == 1) {
+				var pairs = [
+					[ 40, 0x0666 ], [ 40, 0x2CCC ], [ 40, 0x5999 ],
+					[ 40, 0x8666 ], [ 20, 0xC000 ], [ 80, 0x1333 ],
+					[ 80, 0x4000 ], [ 80, 0x6CCC ], [ 80, 0x9333 ],
+					[ 80, 0xACCC ], [ 80, 0xC666 ], [ 60, 0xE000 ],
+				]
+				for (i in 0...pairs.count) {
+					var pair = pairs[i]
+					var distance = pair[0]
+					var angle = pair[1]
+					positions.add([
+						distance * Math.CosS(angle),
+						0,
+						distance * Math.SinS(angle)
+					])
+				}
+			} else {
+				// center shrub
+				positions.add([0, 0, 0])
+				// circle
+				for (i in 0..8) {
+					positions.add([
+						80 * Math.SinS(i * 0x2000),
+						0,
+						80 * Math.CosS(i * 0x2000)
+					])
+				}
 			}
-		} else {
-			// center shrub
-			if (type == 0) {
-				Draw.Mesh(mesh)
+			
+			// TODO raycasting
+			for (pos in positions) {
+				pos[1] = 30
 			}
-			// circle
-			for (i in 0..8) {
-				Draw.SetLocalPosition(
-					80 * Math.SinS(i * 0x2000),
-					yoffset,
-					80 * Math.CosS(i * 0x2000)
-				)
-				Draw.Mesh(mesh)
-			}
+			
+			// store positions list in udata
+			Udata["positions"] = positions
+		}
+		
+		// draw mesh at each position
+		for (pos in Udata["positions"]) {
+			Draw.SetLocalPosition(pos[0], pos[1], pos[2])
+			Draw.Mesh(mesh)
 		}
 	"""
 	[[Actor.Property]]
