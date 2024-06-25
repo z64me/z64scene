@@ -222,6 +222,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				
 				sb_push(*gGui->instanceList, newInst);
 				gGui->selectedInstance = &sb_last(*gGui->instanceList);
+				gGui->selectedInstance->prev = (typeof(gGui->selectedInstance->prev))INSTANCE_PREV_INIT;
 				
 				GuiPushModal("Duplicated instance.");
 				GizmoSetupMove(gState.gizmo);
@@ -1300,6 +1301,30 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
 	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.y); }
 	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
+	void WorldGetPositionChanged(WrenVM* vm) {
+		struct Instance *inst = WREN_UDATA;
+		const float threshold = 0.01f;
+		Vec3f posPrev = inst->prev.pos;
+		wrenSetSlotBool(vm, 0,
+			fabs(inst->pos.x - posPrev.x) > threshold
+			|| fabs(inst->pos.y - posPrev.y) > threshold
+			|| fabs(inst->pos.z - posPrev.z) > threshold
+		);
+		inst->prev.pos = inst->pos;
+	}
+	void WorldGetPropertyChanged(WrenVM* vm) {
+		struct Instance *inst = WREN_UDATA;
+		wrenSetSlotBool(vm, 0,
+			inst->params != inst->prev.params
+			|| inst->xrot != inst->prev.xrot
+			|| inst->yrot != inst->prev.yrot
+			|| inst->zrot != inst->prev.zrot
+		);
+		inst->prev.params = inst->params;
+		inst->prev.xrot = inst->xrot;
+		inst->prev.yrot = inst->yrot;
+		inst->prev.zrot = inst->zrot;
+	}
 	
 	void DrawSetScale3(WrenVM* vm) {
 		sXscale = wrenGetSlotDouble(vm, 1);
@@ -1389,6 +1414,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			if (streq(signature, "Xpos")) return WorldGetXpos;
 			else if (streq(signature, "Ypos")) return WorldGetYpos;
 			else if (streq(signature, "Zpos")) return WorldGetZpos;
+			else if (streq(signature, "PositionChanged")) return WorldGetPositionChanged;
+			else if (streq(signature, "PropertyChanged")) return WorldGetPropertyChanged;
 			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {

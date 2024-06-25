@@ -152,6 +152,8 @@ struct ActorDatabase
 					foreign static Xpos
 					foreign static Ypos
 					foreign static Zpos
+					foreign static PositionChanged
+					foreign static PropertyChanged
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)
@@ -180,6 +182,7 @@ struct ActorDatabase
 				construct new() { }
 				}
 				var Props = props__hooks.new()
+				var Udata = {}
 			)");
 			
 			// constants

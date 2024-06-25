@@ -1153,7 +1153,8 @@ static void DrawSidebar(void)
 			struct Instance newInst = {
 				.id = type.index,
 				.pos = gGui->newSpawnPos,
-				.tab = gAddNewInstanceSearchTab
+				.tab = gAddNewInstanceSearchTab,
+				.prev = INSTANCE_PREV_INIT,
 			};
 			
 			if (gGui->instanceList)

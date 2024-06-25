@@ -41,6 +41,16 @@ struct CutsceneOot;
 
 #define CODE_AS_STRING(...) # __VA_ARGS__
 
+#define INSTANCE_PREV_DEFAULT 0x10000
+#define INSTANCE_POS_PREV_INIT (Vec3f){ FLT_MAX, FLT_MAX, FLT_MAX }
+#define INSTANCE_PREV_INIT { \
+	INSTANCE_PREV_DEFAULT, \
+	INSTANCE_PREV_DEFAULT, \
+	INSTANCE_PREV_DEFAULT, \
+	INSTANCE_PREV_DEFAULT, \
+	INSTANCE_POS_PREV_INIT \
+}
+
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
 #define ON_CHANGE(VARIABLE) \
@@ -326,6 +336,15 @@ struct Instance
 	} spawnpoint;
 	
 	SkelAnime skelanime;
+	
+	// for tracking changes
+	struct {
+		uint32_t xrot;
+		uint32_t yrot;
+		uint32_t zrot;
+		uint32_t params;
+		Vec3f    pos;
+	} prev;
 };
 
 struct RoomMeshSimple

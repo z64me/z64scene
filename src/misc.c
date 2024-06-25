@@ -983,6 +983,7 @@ static struct Instance private_InstanceParse(const void *data, enum InstanceTab 
 	return (struct Instance) {
 		.id = u16r(data8 + 0)
 		, .pos = { s16r3(data8 + 2) }
+		, .prev = INSTANCE_PREV_INIT
 		, .xrot = s16r(data8 + 8)
 		, .yrot = s16r(data8 + 10)
 		, .zrot = s16r(data8 + 12)
@@ -1150,6 +1151,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					struct Instance doorway = {
 						.id = u16r(arr + 4),
 						.pos = { s16r3(arr + 6) },
+						.prev = INSTANCE_PREV_INIT,
 						.yrot = u16r(arr + 12),
 						.params = u16r(arr + 14),
 						.tab = INSTANCE_TAB_DOOR,
