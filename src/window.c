@@ -1429,7 +1429,7 @@ bool RenderCodeGo(struct Instance *inst)
 		wrenEnsureSlots(vm, 1);
 		wrenSetSlotHandle(vm, 0, rc->slotHandle);
 		
-		n64_buffer_init();
+		n64_buffer_clear();
 		n64_draw_dlist(gfxDisableXray);
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			fprintf(stderr, "failed to invoke function\n");
