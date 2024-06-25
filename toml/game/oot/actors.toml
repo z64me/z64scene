@@ -4255,7 +4255,63 @@
 	Name = "Circle of Bushes"
 	Index = 337
 	Category = "6"
+	Objects = [ 0x0002 ]
 	Notes = "+0x10 = Spawns set of 3 bugs\n+0xFF00 = Random Drop Table"
+	RenderCode = """
+		var type = Props.Appearance
+		var myMeshRock = 0x0500A880
+		var myMeshShrub = 0x0500B9D0
+		var yoffset = 30
+		
+		// TODO use different DL addresses for different game versions
+		
+		// TODO setting this to 0 until raycast is set up
+		yoffset = 0
+		
+		// mesh
+		var mesh = 0
+		if (type == 2) {
+			mesh = myMeshRock
+		} else {
+			mesh = myMeshShrub
+			Draw.SetScale(0.4)
+		}
+		
+		// scattered shrubs
+		if (type == 1) {
+			var pairs = [
+				[ 40, 0x0666 ], [ 40, 0x2CCC ], [ 40, 0x5999 ],
+				[ 40, 0x8666 ], [ 20, 0xC000 ], [ 80, 0x1333 ],
+				[ 80, 0x4000 ], [ 80, 0x6CCC ], [ 80, 0x9333 ],
+				[ 80, 0xACCC ], [ 80, 0xC666 ], [ 60, 0xE000 ],
+			]
+			for (i in 0...pairs.count) {
+				var pair = pairs[i]
+				var distance = pair[0]
+				var angle = pair[1]
+				Draw.SetLocalPosition(
+					distance * Math.CosS(angle),
+					yoffset,
+					distance * Math.SinS(angle)
+				)
+				Draw.Mesh(mesh)
+			}
+		} else {
+			// center shrub
+			if (type == 0) {
+				Draw.Mesh(mesh)
+			}
+			// circle
+			for (i in 0..8) {
+				Draw.SetLocalPosition(
+					80 * Math.SinS(i * 0x2000),
+					yoffset,
+					80 * Math.CosS(i * 0x2000)
+				)
+				Draw.Mesh(mesh)
+			}
+		}
+	"""
 	[[Actor.Property]]
 		Mask = 16
 		Name = "Spawn Bugs"
@@ -4265,14 +4321,13 @@
 		Name = "Random Drop Table"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 239
-		Name = "Presets"
+		Mask = 0b0011
+		Name = "Appearance"
 		Target = "Var"
 		Dropdown = [
-			[0,"Circle of shrubs with one in the middle, random drops"],
-			[1,"Scattered shrubs, random drops"],
-			[2,"Circle of rocks, random drops"],
-			[3,"Crashes"]
+			[0, "Shrub Circle"],
+			[1, "Scattered Shrubs"],
+			[2, "Rock Circle"]
 		]
 
 [[Actor]]
