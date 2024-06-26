@@ -120,8 +120,46 @@ static WrenForeignMethodFn bindForeignMethod(
 	return 0;
 }
 
+void TestWrenSimple(void)
+{
+	WrenConfiguration config;
+	wrenInitConfiguration(&config);
+		config.writeFn = &writeFn;
+		config.errorFn = &errorFn;
+		config.bindForeignMethodFn = &bindForeignMethod;
+	WrenVM* vm = wrenNewVM(&config);
+	
+	const char *module = "main";
+	const char *script = R"(
+		System.print("0 == false : %(0 == false) ")
+		System.print("1 == true  : %(1 == true) ")
+	)";
+	fprintf(stderr, "script = %s\n", script);
+	
+	// compile the code
+	WrenInterpretResult result = wrenInterpret(vm, module, script);
+	
+	switch (result)
+	{
+		case WREN_RESULT_COMPILE_ERROR:
+			fprintf(stderr, "Compile Error!\n");
+			break;
+		case WREN_RESULT_RUNTIME_ERROR:
+			fprintf(stderr, "Runtime Error!\n");
+			break;
+		case WREN_RESULT_SUCCESS:
+			fprintf(stderr, "Success!\n");
+			break;
+	}
+	
+	wrenFreeVM(vm);
+	//exit(0);
+}
+
 void TestWren(void)
 {
+	TestWrenSimple();
+	return;
 	WrenConfiguration config;
 	wrenInitConfiguration(&config);
 		config.writeFn = &writeFn;
