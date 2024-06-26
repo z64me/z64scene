@@ -22,6 +22,16 @@ extern "C" {
 #include "object.h"
 }
 
+#define SPAN_UPPERCASE   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define SPAN_LOWERCASE   "abcdefghijklmnopqrstuvwxyz"
+#define SPAN_DIGITS      "0123456789"
+#define SPAN_UNDERSCORE  "_"
+#define SPAN_VARNAME \
+	SPAN_UPPERCASE \
+	SPAN_LOWERCASE \
+	SPAN_DIGITS \
+	SPAN_UNDERSCORE
+
 #define STRTOK_LOOP(STRING, DELIM) \
 	for (char *next, *each = strtok(STRING, DELIM) \
 		; each && (next = strtok(0, DELIM)) \
@@ -197,7 +207,6 @@ struct ActorDatabase
 				construct new() { }
 				}
 				var Props = props__hooks.new()
-				var Udata = {}
 			)");
 			
 			// constants
@@ -216,6 +225,41 @@ struct ActorDatabase
 				}
 				var Syms = Syms_.new()
 			)");
+			
+			// codegen for udata class
+			const char udataTok[] = "Udata.";
+			const int udataTokLen = sizeof(udataTok) - 1;
+			const char *udataMatch = strstr(rendercodeToml, udataTok);
+			if (udataMatch)
+			{
+				std::map<std::string, bool> udataMembers = {};
+				char tmp[256];
+				
+				do {
+					udataMatch += udataTokLen;
+					int len = strspn(udataMatch, SPAN_VARNAME);
+					if (len > 0 && len < sizeof(tmp) - 1) {
+						memcpy(tmp, udataMatch, len);
+						tmp[len] = '\0';
+						udataMembers[tmp] = true;
+					}
+					udataMatch = strstr(udataMatch, udataTok);
+				} while (udataMatch);
+				
+				STRCATF(buf, R"(
+					class UdataClass {
+				)");
+				for (auto &member : udataMembers) {
+					const char *name = member.first.c_str();
+					STRCATF(buf, "%s { _%s }\n", name, name);
+					STRCATF(buf, "%s=(v) { _%s = v }\n", name, name);
+				}
+				STRCATF(buf, R"(
+					construct new() { }
+					}
+					var Udata = UdataClass.new()
+				)");
+			}
 			
 			// render code offset
 			rendercodeLineNumberOffset = 4;

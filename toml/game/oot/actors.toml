@@ -4315,11 +4315,11 @@
 			}
 			
 			// store positions list in udata
-			Udata["positions"] = positions
+			Udata.positions = positions
 		}
 		
 		// draw mesh at each position
-		for (pos in Udata["positions"]) {
+		for (pos in Udata.positions) {
 			Draw.SetLocalPosition(pos[0], pos[1], pos[2])
 			Draw.Mesh(mesh)
 		}
