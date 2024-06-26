@@ -48,6 +48,7 @@ struct CutsceneOot;
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
+	InstanceNewUuid(), \
 	INSTANCE_POS_PREV_INIT \
 }
 
@@ -343,6 +344,7 @@ struct Instance
 		uint32_t yrot;
 		uint32_t zrot;
 		uint32_t params;
+		uint32_t uuid;
 		Vec3f    pos;
 	} prev;
 };
@@ -456,6 +458,7 @@ void SceneWriterCleanup(void);
 
 struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src);
 void InstanceDeleteFromListGeneric(struct Instance **list, const void *src);
+uint32_t InstanceNewUuid(void);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);

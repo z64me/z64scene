@@ -1307,6 +1307,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void WorldGetXrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->xrot); }
 	void WorldGetYrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->yrot); }
 	void WorldGetZrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->zrot); }
+	void WorldGetUuid(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->prev.uuid); }
 	void WorldGetPositionChanged(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		const float threshold = 0.01f;
@@ -1448,6 +1449,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Xrot")) return WorldGetXrot;
 			else if (streq(signature, "Yrot")) return WorldGetYrot;
 			else if (streq(signature, "Zrot")) return WorldGetZrot;
+			else if (streq(signature, "Uuid")) return WorldGetUuid;
 			else if (streq(signature, "PositionChanged")) return WorldGetPositionChanged;
 			else if (streq(signature, "PropertyChanged")) return WorldGetPropertyChanged;
 			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only

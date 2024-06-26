@@ -176,6 +176,7 @@ struct ActorDatabase
 					foreign static Zrot
 					foreign static PositionChanged
 					foreign static PropertyChanged
+					foreign static Uuid
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)
@@ -230,8 +231,10 @@ struct ActorDatabase
 			const char udataTok[] = "Udata.";
 			const int udataTokLen = sizeof(udataTok) - 1;
 			const char *udataMatch = strstr(rendercodeToml, udataTok);
+			bool usesUdata = false;
 			if (udataMatch)
 			{
+				usesUdata = true;
 				std::map<std::string, bool> udataMembers = {};
 				char tmp[256];
 				
@@ -257,21 +260,37 @@ struct ActorDatabase
 				STRCATF(buf, R"(
 					construct new() { }
 					}
-					var Udata = UdataClass.new()
+					var UdataMap = {}
 				)");
 			}
 			
+			// rendercode prefix
+			STRCATF(buf, R"(
+				class hooks {
+					static draw() {
+						Draw.UseObjectSlot(0)
+						Draw.SetLocalPosition(0, 0, 0)
+						Draw.SetScale(0.1)
+			)");
+			
+			if (usesUdata)
+				STRCATF(buf, R"(
+					var Udata = UdataMap[World.Uuid.toString]
+					if (Udata is Null) {
+						Udata = UdataClass.new()
+						UdataMap[World.Uuid.toString] = Udata
+						//System.print("allocate Udata for %(World.Uuid) ")
+					}
+				)");
+			
 			// render code offset
-			rendercodeLineNumberOffset = 4;
+			rendercodeLineNumberOffset = 2;
 			for (char *tmp = work; *tmp; ++tmp)
 				if (*tmp == '\n')
 					rendercodeLineNumberOffset += 1;
 			
 			// rendercode
-			STRCATF(buf, "class hooks { static draw() { \n Draw.UseObjectSlot(0) \n "
-				"Draw.SetLocalPosition(0, 0, 0) \n Draw.SetScale(0.1) \n %s \n } } "
-				, rendercodeToml
-			);
+			STRCATF(buf, " %s \n } } ", rendercodeToml);
 			
 			// add to error line number, to report correct line in toml
 			rendercode.lineErrorOffset = 0;

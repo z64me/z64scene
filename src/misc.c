@@ -884,6 +884,14 @@ void CollisionHeaderFree(CollisionHeader *header)
 	free(header);
 }
 
+// not actually a uuid, but close enough
+uint32_t InstanceNewUuid(void)
+{
+	static uint32_t s = 0;
+	
+	return ++s;
+}
+
 // experimented with polymorphic instance types
 /*
 struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src)
