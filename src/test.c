@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <wren.h>
+#include <stdbool.h>
 
 #include "misc.h"
 
@@ -120,6 +121,7 @@ static WrenForeignMethodFn bindForeignMethod(
 	return 0;
 }
 
+// testing falsy 0 and more
 void TestWrenSimple(void)
 {
 	WrenConfiguration config;
@@ -133,8 +135,43 @@ void TestWrenSimple(void)
 	const char *script = R"(
 		System.print("0 == false : %(0 == false) ")
 		System.print("1 == true  : %(1 == true) ")
+		System.print("2 == true  : %(2 == true) ")
+		System.print("2 != true  : %(2 != true) ")
+		System.print("2 == false : %(2 == false) ")
+		System.print("0 == true  : %(0 == true) ")
+		System.print("false == 0 : %(false == 0) ")
+		System.print("true == 1  : %(true == 1) ")
+		System.print("true == 2  : %(true == 2) ")
+		System.print("false == false  : %(false == false) ")
+		System.print("true  == true   : %(true  == true) ")
+		System.print("false != true   : %(false != true) ")
+		System.print("false == true   : %(false == true) ")
+		System.print("true  == false  : %(true  == false) ")
+		for (i in 0..5) {
+			System.print("%(i) == false : %(i == false) ")
+		}
+		System.print("!0 = %(!0) ")
+		System.print("!1 = %(!1) ")
+		System.print("!!0 = %(!!0) ")
+		System.print("!!1 = %(!!1) ")
+		var test = 0
+		System.print("test = %(test), !test = %(!test) ")
+		test = 100
+		System.print("test = %(test), !test = %(!test) ")
+		test = (true && 0 && true)
+		System.print(test)
+		if (0 || 0 || false) {
+			System.print("falsy 0 not working")
+		} else {
+			System.print("falsy 0 is working")
+		}
+		if (1) {
+			System.print("if (1) ")
+		}
 	)";
 	fprintf(stderr, "script = %s\n", script);
+	fprintf(stderr, "((bool)123) == true  : %d\n", ((bool)123) == true);
+	fprintf(stderr, "((bool)123) == false : %d\n", ((bool)123) == false);
 	
 	// compile the code
 	WrenInterpretResult result = wrenInterpret(vm, module, script);
