@@ -167,7 +167,7 @@ struct ActorDatabase
 			char *buf = work;
 			*buf = '\0';
 			STRCATF(buf, "%s", R"(
-				class World {
+				class Inst {
 					foreign static Xpos
 					foreign static Ypos
 					foreign static Zpos
@@ -275,11 +275,11 @@ struct ActorDatabase
 			
 			if (usesUdata)
 				STRCATF(buf, R"(
-					var Udata = UdataMap[World.Uuid.toString]
+					var Udata = UdataMap[Inst.Uuid.toString]
 					if (Udata is Null) {
 						Udata = UdataClass.new()
-						UdataMap[World.Uuid.toString] = Udata
-						//System.print("allocate Udata for %(World.Uuid) ")
+						UdataMap[Inst.Uuid.toString] = Udata
+						//System.print("allocate Udata for %(Inst.Uuid) ")
 					}
 				)");
 			

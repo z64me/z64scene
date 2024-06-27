@@ -23,7 +23,7 @@ typedef struct TestWrenUdata
 // meanwhile, class Prop will be populated
 // based on properties defined in the toml
 #define WRENHOOK_PREFIXES " \
-class World { \
+class Inst { \
 	foreign static Xpos \n \
 	foreign static Ypos \n \
 	foreign static Zpos \n \
@@ -84,9 +84,9 @@ static WrenForeignMethodFn bindForeignMethod(
 	, const char* signature
 )
 {
-	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Xpos); }
-	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Ypos); }
-	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Zpos); }
+	void InstGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Xpos); }
+	void InstGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Ypos); }
+	void InstGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->Zpos); }
 	
 	void DrawSetScale3(WrenVM* vm) {
 		float xscale = wrenGetSlotDouble(vm, 1);
@@ -103,11 +103,11 @@ static WrenForeignMethodFn bindForeignMethod(
 	
 	if (streq(module, "main")) {
 		// no setters, are read-only
-		if (streq(className, "World")) {
-			if (streq(signature, "Xpos")) return WorldGetXpos;
-			else if (streq(signature, "Ypos")) return WorldGetYpos;
-			else if (streq(signature, "Zpos")) return WorldGetZpos;
-			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
+		if (streq(className, "Inst")) {
+			if (streq(signature, "Xpos")) return InstGetXpos;
+			else if (streq(signature, "Ypos")) return InstGetYpos;
+			else if (streq(signature, "Zpos")) return InstGetZpos;
+			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Prop")) {
 			// TODO
@@ -222,7 +222,7 @@ void TestWren(void)
 	);
 	script = CODE_AS_WRENHOOK( System.print("ran autowrapped draw() function") );
 	script = CODE_AS_WRENHOOK_R( R"(
-		System.print("test %(World.Xpos) %(World.Xpos / 2) %(World.Xpos >> 1) ")
+		System.print("test %(Inst.Xpos) %(Inst.Xpos / 2) %(Inst.Xpos >> 1) ")
 		Draw.SetScale(1.23)
 		Draw.SetScale(1.23, 4.56, 7.89)
 		System.print("Props.Hello = %(Props.Hello) ")

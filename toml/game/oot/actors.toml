@@ -4274,7 +4274,7 @@
 		}
 		
 		// determine positions
-		if (World.PositionChanged || World.PropertyChanged) {
+		if (Inst.PositionChanged || Inst.PropertyChanged) {
 			//System.print("update positions")
 			var positions = []
 			

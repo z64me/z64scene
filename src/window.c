@@ -1301,14 +1301,14 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	
 #define WREN_UDATA ((struct Instance*)wrenGetUserData(vm))
 #define streq(A, B) !strcmp(A, B)
-	void WorldGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
-	void WorldGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.y); }
-	void WorldGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
-	void WorldGetXrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->xrot); }
-	void WorldGetYrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->yrot); }
-	void WorldGetZrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->zrot); }
-	void WorldGetUuid(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->prev.uuid); }
-	void WorldGetPositionChanged(WrenVM* vm) {
+	void InstGetXpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.x); }
+	void InstGetYpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.y); }
+	void InstGetZpos(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->pos.z); }
+	void InstGetXrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->xrot); }
+	void InstGetYrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->yrot); }
+	void InstGetZrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->zrot); }
+	void InstGetUuid(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->prev.uuid); }
+	void InstGetPositionChanged(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		const float threshold = 0.01f;
 		Vec3f posPrev = inst->prev.pos;
@@ -1319,7 +1319,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 		inst->prev.pos = inst->pos;
 	}
-	void WorldGetPropertyChanged(WrenVM* vm) {
+	void InstGetPropertyChanged(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		wrenSetSlotBool(vm, 0,
 			inst->params != inst->prev.params
@@ -1442,17 +1442,17 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	
 	if (streq(module, "main")) {
 		// no setters, are read-only
-		if (streq(className, "World")) {
-			if (streq(signature, "Xpos")) return WorldGetXpos;
-			else if (streq(signature, "Ypos")) return WorldGetYpos;
-			else if (streq(signature, "Zpos")) return WorldGetZpos;
-			else if (streq(signature, "Xrot")) return WorldGetXrot;
-			else if (streq(signature, "Yrot")) return WorldGetYrot;
-			else if (streq(signature, "Zrot")) return WorldGetZrot;
-			else if (streq(signature, "Uuid")) return WorldGetUuid;
-			else if (streq(signature, "PositionChanged")) return WorldGetPositionChanged;
-			else if (streq(signature, "PropertyChanged")) return WorldGetPropertyChanged;
-			//else if (streq(signature, "Xpos=(_)")) return WorldSetXpos; // no setter, is read-only
+		if (streq(className, "Inst")) {
+			if (streq(signature, "Xpos")) return InstGetXpos;
+			else if (streq(signature, "Ypos")) return InstGetYpos;
+			else if (streq(signature, "Zpos")) return InstGetZpos;
+			else if (streq(signature, "Xrot")) return InstGetXrot;
+			else if (streq(signature, "Yrot")) return InstGetYrot;
+			else if (streq(signature, "Zrot")) return InstGetZrot;
+			else if (streq(signature, "Uuid")) return InstGetUuid;
+			else if (streq(signature, "PositionChanged")) return InstGetPositionChanged;
+			else if (streq(signature, "PropertyChanged")) return InstGetPropertyChanged;
+			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
