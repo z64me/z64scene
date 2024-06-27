@@ -22,6 +22,15 @@
 #define NOC_FILE_DIALOG_IMPLEMENTATION
 #include "noc_file_dialog.h"
 
+enum RenderGroup
+{
+	RENDERGROUP_IGNORE = 0,
+	RENDERGROUP_ROOM = 0x01000000,
+	RENDERGROUP_INST = 0x02000000,
+	RENDERGROUP_MASK_ID = 0x00ffffff,
+	RENDERGROUP_MASK_GROUP = 0xff000000,
+};
+
 static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
 static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
 
@@ -114,11 +123,19 @@ struct CameraRay
 	RayLine ray;
 	Vec3f pos;
 	Vec3f dir;
+	uint32_t renderGroup;
+	bool isSelectingInstance; // instance selection by mouse click
+	struct Instance *currentInstance;
 };
+static struct CameraRay worldRayData = { 0 };
 
 void CameraRayCallback(void *udata, const N64Tri *tri64)
 {
 	struct CameraRay *ud = udata;
+
+	if ((tri64->setId >> 24) != (ud->renderGroup >> 24))
+		return;
+	
 	Triangle tri = {
 		.v = {
 			{ UNFOLD_VEC3(tri64->vtx[0]->pos) }
@@ -129,14 +146,32 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 		, .cullFrontface = tri64->cullFrontface
 	};
 	
-	Col3D_LineVsTriangle(
+	if (Col3D_LineVsTriangle(
 		&ud->ray
 		, &tri
 		, &ud->pos
 		, &ud->dir
 		, tri64->cullBackface
 		, tri64->cullFrontface
-	);
+	)) {
+		ud->renderGroup &= RENDERGROUP_MASK_GROUP;
+		if (worldRayData.isSelectingInstance && ud->renderGroup == RENDERGROUP_INST)
+		{
+			// TODO use rendergroup id to select from appropriate list (spawn/actor/door)
+			//      instead of relying on global variable (global variable is fine for now,
+			//      but will break if multiple instances drawn in a single n64_buffer_flush)
+			struct Instance *each = ud->currentInstance;
+			
+			// TODO construct a list of collisions and choose the nearest instance
+			// TODO if multiple instances overlap, each click should cycle through them
+			GizmoSetPosition(gState.gizmo, UNFOLD_VEC3(each->pos));
+			GizmoAddChild(gState.gizmo, &each->pos);
+			gGui->selectedInstance = each;
+
+			fprintf(stderr, "RENDERGROUP_INST\n");
+		}
+		ud->renderGroup |= tri64->setId & RENDERGROUP_MASK_ID;
+	}
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -1553,10 +1588,17 @@ bool RenderCodeGo(struct Instance *inst)
 	return gRenderCodeDrewSomething;
 }
 
+#define PUT_32_BE(BYTES, OFFSET, DATA) { \
+	((uint8_t*)(BYTES))[OFFSET + 0] = ((DATA) >> 24) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 1] = ((DATA) >> 16) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 2] = ((DATA) >>  8) & 0xff; \
+	((uint8_t*)(BYTES))[OFFSET + 3] = ((DATA) >>  0) & 0xff; \
+}
 static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 {
 	float model[16];
 	struct Instance *instances;
+	GbiGfx setId[] = { gsXPSetId(0), gsSPEndDisplayList() };
 	
 	if (!instanceList)
 		return;
@@ -1581,6 +1623,14 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 			for (int i = 0; i < 12; ++i)
 				model[i] *= 0.025f;
 		}
+		
+		uint32_t renderGroup = RENDERGROUP_INST | eachIndex;
+		worldRayData.currentInstance = each;
+		if (GizmoHasFocus(gState.gizmo) && gGui->selectedInstance == each) // don't raycast onto self
+			renderGroup = RENDERGROUP_IGNORE;
+		PUT_32_BE(setId, 4, renderGroup);
+		
+		n64_draw_dlist(setId);
 		
 		// rendercode
 		if (RenderCodeGo(each))
@@ -1608,7 +1658,6 @@ void WindowMainLoop(struct Scene *scene)
 		}
 	};
 	gGui = &gui;
-	struct CameraRay worldRayData = { 0 };
 	
 	// glfw: initialize and configure
 	// ------------------------------
@@ -1706,7 +1755,7 @@ void WindowMainLoop(struct Scene *scene)
 		gState.hasCameraMoved = false;
 		if (shouldIgnoreInput == false && scene)
 		{
-			bool wasControllingCamera = gInput.mouse.isControllingCamera;
+			//bool wasControllingCamera = gInput.mouse.isControllingCamera;
 			Matrix viewMtxOld = gState.viewMtx;
 			
 			camera_flythrough(&gState.viewMtx);
@@ -1720,6 +1769,8 @@ void WindowMainLoop(struct Scene *scene)
 				gState.hasCameraMoved = true;
 			}
 			
+			// old instance selection
+		#if 0
 			// consume left-click
 			if (gInput.mouse.clicked.left)
 			{
@@ -1737,6 +1788,7 @@ void WindowMainLoop(struct Scene *scene)
 					RaycastInstanceList(gGui->spawnList, gizmo, ray);
 					RaycastInstanceList(gGui->doorList, gizmo, ray);
 				}
+				// ref:
 				/*
 				for (var_t i = 0; i < room->actorList.num; i++) {
 					Actor* actor = Arli_At(&room->actorList, i);
@@ -1757,6 +1809,7 @@ void WindowMainLoop(struct Scene *scene)
 				}
 				*/
 			}
+		#endif
 		}
 		
 		// fog toggle
@@ -1848,6 +1901,9 @@ void WindowMainLoop(struct Scene *scene)
 			void *roomSegment = each->file->data;
 			struct SceneHeader *sceneHeader = &scene->headers[0];
 			
+			gXPSetId(POLY_OPA_DISP++, RENDERGROUP_ROOM | eachIndex);
+			gXPSetId(POLY_XLU_DISP++, RENDERGROUP_ROOM | eachIndex);
+			
 			gSPDisplayList(POLY_OPA_DISP++, n64_material_setup_dl[0x19]);
 			gSPSegment(POLY_OPA_DISP++, 2, sceneSegment);
 			gSPSegment(POLY_OPA_DISP++, 3, roomSegment);
@@ -1923,6 +1979,8 @@ void WindowMainLoop(struct Scene *scene)
 		
 		// if mouse has moved or ctrl key state has changed,
 		// perform raycast against all visual geometry
+		bool isRaycasting = false;
+		worldRayData.isSelectingInstance = false;
 		if ((GizmoHasFocus(gizmo)
 			&& gInput.key.lctrl
 			&& (gInput.mouse.vel.x
@@ -1934,12 +1992,41 @@ void WindowMainLoop(struct Scene *scene)
 		{
 			worldRayData.ray = WindowGetCursorRayLine();
 			worldRayData.ray.nearest = FLT_MAX;
+			worldRayData.renderGroup = RENDERGROUP_ROOM;
 			n64_set_tri_callback(&worldRayData, CameraRayCallback);
+			isRaycasting = true;
 		}
 		
 		n64_buffer_flush(true);
 		
-		n64_set_tri_callback(0, 0);
+		// left-click an instance to select it
+		// TODO consolidate it into the above block
+		if (shouldIgnoreInput == false
+			&& gInput.mouse.clicked.left
+			&& !GizmoHasFocus(gizmo)
+			&& !gInput.mouse.isControllingCamera
+		)
+		{
+			// setup
+			if (!isRaycasting)
+			{
+				worldRayData.ray = WindowGetCursorRayLine();
+				worldRayData.ray.nearest = FLT_MAX;
+				n64_set_tri_callback(&worldRayData, CameraRayCallback);
+				worldRayData.isSelectingInstance = true;
+				isRaycasting = true;
+			}
+			
+			GizmoRemoveChildren(gizmo);
+			gGui->selectedInstance = 0;
+		}
+
+		// released lmb
+		if (gInput.mouse.clicked.left)
+			gInput.mouse.isControllingCamera = false;
+
+		if (isRaycasting)
+			worldRayData.renderGroup = RENDERGROUP_INST;
 		
 		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
@@ -1952,6 +2039,8 @@ void WindowMainLoop(struct Scene *scene)
 		n64_draw_dlist(gfxRed);
 		DrawInstanceList(gGui->doorList);
 		n64_draw_dlist(gfxDisableXray);
+		
+		n64_set_tri_callback(0, 0);
 		
 		// test
 		if (false)
