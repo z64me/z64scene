@@ -4298,7 +4298,9 @@
 				}
 			} else {
 				// center shrub
-				positions.add([0, 0, 0])
+				if (type == 0) {
+					positions.add([0, 0, 0])
+				}
 				// circle
 				for (i in 0..8) {
 					positions.add([
