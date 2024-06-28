@@ -72,7 +72,12 @@ static void WorkReady(void)
 	if (!gWorkblobData)
 	{
 		gWorkblobData = Calloc(1, WORKBUF_SIZE);
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Warray-bounds"
+		// deliberately start at -1 b/c push() puts it at 0
+		// (there is error checking for whether it has push()'d)
 		gWorkblob = gWorkblobStack - 1;
+		#pragma GCC diagnostic pop
 	}
 	
 	gWork->size = 0;
