@@ -4,5 +4,12 @@
 			"path": ".."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"*.tcc": "c",
+			"cutscene.h": "c",
+			"stretchy_buffer.h": "c",
+			"logging.h": "c"
+		}
+	}
 }
