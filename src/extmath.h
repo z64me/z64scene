@@ -14,6 +14,10 @@
 #include <math.h>
 #include <float.h>
 
+#ifndef M_PI
+	#define M_PI 3.14159265359
+#endif
+
 typedef uint8_t u8;
 typedef int8_t s8;
 typedef uint16_t u16;
