@@ -198,7 +198,7 @@ struct ActorDatabase
 			
 			// properties
 			STRCATF(buf, "%s", R"(
-				class props__hooks {
+				class PropsClass {
 			)");
 			for (auto &option : properties) {
 				const char *name = option.QuickSanitizedName();
@@ -208,12 +208,12 @@ struct ActorDatabase
 			STRCATF(buf, "%s", R"(
 				construct new() { }
 				}
-				var Props = props__hooks.new()
+				var Props = PropsClass.new()
 			)");
 			
 			// constants
 			STRCATF(buf, "%s", R"(
-				class Syms_ {
+				class SymsClass {
 			)");
 			for (int i = 0; i < objects.size(); ++i)
 			{
@@ -225,7 +225,7 @@ struct ActorDatabase
 			STRCATF(buf, "%s", R"(
 					construct new() { }
 				}
-				var Syms = Syms_.new()
+				var Syms = SymsClass.new()
 			)");
 			
 			// codegen for udata class
