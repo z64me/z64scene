@@ -17,6 +17,7 @@ extern "C" {
 #include <stb_image_write.h>
 #include "noc_file_dialog.h"
 #include "project.h"
+#include "logging.h"
 }
 
 #if 1 // region: helper macros
@@ -248,12 +249,12 @@ static void TestAllActorRenderCodeGen(void)
 		const char *tmp = entry.RenderCodeGen(GetObjectSymbolAddresses);
 		if (tmp)
 		{
-			fprintf(stderr,
-				"-------- codegen --------\n"
+			LogDebug(
+				"\n-------- codegen --------\n"
 				"tomlLineStart = %d\n"
 				"offsetLineStart = %d\n"
 				"%s\n"
-				"---------- end ----------\n"
+				"---------- end ----------"
 				, entry.rendercodeLineNumberInToml
 				, entry.rendercodeLineNumberOffset
 				, tmp
@@ -352,7 +353,7 @@ static void MultiLineTabBarGeneric(
 				{
 					if (ImGui::IsItemDeactivated())
 					{
-						//fprintf(stderr, "selected %s\n", name);
+						//LogDebug("selected %s", name);
 						*which = t;
 					}
 					ImGui::EndTabItem();
@@ -857,10 +858,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
 					)
 					{
-						fprintf(stderr, "warning: width height %d x %d\n", imageWidth, imageHeight);
-						fprintf(stderr, "refData    = %p\n", blob->refData);
-						fprintf(stderr, "refDataEnd = %p\n", blob->refDataFileEnd);
-						fprintf(stderr, "sizeBytes  = %x\n", blob->sizeBytes);
+						LogDebug("warning: width height %d x %d", imageWidth, imageHeight);
+						LogDebug("refData    = %p", blob->refData);
+						LogDebug("refDataEnd = %p", blob->refDataFileEnd);
+						LogDebug("sizeBytes  = %x", blob->sizeBytes);
 						isBadTexture = true;
 						goto L_textureError;
 					}
@@ -873,7 +874,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 							, blob->sizeBytes
 							, &x, &y, &c, 4
 						);
-						//fprintf(stderr, "test = %p %d x %d x %d\n", test, x, y, c);
+						//LogDebug("test = %p %d x %d x %d", test, x, y, c);
 						memcpy(imageData, test, x * y * 4);
 						stbi_image_free(test);
 					}
@@ -1144,7 +1145,7 @@ static void DrawSidebar(void)
 		
 		if (!type.isEmpty)
 		{
-			fprintf(stderr, "add instance of type '%s'\n", type.name);
+			LogDebug("add instance of type '%s'", type.name);
 			
 			switch (gAddNewInstanceSearchTab)
 			{
@@ -1164,7 +1165,7 @@ static void DrawSidebar(void)
 			if (gGui->instanceList)
 				gGui->selectedInstance = &sb_push(*(gGui->instanceList), newInst);
 			else
-				fprintf(stderr, "instanceList == 0, can't add\n");
+				LogDebug("instanceList == 0, can't add");
 		}
 		
 		ImGui::EndPopup();
@@ -1182,7 +1183,7 @@ static void DrawMenuBar(void)
 			}
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
-				fprintf(stderr, "wow!\n");
+				LogDebug("wow!");
 				
 				Scene *newScene = WindowOpenFile();
 				

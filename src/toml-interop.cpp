@@ -109,15 +109,15 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 		{
 			DeriveNameFromFolderName(&entry.name, path);
 			
-			fprintf(stderr, "derived actor id %04x name = '%s'\n", id, entry.name);
+			LogDebug("derived actor id %04x name = '%s'", id, entry.name);
 		}
 		
 		/*
 		if (useTomlName == true)
 		{
-			fprintf(stderr, "tomlName = '%s'\n", entry.name);
-			fprintf(stderr, "objects.size = %d\n", entry.objects.size());
-			fprintf(stderr, "objects.[0] = %d\n", entry.objects[0]);
+			LogDebug("tomlName = '%s'", entry.name);
+			LogDebug("objects.size = %d", entry.objects.size());
+			LogDebug("objects.[0] = %d", entry.objects[0]);
 			exit(0);
 		}
 		*/
@@ -177,7 +177,7 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 				
 				// found an overlay
 				if (zovlFilename) {
-					fprintf(stderr, "zovlFilename = '%s'\n", zovlFilename);
+					LogDebug("zovlFilename = '%s'", zovlFilename);
 					File *file = FileFromFilename(zovlFilename);
 					ivar -= vram;
 					// initialization data is within the file
@@ -185,7 +185,7 @@ static void TomlInjectActorsFromProject(Project *project, ActorDatabase *actorDb
 						const uint8_t *data = (const uint8_t*)file->data;
 						data += ivar;
 						uint16_t objId = (data[8] << 8) | data[9];
-						fprintf(stderr, "derived object dependency %04x\n", objId);
+						LogDebug("derived object dependency %04x", objId);
 						if (entry.objects.size() == 0)
 							entry.objects.emplace_back(objId);
 						else
@@ -239,9 +239,9 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 		if (zobjFilename)
 			entry.zobjPath = strdup(zobjFilename);
 		
-		fprintf(stderr, "derived object id %04x name = '%s'\n", id, entry.name);
+		LogDebug("derived object id %04x name = '%s'", id, entry.name);
 		if (entry.zobjPath)
-			fprintf(stderr, " with filename = '%s'\n", entry.zobjPath);
+			LogDebug(" with filename = '%s'", entry.zobjPath);
 		
 		// symbols
 		if (project->type == PROJECT_TYPE_ZZRTL) {
@@ -258,7 +258,7 @@ static void TomlInjectObjectsFromProject(Project *project, ObjectDatabase *objec
 			}
 		}
 		if (entry.symsPath)
-			fprintf(stderr, "object syms at '%s'\n", entry.symsPath);
+			LogDebug("object syms at '%s'", entry.symsPath);
 	})
 }
 

@@ -35,7 +35,7 @@ static void SkelAnime_GetFrameData(const struct ObjectAnimation *anim, int frame
 	uint16_t limit = anim->limit;
 	
 	if (!jointIndices || !frameData)
-		Die("SkelAnime_GetFrameData() failed on %08x %08x\n",
+		Die("SkelAnime_GetFrameData() failed on %08x %08x",
 			anim->rotIndexSegAddr, anim->rotValSegAddr
 		);
 	
@@ -134,7 +134,7 @@ static void SkelAnime_Limb(const uint32_t skelSeg, u8 limbId, MtxN64** mtx, Vec3
 		}
 		
 		veccpy(&rpos, &pos);
-		//fprintf(stderr, "limb[%d] pos = %d %d %d\n", limbId, pos.x, pos.y, pos.z);
+		//LogDebug("limb[%d] pos = %d %d %d", limbId, pos.x, pos.y, pos.z);
 		//static Vec3f rpos; float speed = 0.01; rpos.x += speed; rpos.y += speed; rpos.z += speed;
 		
 		Matrix_TranslateRotateZYX(&rpos, &rot);

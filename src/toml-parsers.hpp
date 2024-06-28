@@ -20,6 +20,7 @@ extern "C" {
 #include "file.h"
 #include "rendercode.h"
 #include "object.h"
+#include "logging.h"
 }
 
 #define SPAN_UPPERCASE   "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -436,7 +437,7 @@ struct ObjectDatabase
 				FileFree(tmp);
 			}
 			else
-				fprintf(stderr, "'%s' doesn't exist\n", symsPath);
+				LogDebug("'%s' doesn't exist", symsPath);
 			
 			// consider these consumed
 			free(symsPath);
@@ -447,7 +448,7 @@ struct ObjectDatabase
 		{
 			// print contents
 			for (const auto &sym : symbolAddresses)
-				fprintf(stderr, "%s = 0x%08x;\n", sym.first.c_str(), sym.second);
+				LogDebug("%s = 0x%08x;", sym.first.c_str(), sym.second);
 				//std::cout << sym.first << " = " << std::hex << sym.second << ";\n";
 		}
 	};

@@ -7,6 +7,7 @@
 #include "misc.h"
 #include "stretchy_buffer.h"
 #include "cutscene.h"
+#include "logging.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -103,7 +104,7 @@ void *Calloc(size_t howMany, size_t sizeEach)
 	void *result = calloc(howMany, sizeEach);
 	
 	if (!result)
-		Die("memory error on Calloc(%"PRIuPTR", %"PRIuPTR")\n", howMany, sizeEach);
+		Die("memory error on Calloc(%"PRIuPTR", %"PRIuPTR")", howMany, sizeEach);
 	
 	return result;
 }
@@ -254,7 +255,7 @@ const char *ExePath(const char *path)
 		++appendTo;
 		
 		*appendTo = '\0';
-		fprintf(stderr, "ExePath = '%s'\n", basePath);
+		LogDebug("ExePath = '%s'", basePath);
 	}
 	else
 		strcpy(appendTo, path);
@@ -298,7 +299,7 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 		{
 			sprintf(lastSlash, variations[k], i);
 			
-			fprintf(stderr, "%s\n", roomNameBuf);
+			LogDebug("%s", roomNameBuf);
 			
 			if (FileExists(roomNameBuf))
 			{
@@ -368,7 +369,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 					}
 					
 					default:
-						Die("unsupported prerender amountType=%d\n", each->image.base.amountType);
+						Die("unsupported prerender amountType=%d", each->image.base.amountType);
 						break;
 				}
 			}
@@ -379,7 +380,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		// add eof marker
 		each->blobs = DataBlobPush(each->blobs, each->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
 		
-		fprintf(stderr, "'%s' data blobs:\n", each->file->filename);
+		LogDebug("'%s' data blobs:", each->file->filename);
 		DataBlobPrintAll(each->blobs);
 	});
 	
@@ -388,7 +389,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	// add eof marker
 	scene->blobs = DataBlobPush(scene->blobs, scene->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
 	
-	fprintf(stderr, "'%s' data blobs:\n", scene->file->filename);
+	LogDebug("'%s' data blobs:", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);
 	
 	// trim blobs that overlap (for smaller-than-predicted palette/texture data)
@@ -428,7 +429,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		}
 		
 		// print
-		//sb_foreach(array, { fprintf(stderr, "%p\n", (*each)->refData); });
+		//sb_foreach(array, { LogDebug("%p", (*each)->refData); });
 		
 		// trim
 		for (int i = 0; i < sb_count(array) - 1; ++i)
@@ -469,7 +470,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 					- ((uintptr_t)(a->refData))
 				;
 				
-				fprintf(stderr, "trimmed blob %08x size to %08x\n"
+				LogDebug("trimmed blob %08x size to %08x"
 					, a->originalSegmentAddress, a->sizeBytes
 				);
 			}
@@ -521,7 +522,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		exit(0);
 	}
 	
-	fprintf(stderr, "total texture blobs %d\n", sb_count(scene->textureBlobs));
+	LogDebug("total texture blobs %d", sb_count(scene->textureBlobs));
 	
 	// trim blank headers off the end
 	sb_foreach(scene->rooms, {
@@ -542,9 +543,9 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	PAD_ALTERNATE_HEADERS(scene->headers, minHeaders);
 	*/
 	
-	fprintf(stderr, "header counts\n - %s: %d headers\n", scene->file->shortname, sb_count(scene->headers));
+	LogDebug("header counts\n - %s: %d headers", scene->file->shortname, sb_count(scene->headers));
 	sb_foreach(scene->rooms, {
-		fprintf(stderr, " - %s: %d headers\n", each->file->shortname, sb_count(each->headers));
+		LogDebug(" - %s: %d headers", each->file->shortname, sb_count(each->headers));
 	});
 }
 
@@ -826,7 +827,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 					pos[k] = (Vec3s) { u16r(b + 0), u16r(b + 2), u16r(b + 4) };
 				}
 				
-				fprintf(stderr, "crawlspace uses setting %d\n", cam.setting);
+				LogDebug("crawlspace uses setting %d", cam.setting);
 			}
 			else
 			{
@@ -1099,9 +1100,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				result->mm.sceneSetupType = 1;
 				result->mm.sceneSetupData = AnimatedMaterialNewFromSegment(u32r(walk + 4));
 				sb_foreach(result->mm.sceneSetupData, {
-					fprintf(stderr, "texanim[%d] type%d, seg%d\n", eachIndex, each->type, each->segment);
+					LogDebug("texanim[%d] type%d, seg%d", eachIndex, each->type, each->segment);
 				});
-				//Die("%d texanims\n", sb_count(result->mm.sceneSetupData));
+				//Die("%d texanims", sb_count(result->mm.sceneSetupData));
 				break;
 			}
 			
@@ -1144,9 +1145,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					sb_push(result->paths, path);
 				}
 				
-				fprintf(stderr, "%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
-				sb_foreach(result->paths, { fprintf(stderr, " %d,", sb_count(each->points)); } );
-				fprintf(stderr, " }\n");
+				LogDebug("%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
+				sb_foreach(result->paths, { LogDebug(" -> %d points,", sb_count(each->points)); } );
+				LogDebug("}");
 				break;
 			}
 			
@@ -1178,7 +1179,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x17: { // cutscenes
 				uint32_t w1 = u32r(walk + 4);
-				fprintf(stderr, "cutscene header %08x\n", w1);
+				LogDebug("cutscene header %08x", w1);
 				if (walk[1])
 					result->cutsceneListMm = CutsceneListMmNewFromData(n64_segment_get(w1), file->dataEnd, walk[1]);
 				else
@@ -1282,9 +1283,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		for (int i = 0; i < scene->collisions->numExits; ++i)
 			sb_push(result->exits, u16r(exitData + i * 2));
 		
-		fprintf(stderr, "exits:\n");
+		LogDebug("exits:");
 		sb_foreach(result->exits, {
-			fprintf(stderr, " -> %04x\n", *each);
+			LogDebug(" -> %04x", *each);
 		});
 		
 		// TODO if matches header[0] exits, set == 0 to indicate no unique exits
@@ -1313,15 +1314,15 @@ static RoomShapeImage RoomShapeImageFromBytes(const void *data)
 		.tlutCount = u16r(work + 20),
 	};
 	
-	fprintf(stderr, "RoomShapeImageFromBytes()\n");
-	fprintf(stderr, " - source    = %08x\n", result.source);
-	fprintf(stderr, " - tlut      = %08x\n", result.tlut);
-	fprintf(stderr, " - unk_0C    = %08x\n", result.unk_0C);
-	fprintf(stderr, " - unk_0C    = %08x\n", result.unk_0C);
-	fprintf(stderr, " - fmt       = %02x\n", result.fmt);
-	fprintf(stderr, " - siz       = %02x\n", result.siz);
-	fprintf(stderr, " - tlutMode  = %08x\n", result.tlutMode);
-	fprintf(stderr, " - tlutCount = %08x\n", result.tlutCount);
+	LogDebug("RoomShapeImageFromBytes()");
+	LogDebug(" - source    = %08x", result.source);
+	LogDebug(" - tlut      = %08x", result.tlut);
+	LogDebug(" - unk_0C    = %08x", result.unk_0C);
+	LogDebug(" - unk_0C    = %08x", result.unk_0C);
+	LogDebug(" - fmt       = %02x", result.fmt);
+	LogDebug(" - siz       = %02x", result.siz);
+	LogDebug(" - tlutMode  = %08x", result.tlutMode);
+	LogDebug(" - tlutCount = %08x", result.tlutCount);
 	
 	return result;
 }
@@ -1457,9 +1458,9 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 							result->image.multi = (RoomShapeImageMulti){
 								.numBackgrounds = u8r(d + 8),
 							};
-							fprintf(stderr, "prerender w/ %d bg's\n", result->image.multi.numBackgrounds);
+							LogDebug("prerender w/ %d bg's", result->image.multi.numBackgrounds);
 							const uint8_t *work = data8 + (u32r(d + 12) & 0x00ffffff);
-							fprintf(stderr, "work = %08x %p\n", (u32r(d + 12) & 0x00ffffff), work);
+							LogDebug("work = %08x %p", (u32r(d + 12) & 0x00ffffff), work);
 							for (int i = 0; i < result->image.multi.numBackgrounds; ++i, work += 28)
 							{
 								sb_push(result->image.multi.backgrounds
@@ -1474,14 +1475,14 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 						}
 						
 						default:
-							Die("unknown prerender amountType=%d\n", d[1]);
+							Die("unknown prerender amountType=%d", d[1]);
 							break;
 					}
 					result->image.base.amountType = d[1];
 				}
 				else
 				{
-					fprintf(stderr, "unsupported mesh header type %d\n", d[0]);
+					LogDebug("unsupported mesh header type %d", d[0]);
 				}
 				break;
 			}

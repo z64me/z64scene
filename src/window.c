@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+#include "logging.h"
 #include "misc.h"
 #include "extmath.h"
 #include "gizmo.h"
@@ -168,7 +169,7 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 			GizmoAddChild(gState.gizmo, &each->pos);
 			gGui->selectedInstance = each;
 
-			fprintf(stderr, "RENDERGROUP_INST\n");
+			LogDebug("RENDERGROUP_INST");
 		}
 		ud->renderGroup |= tri64->setId & RENDERGROUP_MASK_ID;
 	}
@@ -319,7 +320,7 @@ static void drop_callback(GLFWwindow* window, int count, const char *files[])
 	if (!extension)
 		return;
 	
-	//fprintf(stderr, "filename = %s, extension = %s\n", filename, extension);
+	//LogDebug("filename = %s, extension = %s", filename, extension);
 	
 	char *extensionLower = Strdup(extension + 1);
 	for (char *c = extensionLower; *c; ++c)
@@ -400,7 +401,7 @@ static inline void *camera_flythrough(Matrix *m)
 		, 0
 	);
 	
-	//fprintf(stderr, "%f %f %f\n", UNFOLD_ARRAY_3(float, look));
+	//LogDebug("%f %f %f", UNFOLD_ARRAY_3(float, look));
 	memcpy(&gState.cameraFly.eye, pos, sizeof(pos));
 	//memcpy(&gState.cameraFly.lookAt, look, sizeof(look));
 	gState.cameraFly.lookAt = (Vec3f) {
@@ -415,7 +416,7 @@ static inline void *camera_flythrough(Matrix *m)
 		pos[1] + look[1] * distSpawnActorFromCamera,
 		pos[2] + look[2] * distSpawnActorFromCamera
 	};
-	//fprintf(stderr, "newSpawnPos = %f %f %f\n", UNFOLD_VEC3(gGui->newSpawnPos));
+	//LogDebug("newSpawnPos = %f %f %f", UNFOLD_VEC3(gGui->newSpawnPos));
 	
 	oldcursor = cursor;
 	
@@ -847,7 +848,7 @@ void WindowSaveSceneAs(void)
 
 struct Scene *WindowLoadScene(const char *fn)
 {
-	fprintf(stderr, "%s\n", fn);
+	LogDebug("%s", fn);
 	struct Scene *scene = SceneFromFilenamePredictRooms(fn);
 	
 	// cleanup
@@ -1074,8 +1075,8 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 		projectedPos.z *= 1.0f / projectionMtxFDiagonal.z; // original math
 		
 		//Vec4f test = WindowGetLocalScreenVec(pos);
-		//fprintf(stderr, "test %f %f\n", test.z, test.w);
-		//fprintf(stderr, " -> %f\n", projectedPos.z);
+		//LogDebug("test %f %f", test.z, test.w);
+		//LogDebug(" -> %f", projectedPos.z);
 		
 		float var_fv1 = ABS_ALT(cullable->radius);
 		
@@ -1084,15 +1085,15 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 			|| cullable->xlu == 0x03004760 // front dl
 		)
 		{
-			fprintf(stderr, "%08x:\n", cullable->xlu);
-			fprintf(stderr, " { %.f %.f %.f }\n", projectedPos.x, projectedPos.y, projectedPos.z);
-			fprintf(stderr, " { %.f %.f %.f }\n", pos.x, pos.y, pos.z);
-			fprintf(stderr, " %.f -> %.f\n", projectedPos.z, projectedPos.z - var_fv1);
-			fprintf(stderr, " recip %f\n", 1.0f / projectionMtxFDiagonal.z);
+			LogDebug("%08x:", cullable->xlu);
+			LogDebug(" { %.f %.f %.f }", projectedPos.x, projectedPos.y, projectedPos.z);
+			LogDebug(" { %.f %.f %.f }", pos.x, pos.y, pos.z);
+			LogDebug(" %.f -> %.f", projectedPos.z, projectedPos.z - var_fv1);
+			LogDebug(" recip %f", 1.0f / projectionMtxFDiagonal.z);
 			
 			float testA = projectedPos.z - var_fv1;
 			float testB = Vec3f_DistXYZ(pos, gState.cameraFly.eye); // also try lookAt
-			fprintf(stderr, " %.f vs %.f \n", testA, testB);
+			LogDebug(" %.f vs %.f ", testA, testB);
 		}
 		*/
 		
@@ -1157,7 +1158,7 @@ static void DrawRoomCullable(struct RoomHeader *header, int16_t zFar, uint32_t f
 		}
 	}
 	
-	//fprintf(stderr, "draw %d / %d\n", (int)(insert - linkedEntriesBuffer), numEntries);
+	//LogDebug("draw %d / %d", (int)(insert - linkedEntriesBuffer), numEntries);
 
 	//! FAKE: Similar trick used in OoT
 	//R_ROOM_CULL_NUM_ENTRIES = numEntries & 0xFFFF & 0xFFFF & 0xFFFF;
@@ -1273,7 +1274,7 @@ struct ActorRenderCode *gRenderCodeHandle = 0;
 
 static void RenderCodeWriteFn(WrenVM* vm, const char* text)
 {
-	fprintf(stderr, "%s", text);
+	LogDebug("%s", text);
 }
 
 static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
@@ -1286,13 +1287,13 @@ static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
 	switch (errorType)
 	{
 		case WREN_ERROR_COMPILE:
-			fprintf(stderr, "[%s line %d] [Error] %s\n", module, line, msg);
+			LogDebug("[%s line %d] [Error] %s", module, line, msg);
 			break;
 		case WREN_ERROR_STACK_TRACE:
-			fprintf(stderr, "[%s line %d] in %s\n", module, line, msg);
+			LogDebug("[%s line %d] in %s", module, line, msg);
 			break;
 		case WREN_ERROR_RUNTIME:
-			fprintf(stderr, "[Runtime Error] %s\n", msg);
+			LogDebug("[Runtime Error] %s", msg);
 			break;
 	}
 }
@@ -1372,13 +1373,13 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		sXscale = wrenGetSlotDouble(vm, 1);
 		sYscale = wrenGetSlotDouble(vm, 2);
 		sZscale = wrenGetSlotDouble(vm, 3);
-		//fprintf(stderr, "DrawSetScale3 = %f %f %f\n", sXscale, sYscale, sZscale);
+		//LogDebug("DrawSetScale3 = %f %f %f", sXscale, sYscale, sZscale);
 	}
 	void DrawSetScale1(WrenVM* vm) {
 		sXscale = wrenGetSlotDouble(vm, 1);
 		sYscale = sXscale;
 		sZscale = sXscale;
-		//fprintf(stderr, "DrawSetScale1 = %f %f %f\n", sXscale, sYscale, sZscale);
+		//LogDebug("DrawSetScale1 = %f %f %f", sXscale, sYscale, sZscale);
 	}
 	void DrawUseObjectSlot(WrenVM* vm) {
 		int slot = wrenGetSlotDouble(vm, 1);
@@ -1411,7 +1412,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void DrawMesh(WrenVM* vm) {
 		uint32_t address = wrenGetSlotDouble(vm, 1);
 		struct Instance *inst = WREN_UDATA;
-		//fprintf(stderr, "address = %08x\n", address);
+		//LogDebug("address = %08x", address);
 		ReadyMatrix(inst, true);
 		gSPDisplayList(POLY_OPA_DISP++, address);
 		gRenderCodeDrewSomething = true;
@@ -1536,7 +1537,7 @@ bool RenderCodeGo(struct Instance *inst)
 		sYrotGlobal = inst->yrot;
 		sZrotGlobal = inst->zrot;
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
-			fprintf(stderr, "failed to invoke function\n");
+			LogDebug("failed to invoke function");
 		n64_buffer_flush(false);
 		n64_draw_dlist(gfxEnableXray);
 	}
@@ -1554,7 +1555,7 @@ bool RenderCodeGo(struct Instance *inst)
 		
 		WrenInterpretResult result = wrenInterpret(vm, module, rc->src);
 		
-		//fprintf(stderr, "src\n\n\n %s \n\n\n", rc->src);
+		//LogDebug("src\n\n\n %s \n\n\n", rc->src);
 		
 		// success
 		if (result == WREN_RESULT_SUCCESS)
@@ -1718,7 +1719,7 @@ void WindowMainLoop(struct Scene *scene)
 	// -----------
 	while (!glfwWindowShouldClose(window))
 	{
-		//fprintf(stderr, "-- loop ----\n");
+		//LogDebug("-- loop ----");
 		
 		{
 			static double sGameplayFrames = 0;
@@ -2069,7 +2070,7 @@ void WindowMainLoop(struct Scene *scene)
 			if (worldRayData.ray.nearest < FLT_MAX)
 			{
 				gGui->newSpawnPos = worldRayData.pos;
-				//fprintf(stderr, "newSpawnPos = %f %f %f\n", UNFOLD_VEC3(gGui->newSpawnPos));
+				//LogDebug("newSpawnPos = %f %f %f", UNFOLD_VEC3(gGui->newSpawnPos));
 			}
 		}
 		

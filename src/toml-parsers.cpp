@@ -38,7 +38,7 @@ static ActorDatabase::Entry::Property ActorDatabasePropertyFromToml(toml::value 
 	// this should never be the case
 	if (!result.mask)
 	{
-		fprintf(stderr, "property '%s' mask == 0\n", result.name);
+		LogDebug("property '%s' mask == 0", result.name);
 	}
 	
 	auto dropdown = property["Dropdown"];
@@ -306,14 +306,14 @@ void TomlTest(void)
 		if (!actor.name)
 			continue;
 		
-		fprintf(stderr, "%s : %04x %04x\n", actor.name, actor.index, actor.objects[0]);
+		LogDebug("%s : %04x %04x", actor.name, actor.index, actor.objects[0]);
 		
 		for (auto &prop : actor.properties)
 		{
-			fprintf(stderr, "  %s in %s\n", prop.name, prop.target);
+			LogDebug("  %s in %s", prop.name, prop.target);
 			
 			for (auto &combo : prop.combos)
-				fprintf(stderr, "     %s = %d\n", combo.label, combo.value);
+				LogDebug("     %s = %d", combo.label, combo.value);
 		}
 	}
 }

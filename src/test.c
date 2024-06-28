@@ -9,6 +9,7 @@
 #include <wren.h>
 #include <stdbool.h>
 
+#include "logging.h"
 #include "misc.h"
 
 typedef struct TestWrenUdata
@@ -54,7 +55,11 @@ var Props = props__hooks.new() \n \
 
 static void writeFn(WrenVM* vm, const char* text)
 {
-	fprintf(stderr, "%s", text);
+	// skip newlines
+	if (strspn(text, "\r\n\t ") == strlen(text))
+		return;
+	
+	LogDebug("%s", text);
 }
 
 static void errorFn(WrenVM* vm, WrenErrorType errorType,
@@ -65,13 +70,13 @@ static void errorFn(WrenVM* vm, WrenErrorType errorType,
 	switch (errorType)
 	{
 		case WREN_ERROR_COMPILE:
-			fprintf(stderr, "[%s line %d] [Error] %s\n", module, line, msg);
+			LogDebug("[%s line %d] [Error] %s", module, line, msg);
 			break;
 		case WREN_ERROR_STACK_TRACE:
-			fprintf(stderr, "[%s line %d] in %s\n", module, line, msg);
+			LogDebug("[%s line %d] in %s", module, line, msg);
 			break;
 		case WREN_ERROR_RUNTIME:
-			fprintf(stderr, "[Runtime Error] %s\n", msg);
+			LogDebug("[Runtime Error] %s", msg);
 			break;
 	}
 }
@@ -92,13 +97,13 @@ static WrenForeignMethodFn bindForeignMethod(
 		float xscale = wrenGetSlotDouble(vm, 1);
 		float yscale = wrenGetSlotDouble(vm, 2);
 		float zscale = wrenGetSlotDouble(vm, 3);
-		fprintf(stderr, "DrawSetScale3 = %f %f %f\n", xscale, yscale, zscale);
+		LogDebug("DrawSetScale3 = %f %f %f", xscale, yscale, zscale);
 	}
 	void DrawSetScale1(WrenVM* vm) {
 		float xscale = wrenGetSlotDouble(vm, 1);
 		float yscale = xscale;
 		float zscale = xscale;
-		fprintf(stderr, "DrawSetScale1 = %f %f %f\n", xscale, yscale, zscale);
+		LogDebug("DrawSetScale1 = %f %f %f", xscale, yscale, zscale);
 	}
 	
 	if (streq(module, "main")) {
@@ -169,9 +174,9 @@ void TestWrenSimple(void)
 			System.print("if (1) ")
 		}
 	)";
-	fprintf(stderr, "script = %s\n", script);
-	fprintf(stderr, "((bool)123) == true  : %d\n", ((bool)123) == true);
-	fprintf(stderr, "((bool)123) == false : %d\n", ((bool)123) == false);
+	LogDebug("script = %s", script);
+	LogDebug("((bool)123) == true  : %d", ((bool)123) == true);
+	LogDebug("((bool)123) == false : %d", ((bool)123) == false);
 	
 	// compile the code
 	WrenInterpretResult result = wrenInterpret(vm, module, script);
@@ -179,13 +184,13 @@ void TestWrenSimple(void)
 	switch (result)
 	{
 		case WREN_RESULT_COMPILE_ERROR:
-			fprintf(stderr, "Compile Error!\n");
+			LogDebug("Compile Error!");
 			break;
 		case WREN_RESULT_RUNTIME_ERROR:
-			fprintf(stderr, "Runtime Error!\n");
+			LogDebug("Runtime Error!");
 			break;
 		case WREN_RESULT_SUCCESS:
-			fprintf(stderr, "Success!\n");
+			LogDebug("Success!");
 			break;
 	}
 	
@@ -227,7 +232,7 @@ void TestWren(void)
 		Draw.SetScale(1.23, 4.56, 7.89)
 		System.print("Props.Hello = %(Props.Hello) ")
 	)" );
-	fprintf(stderr, "script = %s\n", script);
+	LogDebug("script = %s", script);
 	
 	// compile the code
 	WrenInterpretResult result = wrenInterpret(vm, module, script);
@@ -235,13 +240,13 @@ void TestWren(void)
 	switch (result)
 	{
 		case WREN_RESULT_COMPILE_ERROR:
-			fprintf(stderr, "Compile Error!\n");
+			LogDebug("Compile Error!");
 			break;
 		case WREN_RESULT_RUNTIME_ERROR:
-			fprintf(stderr, "Runtime Error!\n");
+			LogDebug("Runtime Error!");
 			break;
 		case WREN_RESULT_SUCCESS:
-			fprintf(stderr, "Success!\n");
+			LogDebug("Success!");
 			break;
 	}
 	
@@ -271,7 +276,7 @@ void TestWren(void)
 			wrenEnsureSlots(vm, 1);
 			wrenSetSlotHandle(vm, 0, class); // is necessary each time
 			if (wrenCall(vm, handle) != WREN_RESULT_SUCCESS)
-				fprintf(stderr, "failed to invoke function\n");
+				LogDebug("failed to invoke function");
 		}
 		
 		// free handles
@@ -280,7 +285,7 @@ void TestWren(void)
 		wrenReleaseHandle(vm, propsVar);
 		wrenReleaseHandle(vm, propsSetHello);
 	}
-	fprintf(stderr, "done\n");
+	LogDebug("done");
 	
 	wrenFreeVM(vm);
 	//exit(0);

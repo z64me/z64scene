@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "logging.h"
 #include "datablobs.h"
 #include "stretchy_buffer.h"
 
@@ -164,7 +165,7 @@ void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEn
 {
 	struct DataBlobSegment *seg = &gSegments[segmentIndex];
 	
-	fprintf(stderr, "DataBlobSegmentSetup(%d): %p - %p (%08x)\n"
+	LogDebug("DataBlobSegmentSetup(%d): %p - %p (%08x)"
 		, segmentIndex, data, dataEnd, (uint32_t)(dataEnd - data)
 	);
 	
@@ -345,7 +346,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator)
 						case G_MV_PMTX:
 						case G_MV_POINT:
 						default:
-							fprintf(stderr, "Unrecognized Movemem Index %d for data at %08X\n", idx, segAddr);
+							LogDebug("Unrecognized Movemem Index %d for data at %08X", idx, segAddr);
 							break;
 					}
 					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_GENERIC, w1addr);
@@ -444,7 +445,7 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator)
 							size = G_SIZ_BYTES(siz) * width * height;
 						
 						if (size > 4096)
-							fprintf(stderr, "warning: width height %d x %d\n", width, height);
+							LogDebug("warning: width height %d x %d", width, height);
 						
 						blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE, timg.dramRef);
 						blob->data.texture.w = width;
@@ -518,9 +519,9 @@ void DataBlobSegmentsPopulateFromMesh(uint32_t segAddr, void *originator)
 			case G_LOAD_UCODE:
 			case G_SETCIMG:
 			case G_SETZIMG:
-				fprintf(stderr, "Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				LogDebug("Unimplemented display list command %02X encountered in %08X", cmd, segAddr);
 				break;
-				//ret = DisplayList_ErrMsgSet("Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				//ret = DisplayList_ErrMsgSet("Unimplemented display list command %02X encountered in %08X", cmd, segAddr);
 				//goto err;
 			
 			/*
@@ -739,9 +740,9 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			//uint32_t height = fabs(qu102_I(Textures(id).ULT) - qu102_I(Textures(id).LRT)) + 1;
 			uint32_t width = qu102_I(Textures(id).LRS) + 1;
 			uint32_t height = qu102_I(Textures(id).LRT) + 1;
-			//fprintf(stderr, "%d %d %d %d\n", Line_Width, Line_Height, width, height);
-			//fprintf(stderr, " -> %d %d\n", Textures(id).LRS, Textures(id).LRT);
-			//fprintf(stderr, " -> %d %d\n", Textures(id).ULS, Textures(id).ULT);
+			//LogDebug("%d %d %d %d", Line_Width, Line_Height, width, height);
+			//LogDebug(" -> %d %d", Textures(id).LRS, Textures(id).LRT);
+			//LogDebug(" -> %d %d", Textures(id).ULS, Textures(id).ULT);
 			
 			//int scaleDown = Textures(id).LineSize / 4;
 			//if (!scaleDown) scaleDown = 1;
@@ -751,7 +752,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			Textures(id).RealWidth = width;
 			Textures(id).RealHeight = height;
 			
-			fprintf(stderr, "%d %d - %d\n", width, height, Textures(id).LineSize);
+			LogDebug("%d %d - %d", width, height, Textures(id).LineSize);
 			
 			int siz = Textures(CurrentTex).TexelSize;
 			size_t size = G_SIZ_BYTES(siz) * width * height;
@@ -765,7 +766,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			// maybe?
 			if (size > 4096)
 			{
-				fprintf(stderr, "mask s t %d %d\n", Textures(id).MaskS, Textures(id).MaskT);
+				LogDebug("mask s t %d %d", Textures(id).MaskS, Textures(id).MaskT);
 				bool axis = 0;
 				while (size > 4096)
 				{
@@ -901,7 +902,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 						case G_MV_PMTX:
 						case G_MV_POINT:
 						default:
-							fprintf(stderr, "Unrecognized Movemem Index %d for data at %08X\n", idx, segAddr);
+							LogDebug("Unrecognized Movemem Index %d for data at %08X", idx, segAddr);
 							break;
 					}
 					DataBlobSegmentPush(realAddr, len, w1, DATA_BLOB_TYPE_GENERIC, w1addr);
@@ -1037,7 +1038,7 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 					*/
 					
 					if (size > 4096)
-						fprintf(stderr, "warning: width height %d x %d\n", trueWidth, trueHeight);
+						LogDebug("warning: width height %d x %d", trueWidth, trueHeight);
 					
 					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE, Textures(CurrentTex).DramRef);
 					
@@ -1125,9 +1126,9 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 			case G_LOAD_UCODE:
 			case G_SETCIMG:
 			case G_SETZIMG:
-				fprintf(stderr, "Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				LogDebug("Unimplemented display list command %02X encountered in %08X", cmd, segAddr);
 				break;
-				//ret = DisplayList_ErrMsgSet("Unimplemented display list command %02X encountered in %08X\n", cmd, segAddr);
+				//ret = DisplayList_ErrMsgSet("Unimplemented display list command %02X encountered in %08X", cmd, segAddr);
 				//goto err;
 			
 			/*
@@ -1213,20 +1214,20 @@ void DataBlobSegmentsPopulateFromRoomShapeImage(void *roomShapeImage)
 
 void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob)
 {
-	if (!blob->refs) fprintf(stderr, "warning: no refs on %08x\n", blob->originalSegmentAddress);
+	if (!blob->refs) LogDebug("warning: no refs on %08x", blob->originalSegmentAddress);
 	
 	/*
 	if (blob->type == DATA_BLOB_TYPE_TEXTURE
 		|| blob->type == DATA_BLOB_TYPE_PALETTE
 	)
 	{
-		fprintf(stderr, "texture/palette %08x -> %08x w/ %d refs\n"
+		LogDebug("texture/palette %08x -> %08x w/ %d refs"
 			, blob->originalSegmentAddress
 			, blob->updatedSegmentAddress
 			, sb_count(blob->refs)
 		);
 		sb_foreach(blob->refs, {
-			fprintf(stderr, " -> %p, %08x %08x %08x\n"
+			LogDebug(" -> %p, %08x %08x %08x"
 				, (*each)
 				, READ_32_BE(*each, -4)
 				, READ_32_BE(*each, 0)
@@ -1288,7 +1289,7 @@ void DataBlobPrint(struct DataBlob *blob)
 		typeName = 0;
 	
 	if (typeName)
-		fprintf(stderr, "%s %08x%s%s\n"
+		LogDebug("%s %08x%s%s"
 			, typeName
 			, blob->originalSegmentAddress
 			, *extraInfo ? " : " : ""

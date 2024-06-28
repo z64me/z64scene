@@ -82,9 +82,9 @@ int main(int argc, char *argv[])
 			SceneToFilename(scene, argv[2]);
 		SceneFree(scene);
 		if (argc == 3)
-			fprintf(stderr, "successfully wrote test scene\n");
+			LogDebug("successfully wrote test scene");
 		else
-			fprintf(stderr, "successfully processed input scene\n");
+			LogDebug("successfully processed input scene");
 	}
 	SceneWriterCleanup();
 	return 0;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 			tok = strtok(src, "\r\n");
 			if (!tok) break;
 			src = 0;
-			fprintf(stderr, "'%s'\n", tok);
+			LogDebug("'%s'", tok);
 			scene = SceneFromFilenamePredictRooms(tok);
 			/*
 			if (scene->rooms[0].headers[0].meshFormat == 1
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 			SceneFree(scene);
 		}
 		FileFree(file);
-		fprintf(stderr, "successfully wrote everything\n");
+		LogDebug("successfully wrote everything");
 		SceneWriterCleanup();
 		return 0;
 	}

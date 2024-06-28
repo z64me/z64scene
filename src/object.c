@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "logging.h"
 #include "object.h"
 #include "misc.h"
 
@@ -133,7 +134,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 			continue;
 		
 		// this may be a skeleton
-		fprintf(stderr, "skeleton at %08x, %d limbs\n"
+		LogDebug("skeleton at %08x, %d limbs"
 			, skeletonHeaderAddr, numLimbs
 		);
 		sb_push(obj->skeletons, ((struct ObjectSkeleton){
@@ -201,7 +202,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 		//
 		
 		// is likely an animation
-		fprintf(stderr, "animation at %08x, %d frames\n"
+		LogDebug("animation at %08x, %d frames"
 			, anim.segAddr, anim.numFrames
 		);
 		sb_push(obj->animations, anim);

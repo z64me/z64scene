@@ -7,6 +7,7 @@
 #include <ctype.h>
 #include <ftw.h>
 
+#include "logging.h"
 #include "misc.h"
 #include "file.h"
 
@@ -353,9 +354,9 @@ sb_array(char *, FileListFilterByWithVanilla)(sb_array(char *, list), const char
 	sb_array(char *, objects) = FileListSortById(FileListFilterBy(list, filterA, vanillaSlash));
 	sb_array(char *, merged) = FileListMergeVanilla(objects, objectsVanilla);
 	
-	//fprintf(stderr, "objectsVanilla = %p\n", objectsVanilla);
-	//fprintf(stderr, "objects = %p\n", objects);
-	//fprintf(stderr, "merged = %p\n", merged);
+	//LogDebug("objectsVanilla = %p", objectsVanilla);
+	//LogDebug("objects = %p", objects);
+	//LogDebug("merged = %p", merged);
 	//FileListPrintAll(merged);
 	
 	FileListFree(objectsVanilla);
@@ -418,12 +419,12 @@ void FileListPrintAll(sb_array(char *, list))
 	if (sb_contains_ref(list, FileListHasPrefixId))
 	{
 		sb_foreach(list, {
-			fprintf(stderr, "%s, prefix=0x%04x\n", *each, FileListFilePrefix(*each));
+			LogDebug("%s, prefix=0x%04x", *each, FileListFilePrefix(*each));
 		})
 		return;
 	}
 	
 	sb_foreach(list, {
-		fprintf(stderr, "%s\n", *each);
+		LogDebug("%s", *each);
 	})
 }

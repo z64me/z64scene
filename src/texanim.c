@@ -4,6 +4,7 @@
 // texture animation code lives here
 //
 
+#include "logging.h"
 #include "texanim.h"
 #include "misc.h"
 
@@ -422,7 +423,7 @@ static void AnimatedMat_DrawMain(AnimatedMaterial* matAnim, float alphaRatio, te
 		do {
 			segment = matAnim->segment;
 			segmentAbs = ABS_ALT(segment) + 7;
-			//fprintf(stderr, "populate segment 0x%02x type %d params %p\n", segmentAbs, matAnim->type, matAnim->params);
+			//LogDebug("populate segment 0x%02x type %d params %p", segmentAbs, matAnim->type, matAnim->params);
 			matAnimDrawHandlers[matAnim->type](segmentAbs, Lib_SegmentedToVirtual(matAnim->params));
 			matAnim++;
 		} while (segment >= 0);
@@ -929,7 +930,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 			AnimatedMaterial mat = { matAnim->segment, u16r(&matAnim->type) };
 			void *data = n64_segment_get(u32r(&matAnim->params));
 			
-			//fprintf(stderr, "push type %d seg %d\n", mat.type, mat.segment);
+			//LogDebug("push type %d seg %d", mat.type, mat.segment);
 			
 			segment = mat.segment;
 			

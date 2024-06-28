@@ -4,6 +4,7 @@
 // things pertaining to romhack projects
 //
 
+#include "logging.h"
 #include "project.h"
 #include "file.h"
 #include "misc.h"
@@ -106,7 +107,7 @@ struct Project *ProjectNewFromFilename(const char *filename)
 	
 	// print vanilla folder
 	if (proj->vanilla)
-		fprintf(stderr, "vanilla = '%s'\n", proj->vanilla);
+		LogDebug("vanilla = '%s'", proj->vanilla);
 	
 	FileFree(file);
 	return proj;

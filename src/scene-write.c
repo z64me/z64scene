@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "misc.h"
+#include "logging.h"
 #include "cutscene.h"
 
 static struct File *gWork = 0;
@@ -139,7 +140,7 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	gWork->size += blob->sizeBytes;
 	
 	/*
-	fprintf(stderr, "append blob type %d at %08x\n"
+	LogDebug("append blob type %d at %08x"
 		, blob->type, gWork->size - blob->sizeBytes
 	);
 	*/
@@ -356,8 +357,8 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 						WorkblobPush(4);
 						sb_foreach(backgrounds, {
 							WorkblobThisExactlyBegin(0x1C);
-							fprintf(stderr, "     unk00 = %04x\n", each->unk_00);
-							fprintf(stderr, "bgCamIndex = %04x\n", each->bgCamIndex);
+							LogDebug("     unk00 = %04x", each->unk_00);
+							LogDebug("bgCamIndex = %04x", each->bgCamIndex);
 							WorkblobPut16(each->unk_00);
 							WorkblobPut8(each->bgCamIndex);
 							WorkAppendRoomShapeImage(each->image);
@@ -733,7 +734,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 		room->file->filename = Strdup(filename);
 	}
 	
-	fprintf(stderr, "write room '%s'\n", filename);
+	LogDebug("write room '%s'", filename);
 	
 	// prepare fresh work buffer
 	WorkReady();
@@ -813,7 +814,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		scene->file->filename = Strdup(filename);
 	}
 	
-	fprintf(stderr, "write scene '%s'\n", filename);
+	LogDebug("write scene '%s'", filename);
 	
 	// make sure everything is zero
 	for (blob = scene->blobs; blob; blob = blob->next)
@@ -836,7 +837,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	// append mesh blobs
 	datablob_foreach_filter(scene->blobs, == DATA_BLOB_TYPE_MESH, {
 		WorkAppendDatablob(each);
-		//fprintf(stderr, "mesh appended %08x -> %08x\n", each->originalSegmentAddress, each->updatedSegmentAddress);
+		//LogDebug("mesh appended %08x -> %08x", each->originalSegmentAddress, each->updatedSegmentAddress);
 		DataBlobApplyUpdatedSegmentAddresses(each);
 	});
 	

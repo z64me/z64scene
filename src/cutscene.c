@@ -5,6 +5,7 @@
 //
 
 #include "cutscene.h"
+#include "logging.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -58,8 +59,8 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 	int totalEntries = u32r(data); data += 4;
 	cs->frameCount = u32r(data); data += 4;
 	
-	fprintf(stderr, "totalEntries = %08x\n", totalEntries);
-	fprintf(stderr, "frameCount = %08x\n", cs->frameCount);
+	LogDebug("totalEntries = %08x", totalEntries);
+	LogDebug("frameCount = %08x", cs->frameCount);
 	
 	for (int i = 0; i < totalEntries; i++)
 	{
@@ -71,7 +72,7 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 		int cmdEntries = 0;
 		bool hasOneCameraPoint = false;
 		
-		fprintf(stderr, "cmdName = %s, %08x\n", cmdName, (uint32_t)((data - 4) - dataStart));
+		LogDebug("cmdName = %s, %08x", cmdName, (uint32_t)((data - 4) - dataStart));
 		
 		if (!strstr(cmdName, "_CAM_")) { DATA_ASSERT(4) cmdEntries = u32r(data); data += 4; }
 		
@@ -79,7 +80,7 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 		if (cmdEntries > 255 || cmdEntries < 0)
 		{
 			#ifdef DEBUG_CUTSCENES_STRICT
-			Die("cmdEntries = %d, suspicious\n", cmdEntries);
+			Die("cmdEntries = %d, suspicious", cmdEntries);
 			#endif
 			goto L_fail;
 		}
@@ -327,7 +328,7 @@ struct CutsceneOot *CutsceneOotNewFromData(const u8 *data, const u8 *dataEnd)
 				break;
 			
 			default:
-				fprintf(stderr, "unhandled cutscene command '%s'\n", cmdName);
+				LogDebug("unhandled cutscene command '%s'", cmdName);
 				
 				// doesn't have a text-based name, so not in the enum
 				// (most likely not a cutscene command)
@@ -391,7 +392,7 @@ void CutsceneOotToWorkblob(
 			WorkblobPut32(cmdEntries);
 		}
 		
-		fprintf(stderr, "write cmdName = %s\n", cmdName);
+		LogDebug("write cmdName = %s", cmdName);
 		
 		if (cmdType == CS_CAM_STOP)
 			i = totalEntries;
@@ -568,7 +569,7 @@ void CutsceneOotToWorkblob(
 				break;
 			
 			default:
-				//fprintf(stderr, "write unhandled cutscene command '%s'\n", cmdName);
+				//LogDebug("write unhandled cutscene command '%s'", cmdName);
 				sb_foreach(cmd.unimplemented, {
 					for (int i = 0; i < sizeof(each->_bytes); ++i)
 						WorkblobPut8(each->_bytes[i]);
@@ -631,7 +632,7 @@ struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)
 	int totalEntries = u32r(data); data += 4;
 	cs->frameCount = u32r(data); data += 4;
 	
-	fprintf(stderr, "CutsceneMmNewFromData(%p)\n", data);
+	LogDebug("CutsceneMmNewFromData(%p)", data);
 	
 	// Loop over every command list
 	for (int i = 0; i < totalEntries; i++)
@@ -641,7 +642,7 @@ struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)
 		CsCmdMm cmd = { .type = cmdType };
 		int cmdEntries = 0;
 		
-		fprintf(stderr, "cmdName = %s, %08x\n", cmdName, (uint32_t)((data - 4) - dataStart));
+		LogDebug("cmdName = %s, %08x", cmdName, (uint32_t)((data - 4) - dataStart));
 		
 		// cmdEntries is read by every command in mm
 		if (true || !strstr(cmdName, "_CAMERA_")) { cmdEntries = u32r(data); data += 4; }
@@ -954,7 +955,7 @@ struct CutsceneMm *CutsceneMmNewFromData(const u8 *data, const u8 *dataEnd)
 				break;
 			
 			default:
-				fprintf(stderr, "unhandled cutscene command '%s'\n", cmdName);
+				LogDebug("unhandled cutscene command '%s'", cmdName);
 				
 				// doesn't have a text-based name, so not in the enum
 				// (most likely not a cutscene command)
@@ -1015,7 +1016,7 @@ uint32_t CutsceneMmToWorkblob(
 		int cmdEntries = sb_count(cmd.misc); // it's a union, so this counts all types
 		WorkblobPut32(cmdEntries);
 		
-		fprintf(stderr, "write cmdName = %s\n", cmdName);
+		LogDebug("write cmdName = %s", cmdName);
 		
 		// cmdEntries is read by every command in mm
 		
@@ -1251,7 +1252,7 @@ uint32_t CutsceneMmToWorkblob(
 				break;
 			
 			default:
-				//fprintf(stderr, "write unhandled cutscene command '%s'\n", cmdName);
+				//LogDebug("write unhandled cutscene command '%s'", cmdName);
 				sb_foreach(cmd.unimplemented, {
 					for (int i = 0; i < sizeof(each->_bytes); ++i)
 						WorkblobPut8(each->_bytes[i]);
@@ -1269,7 +1270,7 @@ struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataE
 	
 	for (u8 i = 0; i < num; ++i, data += 8)
 	{
-		fprintf(stderr, "append cutscene %08x\n", u32r(data));
+		LogDebug("append cutscene %08x", u32r(data));
 		
 		sb_push(result, ((CutsceneListMm) {
 			.script = CutsceneMmNewFromData(n64_segment_get(u32r(data)), dataEnd),

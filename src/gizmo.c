@@ -12,6 +12,7 @@
 #include "window.h"
 #include "gui.h"
 #include "stretchy_buffer.h"
+#include "logging.h"
 
 // assets
 INCBIN(GfxGizmo, "embed/gfxGizmo.bin");
@@ -144,7 +145,7 @@ static void GizmoMove(struct Gizmo *gizmo, Vec3f *rayPos)
 			*text = '-';
 		}
 		
-		//printf("%s\n", text);
+		//printf("%s", text);
 	}
 	
 	bool isAnyAxisLocked = (axis[0].isLocked || axis[1].isLocked || axis[2].isLocked);
@@ -423,7 +424,7 @@ void GizmoDraw(struct Gizmo *gizmo, struct CameraFly *camera)
 	if (!gfxHead)
 		gfxHead = malloc(128 * sizeof(*gfxHead));
 	
-	//fprintf(stderr, "draw gizmo at %f %f %f\n", UnfoldVec3(gizmo->pos));
+	//LogDebug("draw gizmo at %f %f %f", UnfoldVec3(gizmo->pos));
 	
 	// scale
 	float s = 0.25;
