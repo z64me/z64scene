@@ -865,6 +865,16 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 		}
 	}
 	
+	// masked tri list
+	result->triListMasked = Calloc(result->numPolygons, sizeof(*(result->triListMasked)));
+	for (int i = 0; i < result->numPolygons; ++i)
+		result->triListMasked[i] = (Vec3s) {
+			UNFOLD_ARRAY_3_EXT(uint16_t,
+				result->polyList[i].vtxData,
+				& 0x1fff
+			)
+		};
+	
 	return result;
 }
 
@@ -873,6 +883,9 @@ void CollisionHeaderFree(CollisionHeader *header)
 	free(header->vtxList);
 	free(header->polyList);
 	free(header->surfaceTypeList);
+	
+	if (header->triListMasked)
+		free(header->triListMasked);
 	
 	sb_foreach(header->bgCamList, {
 		if (each->data)

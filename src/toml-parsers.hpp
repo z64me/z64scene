@@ -194,6 +194,10 @@ struct ActorDatabase
 					foreign static SinS(s16angle)
 					foreign static CosS(s16angle)
 				}
+				class Collision {
+					foreign static RaycastSnapToFloor(x, y, z)
+					static RaycastSnapToFloorFailed { -32000 }
+				}
 			)");
 			
 			// properties

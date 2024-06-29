@@ -9,7 +9,8 @@
 			"*.tcc": "c",
 			"cutscene.h": "c",
 			"stretchy_buffer.h": "c",
-			"logging.h": "c"
+			"logging.h": "c",
+			"spawncutscenetable": "c"
 		}
 	}
 }

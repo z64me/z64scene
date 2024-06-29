@@ -34,6 +34,11 @@ struct CutsceneOot;
 
 #define UNFOLD_ARRAY_3(TYPE, ADDR) ((TYPE*)ADDR)[0], ((TYPE*)ADDR)[1], ((TYPE*)ADDR)[2]
 
+#define UNFOLD_ARRAY_3_EXT(TYPE, ADDR, ACTION) \
+	(((TYPE*)ADDR)[0]) ACTION, \
+	(((TYPE*)ADDR)[1]) ACTION, \
+	(((TYPE*)ADDR)[2]) ACTION
+
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
 #define MAX3(A, B, C) MAX(A, MAX(B, C))
 
@@ -236,6 +241,7 @@ typedef struct {
 	/* 0x24 */ uint16_t numWaterBoxes;
 	/* 0x28 */ WaterBox* waterBoxes; // TODO make sb_array later so it can be resized
 	
+	Vec3s *triListMasked; // copy of polyList but only tris w/ bitmasks applied
 	uint32_t originalSegmentAddress;
 	int numSurfaceTypes;
 	int numExits;

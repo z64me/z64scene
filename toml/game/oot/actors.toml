@@ -4286,14 +4286,13 @@
 					[ 80, 0x4000 ], [ 80, 0x6CCC ], [ 80, 0x9333 ],
 					[ 80, 0xACCC ], [ 80, 0xC666 ], [ 60, 0xE000 ],
 				]
-				for (i in 0...pairs.count) {
-					var pair = pairs[i]
+				for (pair in pairs) {
 					var distance = pair[0]
 					var angle = pair[1]
 					positions.add([
 						distance * Math.CosS(angle),
 						0,
-						distance * Math.SinS(angle)
+						-distance * Math.SinS(angle)
 					])
 				}
 			} else {
@@ -4311,9 +4310,23 @@
 				}
 			}
 			
-			// TODO raycasting
-			for (pos in positions) {
-				pos[1] = 30
+			// raycasting
+			// (walks backwards so it's safe to delete unused positions)
+			for (pos in positions[-1..0]) {
+				var y = Collision.RaycastSnapToFloor(
+					Inst.Xpos + pos[0],
+					Inst.Ypos + pos[1] + 30,
+					Inst.Zpos + pos[2]
+				)
+				
+				// no floor beneath it
+				if (y == Collision.RaycastSnapToFloorFailed) {
+					//System.print("raycast failed : %(y)")
+					positions.remove(pos)
+					continue
+				}
+				
+				pos[1] = y - Inst.Ypos
 			}
 			
 			// store positions list in udata

@@ -1274,6 +1274,10 @@ struct ActorRenderCode *gRenderCodeHandle = 0;
 
 static void RenderCodeWriteFn(WrenVM* vm, const char* text)
 {
+	// skip messages consisting only of whitespace
+	if (strspn(text, "\r\n\t ") == strlen(text))
+		return;
+	
 	LogDebug("%s", text);
 }
 
@@ -1445,6 +1449,24 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, coss(v) * (1.0 / 32767.0));
 	}
+	void CollisionRaycastSnapToFloor(WrenVM *vm) {
+		Vec3f point = {
+			wrenGetSlotDouble(vm, 1),
+			wrenGetSlotDouble(vm, 2),
+			wrenGetSlotDouble(vm, 3)
+		};
+		struct Scene *scene = *gSceneP;
+		CollisionHeader *collision = &scene->collisions[0];
+		wrenSetSlotDouble(vm, 0,
+			Col3D_SnapToFloor(
+				point,
+				collision->vtxList,
+				collision->numVertices,
+				collision->triListMasked,
+				collision->numPolygons
+			)
+		);
+	}
 	
 	void DrawSkeleton(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
@@ -1504,6 +1526,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
 			else if (streq(signature, "CosS(_)")) return MathCosS;
+		}
+		else if (streq(className, "Collision")) {
+			if (streq(signature, "RaycastSnapToFloor(_,_,_)")) return CollisionRaycastSnapToFloor;
 		}
 	}
 	

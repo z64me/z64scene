@@ -2846,6 +2846,58 @@ RayLine RayLine_New(Vec3f start, Vec3f end) {
 	return (RayLine) { start, end, FLT_MAX };
 }
 
+float Col3D_SnapToFloor(Vec3f p, Vec3s *verts, int numVerts, Vec3s *tris, int numTris)
+{
+	float nearestY = -32000; // Collision.RaycastSnapToFloorFailed
+	float nearestDelta = FLT_MAX;
+	
+	for (int i = 0; i < numTris; ++i, ++tris)
+	{
+		Vec3f a = { UnfoldVec3(verts[tris->x]) };
+		Vec3f b = { UnfoldVec3(verts[tris->y]) };
+		Vec3f c = { UnfoldVec3(verts[tris->z]) };
+		
+		// determine whether point is above triangle
+		float d1, d2, d3;
+		bool hasNegative, hasPositive;
+		
+		d1 = (p.x - b.x) * (a.z - b.z) - (a.x - b.x) * (p.z - b.z);
+		d2 = (p.x - c.x) * (b.z - c.z) - (b.x - c.x) * (p.z - c.z);
+		d3 = (p.x - a.x) * (c.z - a.z) - (c.x - a.x) * (p.z - a.z);
+		
+		hasNegative = (d1 < 0) || (d2 < 0) || (d3 < 0);
+		hasPositive = (d1 > 0) || (d2 > 0) || (d3 > 0);
+		
+		if (hasNegative && hasPositive)
+			continue;
+		
+		// determine which part of triangle is directly below point
+		Vec3f ab = Vec3_Minus(b, a);
+		Vec3f ac = Vec3_Minus(c, a);
+		Vec3f normal = {
+			ab.y * ac.z - ab.z * ac.y,
+			ab.z * ac.x - ab.x * ac.z,
+			ab.x * ac.y - ab.y * ac.x
+		};
+		float D = -(normal.x * a.x + normal.y * a.y + normal.z * a.z);
+		float thisY = -(normal.x * p.x + normal.z * p.z + D) / normal.y;
+		float thisDelta = p.y - thisY;
+		
+		// triangle intersection is above point
+		if (thisY > p.y + 1)
+			continue;
+		
+		// choose nearest
+		if (thisDelta < nearestDelta)
+		{
+			nearestY = thisY;
+			nearestDelta = thisDelta;
+		}
+	}
+	
+	return nearestY;
+}
+
 bool Col3D_LineVsTriangle(RayLine* ray, Triangle* tri, Vec3f* outPos, Vec3f* outNor, bool cullBackface, bool cullFrontface) {
 	Vec3f vertex0 = tri->v[0];
 	Vec3f vertex1 = tri->v[1];

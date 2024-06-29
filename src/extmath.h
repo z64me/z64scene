@@ -248,6 +248,8 @@ typedef struct {
 	dest.y = a.y - b.y; \
 	dest.z = a.z - b.z
 
+#define Vec3_Minus(a, b) (Vec3f) { a.x - b.x, a.y - b.y, a.z - b.z }
+
 //extern const f32 EPSILON;
 //extern f32 gDeltaTime;
 
@@ -604,6 +606,7 @@ bool Col3D_LineVsTriangle(RayLine* ray, Triangle* tri, Vec3f* outPos, Vec3f* out
 bool Col3D_LineVsTriBuffer(RayLine* ray, TriBuffer* triBuf, Vec3f* outPos, Vec3f* outNor);
 bool Col3D_LineVsCylinder(RayLine* ray, Cylinder* cyl, Vec3f* outPos);
 bool Col3D_LineVsSphere(RayLine* ray, Sphere* sph, Vec3f* outPos);
+float Col3D_SnapToFloor(Vec3f p, Vec3s *verts, int numVerts, Vec3s *tris, int numTris);
 #endif // endregion: collision
 
 #endif
