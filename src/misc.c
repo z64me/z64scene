@@ -868,12 +868,23 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	// masked tri list
 	result->triListMasked = Calloc(result->numPolygons, sizeof(*(result->triListMasked)));
 	for (int i = 0; i < result->numPolygons; ++i)
+	{
+		uint16_t flags = 0;
+		
+		for (int k = 0; k < 3; ++k)
+			flags |= result->polyList[i].vtxData[k];
+		
+		// collision with this flag is ignored by most entities
+		if (flags & 0x4000)
+			continue;
+		
 		result->triListMasked[i] = (Vec3s) {
 			UNFOLD_ARRAY_3_EXT(uint16_t,
 				result->polyList[i].vtxData,
 				& 0x1fff
 			)
 		};
+	}
 	
 	return result;
 }

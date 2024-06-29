@@ -2879,12 +2879,15 @@ float Col3D_SnapToFloor(Vec3f p, Vec3s *verts, int numVerts, Vec3s *tris, int nu
 			ab.z * ac.x - ab.x * ac.z,
 			ab.x * ac.y - ab.y * ac.x
 		};
+		// prevent division by 0, triangle is vertical anyway
+		if (normal.y <= 0.00001 && normal.y >= -0.00001)
+			continue;
 		float D = -(normal.x * a.x + normal.y * a.y + normal.z * a.z);
 		float thisY = -(normal.x * p.x + normal.z * p.z + D) / normal.y;
 		float thisDelta = p.y - thisY;
 		
 		// triangle intersection is above point
-		if (thisY > p.y + 1)
+		if (rintf(thisY) >= rintf(p.y))
 			continue;
 		
 		// choose nearest
