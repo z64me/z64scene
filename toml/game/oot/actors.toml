@@ -3641,6 +3641,74 @@
 	Category = "0"
 	Notes = "0x0010 = Can Toggle\n  0x0020 = Reset when not pressed //Floor,Rusted switches. Zeroes switch flag\n  0x0040 = Triggers all switches with same switch flag //crystal switches only?\n  0x0080 = Frozen in Ice\n  0x3F00 = Switch Flag"
 	Objects = [3]
+	RenderCode = """
+		var type = Props.Type
+		// TODO different addresses for different game versions
+		if (Inst.PropertyChanged) {
+			if (type == 0) { // floor switch
+				var floorSwitchDLists = [
+					0x05005800, // Syms.gFloorSwitch1DL
+					0x05006170, // Syms.gFloorSwitch3DL
+					0x05005d50, // Syms.gFloorSwitch2DL
+					0x05005d50, // Syms.gFloorSwitch2DL
+				]
+				Udata.mesh = floorSwitchDLists[0] // TODO subtype
+			} else if (type == 1) { // rusty floor switch
+				Udata.mesh = 0x05005ad0 // Syms.gRustyFloorSwitchDL
+			} else if (type == 2) { // eye switch
+				var eyeDlists = [
+					0x05006610, // Syms.gEyeSwitch1DL
+					0x05006810, // Syms.gEyeSwitch2DL
+				]
+				var eyeTextures = [
+					[
+						0x0500a8a0, // Syms.gEyeSwitchGoldOpenTex
+						0x050098a0, // Syms.gEyeSwitchGoldOpeningTex
+						0x0500a0a0, // Syms.gEyeSwitchGoldClosingTex
+						0x050090a0, // Syms.gEyeSwitchGoldClosedTex
+					],
+					[
+						0x0500b0a0, // Syms.gEyeSwitchSilverOpenTex
+						0x0500b8a0, // Syms.gEyeSwitchSilverHalfTex
+						0x0500c0a0, // Syms.gEyeSwitchSilverClosedTex
+						0x0500c0a0, // Syms.gEyeSwitchSilverClosedTex
+					],
+				]
+				Udata.mesh = eyeDlists[0] // TODO subtype
+			} else if (type == 3 || type == 4) { // crystal switch
+				var xluDLists = [
+					0x05006e60, // Syms.gCrystalSwitchCoreXluDL
+					0x05007488, // Syms.gCrystalSwitchDiamondXluDL
+					-1,
+					-1,
+					0x05006e60, // Syms.gCrystalSwitchCoreXluDL
+				]
+				var opaDLists = [
+					0x05006d10, // Syms.gCrystalSwitchCoreOpaDL
+					0x05007340, // Syms.gCrystalSwitchDiamondOpaDL
+					-1,
+					-1,
+					0x05006d10, // Syms.gCrystalSwitchCoreOpaDL
+				]
+				Udata.mesh = [ // TODO subtypes
+					opaDLists[0],
+					xluDLists[0],
+				]
+			}
+		}
+		
+		if (type >= 0 && type <= 4) {
+			if (Udata.mesh is List) {
+				for (mesh in Udata.mesh) {
+					if (mesh != -1) {
+						Draw.Mesh(mesh)
+					}
+				}
+			} else if (Udata.mesh != -1) {
+				Draw.Mesh(Udata.mesh)
+			}
+		}
+	"""
 	[[Actor.Property]]
 		Mask = 16128
 		Name = "Switch Flag"
@@ -3662,8 +3730,8 @@
 		Name = "Frozen"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 49167
-		Name = "Presets"
+		Mask = 0xF
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Floor"],
