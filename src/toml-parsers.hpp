@@ -196,6 +196,8 @@ struct ActorDatabase
 					foreign static SetGlobalRotation(xrot, yrot, zrot)
 					foreign static SetPrimColor(r, g, b)
 					foreign static SetPrimColor(r, g, b, a)
+					foreign static SetEnvColor(r, g, b)
+					foreign static SetEnvColor(r, g, b, a)
 				}
 				class Math {
 					foreign static SinS(s16angle)

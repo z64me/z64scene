@@ -1063,6 +1063,15 @@
 	Index = 76
 	Category = "6"
 	Objects = [49]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Mesh(0x06000340) // gBombFlowerLeavesDL
+		Draw.Mesh(0x06000530) // gBombFlowerBaseLeavesDL
+		Draw.SetLocalPosition(0, 1000, 0)
+		Draw.SetPrimColor(200, 255, 200)
+		Draw.SetEnvColor(0/*flashIntensity*/, 20, 10)
+		Draw.Mesh(0x06000408) // gBombFlowerBombAndSparkDL
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"

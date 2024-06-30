@@ -1492,6 +1492,22 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			wrenGetSlotDouble(vm, 4) // a
 		);
 	}
+	void DrawSetEnvColor3(WrenVM* vm) {
+		gDPSetEnvColor(POLY_OPA_DISP++,
+			wrenGetSlotDouble(vm, 1), // r
+			wrenGetSlotDouble(vm, 2), // g
+			wrenGetSlotDouble(vm, 3), // b
+			255 // a
+		);
+	}
+	void DrawSetEnvColor4(WrenVM* vm) {
+		gDPSetEnvColor(POLY_OPA_DISP++,
+			wrenGetSlotDouble(vm, 1), // r
+			wrenGetSlotDouble(vm, 2), // g
+			wrenGetSlotDouble(vm, 3), // b
+			wrenGetSlotDouble(vm, 4) // a
+		);
+	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, sins(v) * (1.0 / 32767.0));
@@ -1583,6 +1599,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;
 			else if (streq(signature, "SetPrimColor(_,_,_)")) return DrawSetPrimColor3;
 			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
+			else if (streq(signature, "SetEnvColor(_,_,_)")) return DrawSetEnvColor3;
+			else if (streq(signature, "SetEnvColor(_,_,_,_)")) return DrawSetEnvColor4;
 		}
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
