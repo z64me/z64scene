@@ -34,6 +34,7 @@ enum RenderGroup
 
 static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
 static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
+static double sGameplayFrames = 0;
 
 // a slanted triangular prism that points in one direction
 unsigned char meshPrismArrow[] = {
@@ -1499,6 +1500,16 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			wrenGetSlotDouble(vm, 4) // a
 		);
 	}
+	void DrawSetPrimColor6(WrenVM* vm) {
+		gDPSetPrimColor((*sRenderCodeSegment)++,
+			wrenGetSlotDouble(vm, 1), // minlevel
+			wrenGetSlotDouble(vm, 2), // lodfrac
+			wrenGetSlotDouble(vm, 3), // r
+			wrenGetSlotDouble(vm, 4), // g
+			wrenGetSlotDouble(vm, 5), // b
+			wrenGetSlotDouble(vm, 6) // a
+		);
+	}
 	void DrawSetEnvColor3(WrenVM* vm) {
 		gDPSetEnvColor((*sRenderCodeSegment)++,
 			wrenGetSlotDouble(vm, 1), // r
@@ -1556,6 +1567,36 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		Matrix_Pop();
 		//wrenSetSlotDouble(vm, 0, 0x01000040);
 	}
+	void DrawTwoTexScroll8(WrenVM *vm) {
+		void *result = Gfx_TwoTexScroll(
+			G_TX_RENDERTILE,
+			wrenGetSlotDouble(vm, 1),
+			wrenGetSlotDouble(vm, 2),
+			wrenGetSlotDouble(vm, 3),
+			wrenGetSlotDouble(vm, 4),
+			1,
+			wrenGetSlotDouble(vm, 5),
+			wrenGetSlotDouble(vm, 6),
+			wrenGetSlotDouble(vm, 7),
+			wrenGetSlotDouble(vm, 8)
+		);
+		gSPDisplayList((*sRenderCodeSegment)++, result);
+	}
+	void DrawTwoTexScroll10(WrenVM *vm) {
+		void *result = Gfx_TwoTexScroll(
+			wrenGetSlotDouble(vm, 1),
+			wrenGetSlotDouble(vm, 2),
+			wrenGetSlotDouble(vm, 3),
+			wrenGetSlotDouble(vm, 4),
+			wrenGetSlotDouble(vm, 5),
+			wrenGetSlotDouble(vm, 6),
+			wrenGetSlotDouble(vm, 7),
+			wrenGetSlotDouble(vm, 8),
+			wrenGetSlotDouble(vm, 9),
+			wrenGetSlotDouble(vm, 10)
+		);
+		gSPDisplayList((*sRenderCodeSegment)++, result);
+	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, sins(v) * (1.0 / 32767.0));
@@ -1567,6 +1608,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void MathDegToBin(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, DegToBin(v));
+	}
+	void GlobalGameplayFrames(WrenVM* vm) {
+		wrenSetSlotDouble(vm, 0, sGameplayFrames);
 	}
 	void CollisionRaycastSnapToFloor(WrenVM *vm) {
 		Vec3f point = {
@@ -1647,6 +1691,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;
 			else if (streq(signature, "SetPrimColor(_,_,_)")) return DrawSetPrimColor3;
 			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
+			else if (streq(signature, "SetPrimColor(_,_,_,_,_,_)")) return DrawSetPrimColor6;
 			else if (streq(signature, "SetEnvColor(_,_,_)")) return DrawSetEnvColor3;
 			else if (streq(signature, "SetEnvColor(_,_,_,_)")) return DrawSetEnvColor4;
 			
@@ -1655,6 +1700,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Matrix(_)")) return DrawMatrix;
 			else if (streq(signature, "MatrixNewFromBillboardSphere()")) return DrawMatrixNewFromBillboardSphere;
 			else if (streq(signature, "MatrixNewFromBillboardCylinder()")) return DrawMatrixNewFromBillboardCylinder;
+			else if (streq(signature, "TwoTexScroll(_,_,_,_,_,_,_,_)")) return DrawTwoTexScroll8;
+			else if (streq(signature, "TwoTexScroll(_,_,_,_,_,_,_,_,_,_)")) return DrawTwoTexScroll10;
 		}
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
@@ -1663,6 +1710,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		}
 		else if (streq(className, "Collision")) {
 			if (streq(signature, "RaycastSnapToFloor(_,_,_)")) return CollisionRaycastSnapToFloor;
+		}
+		else if (streq(className, "Global")) {
+			if (streq(signature, "GameplayFrames")) return GlobalGameplayFrames;
 		}
 	}
 	
@@ -1890,7 +1940,6 @@ void WindowMainLoop(struct Scene *scene)
 		//LogDebug("-- loop ----");
 		
 		{
-			static double sGameplayFrames = 0;
 			sGameplayFrames += gInput.delta_time_sec * (20.0);
 			
 			TexAnimSetGameplayFrames(sGameplayFrames);
@@ -2044,6 +2093,9 @@ void WindowMainLoop(struct Scene *scene)
 			
 			// store a copy in Matrix format for later
 			gBillboardMatrix[0] = inverse_mv;
+			Matrix cyl = inverse_mv;
+			cyl.xy = 0; cyl.yy = 1; cyl.zy = 0;
+			gBillboardMatrix[1] = cyl;
 			
 			// convert to n64 matrix format
 			mat44_to_matn64(billboards, (void*)&inverse_mv);

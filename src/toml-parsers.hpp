@@ -196,6 +196,7 @@ struct ActorDatabase
 					foreign static SetGlobalRotation(xrot, yrot, zrot)
 					foreign static SetPrimColor(r, g, b)
 					foreign static SetPrimColor(r, g, b, a)
+					foreign static SetPrimColor(minlevel, lodfrac, r, g, b, a)
 					foreign static SetEnvColor(r, g, b)
 					foreign static SetEnvColor(r, g, b, a)
 					foreign static BeginSegment(segment)
@@ -203,6 +204,8 @@ struct ActorDatabase
 					foreign static Matrix(matrix)
 					foreign static MatrixNewFromBillboardSphere()
 					foreign static MatrixNewFromBillboardCylinder()
+					foreign static TwoTexScroll(x1, y1, w1, h1, x2, y2, w2, h2)
+					foreign static TwoTexScroll(tile1, x1, y1, w1, h1, tile2, x2, y2, w2, h2)
 				}
 				class Math {
 					foreign static SinS(s16angle)
@@ -212,6 +215,9 @@ struct ActorDatabase
 				class Collision {
 					foreign static RaycastSnapToFloor(x, y, z)
 					static RaycastSnapToFloorFailed { -32000 }
+				}
+				class Global {
+					foreign static GameplayFrames
 				}
 			)");
 			
