@@ -179,6 +179,12 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
 			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
 			struct Instance *inst = gGui->selectedInstance;
+			
+			inst->snapAngle = (Vec3f) {
+				UNFOLD_VEC3_EXT(result, * (32768.0f / M_PI))
+			};
+			inst->prev.positionSnapped = true;
+			/*
 			float conv = 57.2958 * 182.044444444444f;
 			
 			inst->xrot = result.x * conv;
@@ -191,6 +197,7 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 			inst->zrot -= 90 * 182.044444444444;
 			//inst->yrot -= 90 * 182.044444444444;
 			// TODO this should come from the TOML
+			*/
 		}
 	}
 }
@@ -1391,6 +1398,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void InstGetYrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->yrot); }
 	void InstGetZrot(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->zrot); }
 	void InstGetUuid(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->prev.uuid); }
+	void InstGetSnapAngleX(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->snapAngle.x); }
+	void InstGetSnapAngleY(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->snapAngle.y); }
+	void InstGetSnapAngleZ(WrenVM* vm) { wrenSetSlotDouble(vm, 0, WREN_UDATA->snapAngle.z); }
 	void InstGetPositionChanged(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
 		const float threshold = 0.01f;
@@ -1414,6 +1424,17 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		inst->prev.xrot = inst->xrot;
 		inst->prev.yrot = inst->yrot;
 		inst->prev.zrot = inst->zrot;
+	}
+	void InstGetPositionSnapped(WrenVM* vm) {
+		struct Instance *inst = WREN_UDATA;
+		wrenSetSlotBool(vm, 0, inst->prev.positionSnapped);
+		inst->prev.positionSnapped = false;
+	}
+	void InstSetRotation(WrenVM* vm) {
+		struct Instance *inst = WREN_UDATA;
+		inst->xrot = wrenGetSlotDouble(vm, 1);
+		inst->yrot = wrenGetSlotDouble(vm, 2);
+		inst->zrot = wrenGetSlotDouble(vm, 3);
 	}
 	
 	void DrawSetScale3(WrenVM* vm) {
@@ -1492,6 +1513,10 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, coss(v) * (1.0 / 32767.0));
 	}
+	void MathDegToBin(WrenVM* vm) {
+		double v = wrenGetSlotDouble(vm, 1);
+		wrenSetSlotDouble(vm, 0, DegToBin(v));
+	}
 	void CollisionRaycastSnapToFloor(WrenVM *vm) {
 		Vec3f point = {
 			wrenGetSlotDouble(vm, 1),
@@ -1551,8 +1576,13 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Yrot")) return InstGetYrot;
 			else if (streq(signature, "Zrot")) return InstGetZrot;
 			else if (streq(signature, "Uuid")) return InstGetUuid;
+			else if (streq(signature, "SnapAngleX")) return InstGetSnapAngleX;
+			else if (streq(signature, "SnapAngleY")) return InstGetSnapAngleY;
+			else if (streq(signature, "SnapAngleZ")) return InstGetSnapAngleZ;
 			else if (streq(signature, "PositionChanged")) return InstGetPositionChanged;
 			else if (streq(signature, "PropertyChanged")) return InstGetPropertyChanged;
+			else if (streq(signature, "PositionSnapped")) return InstGetPositionSnapped;
+			else if (streq(signature, "SetRotation(_,_,_)")) return InstSetRotation;
 			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {
@@ -1569,6 +1599,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
 			else if (streq(signature, "CosS(_)")) return MathCosS;
+			else if (streq(signature, "DegToBin(_)")) return MathDegToBin;
 		}
 		else if (streq(className, "Collision")) {
 			if (streq(signature, "RaycastSnapToFloor(_,_,_)")) return CollisionRaycastSnapToFloor;

@@ -328,6 +328,7 @@ struct Instance
 	uint16_t  zrot;
 	uint16_t  params;
 	
+	Vec3f     snapAngle;
 	Vec3f     pos;
 	uint8_t   tab; // enum InstanceTab
 	
@@ -352,6 +353,7 @@ struct Instance
 		uint32_t params;
 		uint32_t uuid;
 		Vec3f    pos;
+		bool     positionSnapped;
 	} prev;
 };
 

@@ -3697,6 +3697,11 @@
 			}
 		}
 		
+		// TODO this should be done some other way
+		if (Inst.PositionSnapped && false) {
+			Inst.SetRotation(Inst.SnapAngleX, Inst.SnapAngleY, Inst.SnapAngleZ - Math.DegToBin(90))
+		}
+		
 		if (type >= 0 && type <= 4) {
 			if (Udata.mesh is List) {
 				for (mesh in Udata.mesh) {

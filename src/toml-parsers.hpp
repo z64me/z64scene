@@ -163,7 +163,7 @@ struct ActorDatabase
 			static char *work = 0;
 			
 			if (!work)
-				work = (char*)malloc(4096);
+				work = (char*)malloc(4096 * 1024); // throw 4mib at it
 			
 			char *buf = work;
 			*buf = '\0';
@@ -177,7 +177,13 @@ struct ActorDatabase
 					foreign static Zrot
 					foreign static PositionChanged
 					foreign static PropertyChanged
+					foreign static PositionSnapped
+					foreign static SnapAngleX
+					foreign static SnapAngleY
+					foreign static SnapAngleZ
 					foreign static Uuid
+					
+					foreign static SetRotation(xrot, yrot, zrot)
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)
@@ -193,6 +199,7 @@ struct ActorDatabase
 				class Math {
 					foreign static SinS(s16angle)
 					foreign static CosS(s16angle)
+					foreign static DegToBin(degrees)
 				}
 				class Collision {
 					foreign static RaycastSnapToFloor(x, y, z)
