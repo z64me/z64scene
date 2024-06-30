@@ -198,6 +198,11 @@ struct ActorDatabase
 					foreign static SetPrimColor(r, g, b, a)
 					foreign static SetEnvColor(r, g, b)
 					foreign static SetEnvColor(r, g, b, a)
+					foreign static BeginSegment(segment)
+					foreign static EndSegment()
+					foreign static Matrix(matrix)
+					foreign static MatrixNewFromBillboardSphere()
+					foreign static MatrixNewFromBillboardCylinder()
 				}
 				class Math {
 					foreign static SinS(s16angle)

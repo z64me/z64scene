@@ -2298,6 +2298,60 @@ MtxN64* Matrix_NewMtxN64() {
 	return Matrix_ToMtx(n64_graph_alloc(sizeof(MtxN64))); // previously x_alloc
 }
 
+/**
+ * Changes the 3x3 part of the current matrix to `mf` * S, where S is the scale in the current matrix.
+ *
+ * In details, S is a diagonal where each coefficient is the norm of the column in the 3x3 current matrix.
+ * The 3x3 part can then be written as R * S where R has its columns normalized.
+ * Since R is typically a rotation matrix, and the 3x3 part is changed from R * S to `mf` * S, this operation can be
+ * seen as replacing the R rotation with `mf`, hence the function name.
+ */
+void Matrix_ReplaceRotation(Matrix* mf) {
+	Matrix* cmf = gCurrentMatrix;
+	f32 acc;
+	f32 temp;
+	f32 curColNorm;
+	
+	// compute the Euclidean norm of the first column of the current matrix
+	acc = cmf->xx;
+	acc *= acc;
+	temp = cmf->yx;
+	acc += SQ(temp);
+	temp = cmf->zx;
+	acc += SQ(temp);
+	curColNorm = sqrtf(acc);
+	
+	cmf->xx = mf->xx * curColNorm;
+	cmf->yx = mf->yx * curColNorm;
+	cmf->zx = mf->zx * curColNorm;
+	
+	// second column
+	acc = cmf->xy;
+	acc *= acc;
+	temp = cmf->yy;
+	acc += SQ(temp);
+	temp = cmf->zy;
+	acc += SQ(temp);
+	curColNorm = sqrtf(acc);
+	
+	cmf->xy = mf->xy * curColNorm;
+	cmf->yy = mf->yy * curColNorm;
+	cmf->zy = mf->zy * curColNorm;
+	
+	// third column
+	acc = cmf->xz;
+	acc *= acc;
+	temp = cmf->yz;
+	acc += SQ(temp);
+	temp = cmf->zz;
+	acc += SQ(temp);
+	curColNorm = sqrtf(acc);
+	
+	cmf->xz = mf->xz * curColNorm;
+	cmf->yz = mf->yz * curColNorm;
+	cmf->zz = mf->zz * curColNorm;
+}
+
 void Matrix_MtxFMtxFMult(Matrix* mfA, Matrix* mfB, Matrix* dest) {
 	f32 cx;
 	f32 cy;

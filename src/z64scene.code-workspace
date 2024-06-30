@@ -10,7 +10,12 @@
 			"cutscene.h": "c",
 			"stretchy_buffer.h": "c",
 			"logging.h": "c",
-			"spawncutscenetable": "c"
+			"spawncutscenetable": "c",
+			"chrono": "c",
+			"random": "c",
+			"limits": "c",
+			"valarray": "c",
+			"functional": "c"
 		}
 	}
 }

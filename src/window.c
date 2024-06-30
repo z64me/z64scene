@@ -1340,6 +1340,9 @@ static double sXrotGlobal = 0;
 static double sYrotGlobal = 0;
 static double sZrotGlobal = 0;
 static Vec3f sPosGlobal = {0};
+static GbiGfx **sRenderCodeSegment = 0;
+static void *gRenderCodeBillboards = 0;
+static Matrix gBillboardMatrix[2];
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	WrenVM* vm
 	, const char* module
@@ -1356,7 +1359,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	static double sZposLocal = 0;
 	static struct Object *sObject = 0;
 	
-	void ReadyMatrix(struct Instance *inst, bool shouldPop) {
+	void ReadyMatrix(struct Instance *inst, bool shouldPop, bool shouldUse) {
 		Matrix_Push(); {
 			Matrix_Translate(UNFOLD_VEC3(sPosGlobal), MTXMODE_NEW);
 			Matrix_RotateY_s(sYrotGlobal, MTXMODE_APPLY);
@@ -1365,7 +1368,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
 			Matrix_Translate(sXposLocal, sYposLocal, sZposLocal, MTXMODE_APPLY);
 			
-			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+			if (shouldUse) {
+				gSPMatrix((*sRenderCodeSegment)++, Matrix_NewMtxN64(),
+					G_MTX_MODELVIEW | G_MTX_LOAD
+				);
+			}
 		} if (shouldPop) Matrix_Pop();
 	}
 	
@@ -1468,12 +1475,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		uint32_t address = wrenGetSlotDouble(vm, 1);
 		struct Instance *inst = WREN_UDATA;
 		//LogDebug("address = %08x", address);
-		ReadyMatrix(inst, true);
-		gSPDisplayList(POLY_OPA_DISP++, address);
+		ReadyMatrix(inst, true, true);
+		gSPDisplayList((*sRenderCodeSegment)++, address);
 		gRenderCodeDrewSomething = true;
 	}
 	void DrawSetPrimColor3(WrenVM* vm) {
-		gDPSetPrimColor(POLY_OPA_DISP++,
+		gDPSetPrimColor((*sRenderCodeSegment)++,
 			0, // minlevel
 			0, // lodfrac
 			wrenGetSlotDouble(vm, 1), // r
@@ -1483,7 +1490,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 	}
 	void DrawSetPrimColor4(WrenVM* vm) {
-		gDPSetPrimColor(POLY_OPA_DISP++,
+		gDPSetPrimColor((*sRenderCodeSegment)++,
 			0, // minlevel
 			0, // lodfrac
 			wrenGetSlotDouble(vm, 1), // r
@@ -1493,7 +1500,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 	}
 	void DrawSetEnvColor3(WrenVM* vm) {
-		gDPSetEnvColor(POLY_OPA_DISP++,
+		gDPSetEnvColor((*sRenderCodeSegment)++,
 			wrenGetSlotDouble(vm, 1), // r
 			wrenGetSlotDouble(vm, 2), // g
 			wrenGetSlotDouble(vm, 3), // b
@@ -1501,12 +1508,53 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 	}
 	void DrawSetEnvColor4(WrenVM* vm) {
-		gDPSetEnvColor(POLY_OPA_DISP++,
+		gDPSetEnvColor((*sRenderCodeSegment)++,
 			wrenGetSlotDouble(vm, 1), // r
 			wrenGetSlotDouble(vm, 2), // g
 			wrenGetSlotDouble(vm, 3), // b
 			wrenGetSlotDouble(vm, 4) // a
 		);
+	}
+	void DrawBeginSegment(WrenVM *vm) {
+		static GbiGfx *result = 0;
+		result = n64_graph_alloc(0x100);
+		sRenderCodeSegment = &result;
+		int segmentNumber = wrenGetSlotDouble(vm, 1);
+		gSPSegment(POLY_OPA_DISP++, segmentNumber, result);
+		gSPSegment(POLY_XLU_DISP++, segmentNumber, result);
+	}
+	void DrawEndSegment(WrenVM *vm) {
+		gSPEndDisplayList(*sRenderCodeSegment);
+		sRenderCodeSegment = &POLY_OPA_DISP;
+	}
+	void DrawMatrix(WrenVM *vm) {
+		uint32_t indexOrAddress = wrenGetSlotDouble(vm, 1);
+		// is index, rather than segment address
+		if (indexOrAddress < 0x01000000) {
+			// TODO referencing matrices by index rather than by address
+		}
+		//LogDebug("draw matrix %08x", indexOrAddress);
+		gSPMatrix((*sRenderCodeSegment)++, indexOrAddress, G_MTX_MODELVIEW | G_MTX_LOAD);
+	}
+	void DrawMatrixNewFromBillboardSphere(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		ReadyMatrix(inst, false, false);
+		Matrix_ReplaceRotation(&gBillboardMatrix[0]);
+		gSPMatrix((*sRenderCodeSegment)++, Matrix_NewMtxN64(),
+			G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW
+		);
+		Matrix_Pop();
+		//wrenSetSlotDouble(vm, 0, 0x01000000);
+	}
+	void DrawMatrixNewFromBillboardCylinder(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		ReadyMatrix(inst, false, false);
+		Matrix_ReplaceRotation(&gBillboardMatrix[1]);
+		gSPMatrix((*sRenderCodeSegment)++, Matrix_NewMtxN64(),
+			G_MTX_NOPUSH | G_MTX_LOAD | G_MTX_MODELVIEW
+		);
+		Matrix_Pop();
+		//wrenSetSlotDouble(vm, 0, 0x01000040);
 	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
@@ -1541,7 +1589,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	
 	void DrawSkeleton(WrenVM* vm) {
 		struct Instance *inst = WREN_UDATA;
-		ReadyMatrix(inst, false);
+		ReadyMatrix(inst, false, true);
 		if (sObject) {
 			if (inst->skelanime.limbCount == 0
 				&& sb_count(sObject->skeletons)
@@ -1601,6 +1649,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
 			else if (streq(signature, "SetEnvColor(_,_,_)")) return DrawSetEnvColor3;
 			else if (streq(signature, "SetEnvColor(_,_,_,_)")) return DrawSetEnvColor4;
+			
+			else if (streq(signature, "BeginSegment(_)")) return DrawBeginSegment;
+			else if (streq(signature, "EndSegment()")) return DrawEndSegment;
+			else if (streq(signature, "Matrix(_)")) return DrawMatrix;
+			else if (streq(signature, "MatrixNewFromBillboardSphere()")) return DrawMatrixNewFromBillboardSphere;
+			else if (streq(signature, "MatrixNewFromBillboardCylinder()")) return DrawMatrixNewFromBillboardCylinder;
 		}
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
@@ -1642,6 +1696,10 @@ bool RenderCodeGo(struct Instance *inst)
 		sYrotGlobal = inst->yrot;
 		sZrotGlobal = inst->zrot;
 		sPosGlobal = inst->pos;
+		// billboard matrices live in segment 0x01
+		gSPSegment(POLY_OPA_DISP++, 0x1, gRenderCodeBillboards);
+		gSPSegment(POLY_XLU_DISP++, 0x1, gRenderCodeBillboards);
+		sRenderCodeSegment = &POLY_OPA_DISP;
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			LogDebug("failed to invoke function");
 		n64_buffer_flush(false);
@@ -1984,6 +2042,9 @@ void WindowMainLoop(struct Scene *scene)
 				= 0.0f;
 			Matrix_Transpose(&inverse_mv);
 			
+			// store a copy in Matrix format for later
+			gBillboardMatrix[0] = inverse_mv;
+			
 			// convert to n64 matrix format
 			mat44_to_matn64(billboards, (void*)&inverse_mv);
 			
@@ -2005,6 +2066,7 @@ void WindowMainLoop(struct Scene *scene)
 			// billboard matrices live in segment 0x01
 			gSPSegment(POLY_OPA_DISP++, 0x1, billboards);
 			gSPSegment(POLY_XLU_DISP++, 0x1, billboards);
+			gRenderCodeBillboards = billboards;
 		}
 		
 		sb_foreach(scene->rooms, {

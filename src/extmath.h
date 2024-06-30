@@ -523,6 +523,7 @@ void Matrix_MtxFToYXZRotS(Vec3s* rotDest, s32 flag);
 Matrix Matrix_Invert(Matrix* m);
 void Matrix_Unproject(Matrix* modelViewMtx, Matrix* projMtx, Vec3f* src, Vec3f* dest, f32 w, f32 h);
 void Matrix_Project(Matrix* modelViewMtx, Matrix* projMtx, Vec3f* src, Vec3f* dest, f32 w, f32 h);
+void Matrix_ReplaceRotation(Matrix* mf);
 
 static inline void Matrix_RotateX_s(f32 x, MtxMode mode) {
 	Matrix_RotateX(BinToRad(x), mode);
