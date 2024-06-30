@@ -1339,6 +1339,7 @@ static bool gRenderCodeDrewSomething;
 static double sXrotGlobal = 0;
 static double sYrotGlobal = 0;
 static double sZrotGlobal = 0;
+static Vec3f sPosGlobal = {0};
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	WrenVM* vm
 	, const char* module
@@ -1357,16 +1358,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	
 	void ReadyMatrix(struct Instance *inst, bool shouldPop) {
 		Matrix_Push(); {
-			Matrix_Translate(
-				inst->pos.x + sXposLocal
-				, inst->pos.y + sYposLocal
-				, inst->pos.z + sZposLocal
-				, MTXMODE_NEW
-			);
+			Matrix_Translate(UNFOLD_VEC3(sPosGlobal), MTXMODE_NEW);
 			Matrix_RotateY_s(sYrotGlobal, MTXMODE_APPLY);
 			Matrix_RotateX_s(sXrotGlobal, MTXMODE_APPLY);
 			Matrix_RotateZ_s(sZrotGlobal, MTXMODE_APPLY);
 			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
+			Matrix_Translate(sXposLocal, sYposLocal, sZposLocal, MTXMODE_APPLY);
 			
 			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
 		} if (shouldPop) Matrix_Pop();
@@ -1454,6 +1451,13 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		sXposLocal = wrenGetSlotDouble(vm, 1);
 		sYposLocal = wrenGetSlotDouble(vm, 2);
 		sZposLocal = wrenGetSlotDouble(vm, 3);
+	}
+	void DrawSetGlobalPosition(WrenVM* vm) {
+		sPosGlobal = (Vec3f) {
+			wrenGetSlotDouble(vm, 1),
+			wrenGetSlotDouble(vm, 2),
+			wrenGetSlotDouble(vm, 3),
+		};
 	}
 	void DrawSetGlobalRotation(WrenVM* vm) {
 		sXrotGlobal = wrenGetSlotDouble(vm, 1);
@@ -1575,6 +1579,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
 			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
+			else if (streq(signature, "SetGlobalPosition(_,_,_)")) return DrawSetGlobalPosition;
 			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;
 			else if (streq(signature, "SetPrimColor(_,_,_)")) return DrawSetPrimColor3;
 			else if (streq(signature, "SetPrimColor(_,_,_,_)")) return DrawSetPrimColor4;
@@ -1618,6 +1623,7 @@ bool RenderCodeGo(struct Instance *inst)
 		sXrotGlobal = inst->xrot;
 		sYrotGlobal = inst->yrot;
 		sZrotGlobal = inst->zrot;
+		sPosGlobal = inst->pos;
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			LogDebug("failed to invoke function");
 		n64_buffer_flush(false);

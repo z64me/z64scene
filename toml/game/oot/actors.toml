@@ -4386,10 +4386,13 @@
 			// raycasting
 			// (walks backwards so it's safe to delete unused positions)
 			for (pos in positions[-1..0]) {
+				pos[0] = Inst.Xpos + pos[0]
+				pos[1] = Inst.Ypos + pos[1]
+				pos[2] = Inst.Zpos + pos[2]
 				var y = Collision.RaycastSnapToFloor(
-					Inst.Xpos + pos[0],
-					Inst.Ypos + pos[1] + 30,
-					Inst.Zpos + pos[2]
+					pos[0],
+					pos[1] + 30,
+					pos[2]
 				)
 				
 				// no floor beneath it
@@ -4399,7 +4402,7 @@
 					continue
 				}
 				
-				pos[1] = y - Inst.Ypos
+				pos[1] = y
 			}
 			
 			// store positions list in udata
@@ -4408,7 +4411,7 @@
 		
 		// draw mesh at each position
 		for (pos in Udata.positions) {
-			Draw.SetLocalPosition(pos[0], pos[1], pos[2])
+			Draw.SetGlobalPosition(pos[0], pos[1], pos[2])
 			Draw.Mesh(mesh)
 		}
 	"""
