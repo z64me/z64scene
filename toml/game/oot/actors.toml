@@ -75,6 +75,46 @@
 	Name = "Flame"
 	Index = 8
 	Category = "7"
+	Objects = [ 0x0001 ]
+	RenderCode = """
+		if (Inst.PropertyChanged) {
+			var flameParamTable = [
+				[ [ 255, 200, 0, 255 ], [ 255, 0, 0 ], 75 ],
+				[ [ 255, 200, 0, 255 ], [ 255, 0, 0 ], 75 ],
+				[ [ 0, 170, 255, 255 ], [ 0, 0, 255 ], 75 ],
+				[ [ 170, 255, 0, 255 ], [ 0, 150, 0 ], 75 ],
+				[ [ 255, 200, 0, 255 ], [ 255, 0, 0 ], 40 ],
+				[ [ 255, 200, 0, 255 ], [ 255, 0, 0 ], 75 ],
+				[ [ 170, 255, 0, 255 ], [ 0, 150, 0 ], 75 ],
+				[ [ 0, 170, 255, 255 ], [ 0, 0, 255 ], 75 ],
+				[ [ 255, 0, 170, 255 ], [ 200, 0, 0 ], 75 ],
+				[ [ 255, 255, 170, 255 ], [ 255, 50, 0 ], 75 ],
+				[ [ 255, 255, 170, 255 ], [ 255, 255, 0 ], 75 ],
+				[ [ 255, 255, 170, 255 ], [ 100, 255, 0 ], 75 ],
+				[ [ 255, 170, 255, 255 ], [ 255, 0, 100 ], 75 ],
+				[ [ 255, 170, 255, 255 ], [ 100, 0, 255 ], 75 ],
+				[ [ 170, 255, 255, 255 ], [ 0, 0, 255 ], 75 ],
+				[ [ 170, 255, 255, 255 ], [ 0, 150, 255 ], 75 ],
+			]
+			var flameParams = flameParamTable[Props.Presets & 0xF]
+			Udata.PrimColor = flameParams[0]
+			Udata.EnvColor = flameParams[1]
+			Udata.Scale = flameParams[2] * 0.0001
+			// TODO randomized time offset
+		}
+		var primColor = Udata.PrimColor
+		var envColor = Udata.EnvColor
+		Draw.SetScale(Udata.Scale)
+		Draw.BeginSegment(0x08)
+			Draw.TwoTexScroll(0, 0, 32, 64,
+				0, (Global.GameplayFrames * -20) & 511, 32, 128
+			)
+			Draw.SetPrimColor(0x80, 0x80, primColor[0], primColor[1], primColor[2], primColor[3])
+			Draw.SetEnvColor(envColor[0], envColor[1], envColor[2], 0)
+			Draw.MatrixNewFromBillboardCylinder()
+		Draw.EndSegment()
+		Draw.Mesh(0x0404d4e0) // gEffFire1DL
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
