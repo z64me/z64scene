@@ -172,7 +172,50 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 			LogDebug("RENDERGROUP_INST");
 		}
 		ud->renderGroup |= tri64->setId & RENDERGROUP_MASK_ID;
+		
+		// adjust rotation when snapping to different surfaces
+		if (gGui->selectedInstance && gInput.key.lctrl)
+		{
+			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
+			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
+			struct Instance *inst = gGui->selectedInstance;
+			float conv = 57.2958 * 182.044444444444f;
+			
+			inst->xrot = result.x * conv;
+			inst->yrot = result.y * conv;
+			inst->zrot = result.z * conv;
+			
+			// make it so the 'feet' of the actor touch the floor
+			// (works for crates and guard npc)
+			// (yrot not necessary for the prisms)
+			inst->zrot -= 90 * 182.044444444444;
+			//inst->yrot -= 90 * 182.044444444444;
+			// TODO this should come from the TOML
+		}
 	}
+}
+
+void DrawDefaultActorPreview(struct Instance *inst)
+{
+	float scale = 0.025;
+	n64_buffer_clear();
+	Matrix_Push(); { // from ReadyMatrix(), might consolidate later
+		Matrix_Translate(
+			inst->pos.x + 0
+			, inst->pos.y + 0
+			, inst->pos.z + 0
+			, MTXMODE_NEW
+		);
+		Matrix_RotateY_s(inst->yrot - 90 * 182.044444, MTXMODE_APPLY);
+		Matrix_RotateX_s(inst->xrot, MTXMODE_APPLY);
+		Matrix_RotateZ_s(inst->zrot, MTXMODE_APPLY);
+		Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+		
+		gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+	} Matrix_Pop();
+	gSPSegment(POLY_OPA_DISP++, 0x06, meshPrismArrow);
+	gSPDisplayList(POLY_OPA_DISP++, 0x06000100);
+	n64_buffer_flush(false);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -1662,9 +1705,13 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 		if (RenderCodeGo(each))
 			continue;
 		
-		n64_mtx_model(model);
-		n64_segment_set(0x06, meshPrismArrow);
-		n64_draw_dlist(&meshPrismArrow[0x100]);
+		// draw this actor
+		DrawDefaultActorPreview(each);
+		
+		// inline, less accurate rotations
+		//n64_mtx_model(model);
+		//n64_segment_set(0x06, meshPrismArrow);
+		//n64_draw_dlist(&meshPrismArrow[0x100]);
 	});
 }
 

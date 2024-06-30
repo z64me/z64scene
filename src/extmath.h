@@ -444,6 +444,8 @@ Vec2s Vec2s_Reflect(Vec2s vec, Vec2s normal);
 Vec3s Vec3s_Reflect(Vec3s vec, Vec3s normal);
 Vec4s Vec4s_Reflect(Vec4s vec, Vec4s normal);
 
+Vec3f Vec3f_NormalFromTriangleVertices(Vec3f v1, Vec3f v2, Vec3f v3);
+Vec3f Vec3f_FaceNormalToYawPitch64(Vec3f direction);
 Vec3f Vec3f_ClosestPointOnRay(Vec3f rayStart, Vec3f rayEnd, Vec3f lineStart, Vec3f lineEnd);
 Vec3f Vec3f_ProjectAlong(Vec3f point, Vec3f lineA, Vec3f lineB);
 Vec3f Vec3fRGBfromHSV(float h, float s, float v);

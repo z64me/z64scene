@@ -270,6 +270,29 @@ Vec3f* Vec3f_Up(Vec3f* dest, s16 pitch, s16 yaw, s16 roll) {
 	return dest;
 }
 
+// given the three points of a triangle, get the normal vector
+// (get the direction the triangle is facing)
+Vec3f Vec3f_NormalFromTriangleVertices(Vec3f v1, Vec3f v2, Vec3f v3)
+{
+	// is Vec3f_Normalize() required here?
+	return Vec3f_Normalize(Vec3f_Cross(Vec3_Minus(v2, v1), Vec3_Minus(v3, v1)));
+}
+
+// get yaw pitch vec3 for snapping instance to surface
+Vec3f Vec3f_FaceNormalToYawPitch64(Vec3f direction)
+{
+	Vec3f angles = {0};
+	
+	// yaw
+	angles.y = atan2f(direction.x, direction.z);
+	
+	// pitch
+	float horizontalLength = sqrtf(direction.x * direction.x + direction.z * direction.z);
+	angles.z = atan2f(direction.y, horizontalLength);
+	
+	return angles;
+}
+
 /*
 f32 Math_DelSmoothStepToF(f32* pValue, f32 target, f32 fraction, f32 step, f32 minStep) {
 	step *= gDeltaTime;
