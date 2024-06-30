@@ -1634,6 +1634,10 @@ Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f
 			DegToRad(i), DegToRad(j), DegToRad(k)
 		};
 		
+		// first pass: if the input angle is already good, use that
+		if (l == 0)
+			variation = angles;
+		
 		Matrix_Push(); {
 			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
 			Matrix_RotateY(variation.y, MTXMODE_APPLY);
@@ -1646,6 +1650,11 @@ Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f
 		if (deviation < nearest) {
 			nearest = deviation;
 			result = variation;
+			
+			// first pass: if input angle is already good, use that
+			if (l == 0 && sqrt(deviation) < mag * 0.01) {
+				break;
+			}
 		}
 	}
 	

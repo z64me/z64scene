@@ -2103,6 +2103,10 @@ void WindowMainLoop(struct Scene *scene)
 			// if surface angle has changed
 			if (Vec3s_DistXYZ(triNormal16, inst->prev.triNormal16) > 1)
 			{
+				// provide current instance rotation, to preserve
+				// original rotation if it's already acceptable
+				result = (Vec3f) { BinToRad(inst->xrot), BinToRad(inst->yrot), BinToRad(inst->zrot) };
+				
 				inst->prev.triNormal16 = triNormal16;
 				result = Vec3f_BruteforceEulerAnglesTowardsDirection(result, triNormal, up);
 				
