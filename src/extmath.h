@@ -301,6 +301,7 @@ Vec3s Vec3s_Cross(Vec3s a, Vec3s b);
 
 f32 Vec3f_DistXZ(Vec3f a, Vec3f b);
 f32 Vec3f_DistXYZ(Vec3f a, Vec3f b);
+f32 Vec3f_DistXYZ_NoSqrt(Vec3f a, Vec3f b);
 f32 Vec3s_DistXZ(Vec3s a, Vec3s b);
 f32 Vec3s_DistXYZ(Vec3s a, Vec3s b);
 f32 Vec2f_DistXZ(Vec2f a, Vec2f b);
@@ -444,6 +445,7 @@ Vec2s Vec2s_Reflect(Vec2s vec, Vec2s normal);
 Vec3s Vec3s_Reflect(Vec3s vec, Vec3s normal);
 Vec4s Vec4s_Reflect(Vec4s vec, Vec4s normal);
 
+Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f up);
 Vec3f Vec3f_NormalFromTriangleVertices(Vec3f v1, Vec3f v2, Vec3f v3);
 Vec3f Vec3f_FaceNormalToYawPitch64(Vec3f direction);
 Vec3f Vec3f_ClosestPointOnRay(Vec3f rayStart, Vec3f rayEnd, Vec3f lineStart, Vec3f lineEnd);

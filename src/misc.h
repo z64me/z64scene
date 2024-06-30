@@ -354,6 +354,7 @@ struct Instance
 		uint32_t uuid;
 		Vec3f    pos;
 		bool     positionSnapped;
+		Vec3s    triNormal16;
 	} prev;
 };
 

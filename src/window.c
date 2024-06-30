@@ -127,6 +127,8 @@ struct CameraRay
 	uint32_t renderGroup;
 	bool isSelectingInstance; // instance selection by mouse click
 	struct Instance *currentInstance;
+	Triangle snapAngleTri;
+	bool useSnapAngle;
 };
 static struct CameraRay worldRayData = { 0 };
 
@@ -156,6 +158,7 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 		, tri64->cullFrontface
 	)) {
 		ud->renderGroup &= RENDERGROUP_MASK_GROUP;
+		bool isRoomGeometry = ud->renderGroup == RENDERGROUP_ROOM;
 		if (worldRayData.isSelectingInstance && ud->renderGroup == RENDERGROUP_INST)
 		{
 			// TODO use rendergroup id to select from appropriate list (spawn/actor/door)
@@ -174,30 +177,10 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 		ud->renderGroup |= tri64->setId & RENDERGROUP_MASK_ID;
 		
 		// adjust rotation when snapping to different surfaces
-		if (gGui->selectedInstance && gInput.key.lctrl)
+		if (isRoomGeometry && gGui->selectedInstance && gInput.key.lctrl)
 		{
-			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
-			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
-			struct Instance *inst = gGui->selectedInstance;
-			
-			inst->snapAngle = (Vec3f) {
-				UNFOLD_VEC3_EXT(result, * (32768.0f / M_PI))
-			};
-			inst->prev.positionSnapped = true;
-			/*
-			float conv = 57.2958 * 182.044444444444f;
-			
-			inst->xrot = result.x * conv;
-			inst->yrot = result.y * conv;
-			inst->zrot = result.z * conv;
-			
-			// make it so the 'feet' of the actor touch the floor
-			// (works for crates and guard npc)
-			// (yrot not necessary for the prisms)
-			inst->zrot -= 90 * 182.044444444444;
-			//inst->yrot -= 90 * 182.044444444444;
-			// TODO this should come from the TOML
-			*/
+			ud->useSnapAngle = true;
+			ud->snapAngleTri = tri;
 		}
 	}
 }
@@ -2096,12 +2079,38 @@ void WindowMainLoop(struct Scene *scene)
 		{
 			worldRayData.ray = WindowGetCursorRayLine();
 			worldRayData.ray.nearest = FLT_MAX;
+			worldRayData.useSnapAngle = false;
 			worldRayData.renderGroup = RENDERGROUP_ROOM;
 			n64_set_tri_callback(&worldRayData, CameraRayCallback);
 			isRaycasting = true;
 		}
 		
 		n64_buffer_flush(true);
+		
+		// snap rotation
+		if (worldRayData.useSnapAngle && gGui->selectedInstance)
+		{
+			worldRayData.useSnapAngle = false;
+			Triangle tri = worldRayData.snapAngleTri;
+			
+			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
+			Vec3s triNormal16 = (Vec3s) { UNFOLD_VEC3_EXT(triNormal, * (32768.0f / M_PI)) };
+			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
+			Vec3f up = { 0, 1, 0 };
+			//Vec3f up = { 0, 0, 1 }; // eye switch
+			struct Instance *inst = gGui->selectedInstance;
+			
+			// if surface angle has changed
+			if (Vec3s_DistXYZ(triNormal16, inst->prev.triNormal16) > 1)
+			{
+				inst->prev.triNormal16 = triNormal16;
+				result = Vec3f_BruteforceEulerAnglesTowardsDirection(result, triNormal, up);
+				
+				inst->xrot = RadToBin(result.x);
+				inst->yrot = RadToBin(result.y);
+				inst->zrot = RadToBin(result.z);
+			}
+		}
 		
 		// left-click an instance to select it
 		// TODO consolidate it into the above block

@@ -760,6 +760,14 @@ f32 Vec3f_DistXYZ(Vec3f a, Vec3f b) {
 	return sqrtf(SQ(dx) + SQ(dy) + SQ(dz));
 }
 
+f32 Vec3f_DistXYZ_NoSqrt(Vec3f a, Vec3f b) {
+	f32 dx = b.x - a.x;
+	f32 dy = b.y - a.y;
+	f32 dz = b.z - a.z;
+	
+	return SQ(dx) + SQ(dy) + SQ(dz);
+}
+
 f32 Vec3s_DistXZ(Vec3s a, Vec3s b) {
 	f32 dx = b.x - a.x;
 	f32 dz = b.z - a.z;
@@ -1599,6 +1607,157 @@ bool Quat_Equals(Quat* qa, Quat* qb) {
 			return false;
 	return true;
 }
+
+// randomized angle version; requires significantly fewer iterations
+// than the other brute force method, at the cost of a little accuracy
+// (is way faster: 46,656,000 iterations -> 1000 iterations)
+Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f up) {
+	float mag = 100;
+	float nearest = FLT_MAX;
+	Vec3f distal = Vec3f_MulVal(Vec3f_Normalize(up), mag);
+	Vec3f idealDistal = Vec3f_MulVal(Vec3f_Normalize(dir), mag);
+	Vec3f result = angles;
+	
+	// TODO maybe brute-force 90 degree angles first so
+	//      perpendicular meshes don't suffer precision
+	//      (shouldn't be slow enough to matter)
+	
+	// try a bunch of random rotations, use whichever one is closest
+	for (int l = 0; l < 1000; ++l) {
+		Vec3f thisDistal;
+		float deviation;
+		// testing axis alignment, revert to % 360 it causes problems
+		int i = rand() % 360;
+		int j = rand() % 180 + 180;
+		int k = 0;//rand() % 360;
+		Vec3f variation = {
+			DegToRad(i), DegToRad(j), DegToRad(k)
+		};
+		
+		Matrix_Push(); {
+			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
+			Matrix_RotateY(variation.y, MTXMODE_APPLY);
+			Matrix_RotateX(variation.x, MTXMODE_APPLY);
+			Matrix_RotateZ(variation.z, MTXMODE_APPLY);
+			Matrix_MultVec3f(&distal, &thisDistal);
+		} Matrix_Pop();
+		
+		deviation = Vec3f_DistXYZ_NoSqrt(thisDistal, idealDistal);
+		if (deviation < nearest) {
+			nearest = deviation;
+			result = variation;
+		}
+	}
+	
+	return result;
+}
+
+#if 0
+// brute force version, incredibly slow b/c it iterates too many
+// times (see above function), but keeping it here for reference
+// since it seems to reliably produce the correct Euler angles
+Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f up) {
+	float mag = 100;
+	float nearest = FLT_MAX;
+	Vec3f distal = Vec3f_MulVal(Vec3f_Normalize(up), mag);
+	Vec3f idealDistal = Vec3f_MulVal(Vec3f_Normalize(dir), mag);
+	Vec3f result = angles;
+	
+	for (int i = 0; i < 360; ++i) {
+		for (int j = 0; j < 360; ++j) {
+			for (int k = 0; k < 360; ++k) {
+				Vec3f thisDistal;
+				float deviation;
+				Vec3f variation = {
+					DegToRad(i), DegToRad(j), DegToRad(k)
+				};
+				
+				Matrix_Push(); {
+					Matrix_Translate(0, 0, 0, MTXMODE_NEW);
+					Matrix_RotateY(variation.y, MTXMODE_APPLY);
+					Matrix_RotateX(variation.x, MTXMODE_APPLY);
+					Matrix_RotateZ(variation.z, MTXMODE_APPLY);
+					Matrix_MultVec3f(&distal, &thisDistal);
+				} Matrix_Pop();
+				
+				deviation = Vec3f_DistXYZ_NoSqrt(thisDistal, idealDistal);
+				if (deviation < nearest) {
+					nearest = deviation;
+					result = variation;
+				}
+			}
+		}
+	}
+	
+	return result;
+}
+#endif
+
+// XXX limited by Vec3f_FaceNormalToYawPitch64() output
+//     not being accurate enough, led to above methods
+#if 0
+// it's unideal that this must exist, but it's used very
+// infrequently and doesn't involve many iterations; this
+// takes an Euler rotation that is 'mostly' correct, and
+// tries every combination of +-xyz to determine how to
+// correct it so anything rotated using it points in the
+// same direction as the given vector (converting vector
+// directions to Euler angles is nontrivial to begin with,
+// due to gimbal lock and different game instances wanting
+// to face different directions, so this is acceptable)
+Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f up) {
+	float mag = 100;
+	float nearest = FLT_MAX;
+	Vec3f distal = Vec3f_MulVal(Vec3f_Normalize(up), mag);
+	Vec3f idealDistal = Vec3f_MulVal(Vec3f_Normalize(dir), mag);
+	Vec3f result = angles;
+	float components[3] = { angles.x, angles.y, angles.z };
+	int signs[8][3] = {
+		{1, 1, 1},
+		{1, 1, -1},
+		{1, -1, 1},
+		{1, -1, -1},
+		{-1, 1, 1},
+		{-1, 1, -1},
+		{-1, -1, 1},
+		{-1, -1, -1}
+	};
+	
+	for (int i = 0; i < 3; i++) {
+		for (int j = 0; j < 3; j++) {
+			if (j == i) continue;
+			for (int k = 0; k < 3; k++) {
+				if (k == i || k == j) continue;
+				for (int s = 0; s < 8; s++) {
+					Vec3f variation = {
+						components[i] * signs[s][0],
+						components[j] * signs[s][1],
+						components[k] * signs[s][2]
+					};
+					Vec3f thisDistal;
+					float deviation;
+					
+					Matrix_Push(); {
+						Matrix_Translate(0, 0, 0, MTXMODE_NEW);
+						Matrix_RotateY(variation.y, MTXMODE_APPLY);
+						Matrix_RotateX(variation.x, MTXMODE_APPLY);
+						Matrix_RotateZ(variation.z, MTXMODE_APPLY);
+						Matrix_MultVec3f(&distal, &thisDistal);
+					} Matrix_Pop();
+					
+					deviation = Vec3f_DistXYZ_NoSqrt(thisDistal, idealDistal);
+					if (deviation < nearest) {
+						nearest = deviation;
+						result = variation;
+					}
+				}
+			}
+		}
+	}
+	
+	return result;
+}
+#endif
 
 #endif // endregion: vector
 
