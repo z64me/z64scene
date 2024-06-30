@@ -1070,6 +1070,10 @@
 		Draw.SetLocalPosition(0, 1000, 0)
 		Draw.SetPrimColor(200, 255, 200)
 		Draw.SetEnvColor(0/*flashIntensity*/, 20, 10)
+		Draw.BeginSegment(0x08)
+			Draw.MatrixNewFromBillboardSphere()
+			//Draw.SetEnvColor(200, 20, 10) // testing segments
+		Draw.EndSegment()
 		Draw.Mesh(0x06000408) // gBombFlowerBombAndSparkDL
 	"""
 	[[Actor.Property]]
