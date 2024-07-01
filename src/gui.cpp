@@ -756,7 +756,14 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		TABNAME_SPAWNS
 		, [](){
 			
-			InstanceTab(gGui->spawnList, "Spawn Point", INSTANCE_TAB_SPAWN);
+			Instance *inst = InstanceTab(gGui->spawnList, "Spawn Point", INSTANCE_TAB_SPAWN);
+			
+			if (!inst)
+				return;
+			
+			int room = inst->spawnpoint.room;
+			
+			if (ImGui::InputInt("Room##SpawnPointData", &room)) inst->spawnpoint.room = room;
 		}
 	},
 	new LinkedStringFunc{
