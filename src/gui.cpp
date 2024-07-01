@@ -18,6 +18,7 @@ extern "C" {
 #include "noc_file_dialog.h"
 #include "project.h"
 #include "logging.h"
+#include "window.h"
 }
 
 #if 1 // region: helper macros
@@ -1158,6 +1159,29 @@ static void DrawSidebar(void)
 				{
 					gGui->selectedRoomIndex = id;
 				}
+			}
+		}
+		// right-clicked an instance
+		else if (group == RENDERGROUP_INST)
+		{
+			if (ImGui::MenuItem("Delete", "Del"))
+			{
+				// TODO
+				gGuiSettings.PushModal("Deleted instance");
+			}
+			else if (ImGui::MenuItem("Cut", "Ctrl+X"))
+			{
+				// TODO
+				gGuiSettings.PushModal("Moved instance to clipboard");
+			}
+			else if (ImGui::MenuItem("Copy", "Ctrl+C"))
+			{
+				// TODO
+				gGuiSettings.PushModal("Copied instance to clipboard");
+			}
+			else if (ImGui::MenuItem("Duplicate", "Shift+D"))
+			{
+				WindowTryInstanceDuplicate();
 			}
 		}
 		

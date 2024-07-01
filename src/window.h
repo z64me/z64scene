@@ -73,6 +73,7 @@ RayLine WindowGetRayLine(Vec2f point);
 RayLine WindowGetCursorRayLine(void);
 void WindowClipPointIntoView(Vec3f* a, Vec3f normal);
 Vec2f WindowGetLocalScreenPos(Vec3f point);
+bool WindowTryInstanceDuplicate(void);
 
 struct Object *WindowLoadObject(const char *fn);
 

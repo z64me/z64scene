@@ -272,25 +272,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_D:
 			// Shift + D to Duplicate & Move
-			// TODO move this logic elsewhere
-			if (gGui->selectedInstance
-				&& !gState.hasCameraMoved
-				&& GizmoIsIdle(gState.gizmo)
-				&& (mods & GLFW_MOD_SHIFT)
-				&& gGui->instanceList
+			if ((mods & GLFW_MOD_SHIFT)
 				&& !GuiHasFocus()
+				&& !WindowTryInstanceDuplicate()
 			)
-			{
-				struct Instance newInst = *(gGui->selectedInstance);
-				
-				sb_push(*gGui->instanceList, newInst);
-				gGui->selectedInstance = &sb_last(*gGui->instanceList);
-				gGui->selectedInstance->prev = (typeof(gGui->selectedInstance->prev))INSTANCE_PREV_INIT;
-				
-				GuiPushModal("Duplicated instance.");
-				GizmoSetupMove(gState.gizmo);
-			}
-			else
 				gInput.key.d = pressed;
 			break;
 		
@@ -968,6 +953,29 @@ Vec4f WindowGetLocalScreenVec(Vec3f point)
 	Matrix_MultVec3fToVec4f_Ext(&point, &pos, &gState.projViewMtx);
 	
 	return pos;
+}
+
+bool WindowTryInstanceDuplicate(void)
+{
+	if (gGui->selectedInstance
+		&& !gState.hasCameraMoved
+		&& GizmoIsIdle(gState.gizmo)
+		&& gGui->instanceList
+	)
+	{
+		struct Instance newInst = *(gGui->selectedInstance);
+		
+		sb_push(*gGui->instanceList, newInst);
+		gGui->selectedInstance = &sb_last(*gGui->instanceList);
+		gGui->selectedInstance->prev = (typeof(gGui->selectedInstance->prev))INSTANCE_PREV_INIT;
+		
+		GuiPushModal("Duplicated instance.");
+		GizmoSetupMove(gState.gizmo);
+		
+		return true;
+	}
+	
+	return false;
 }
 
 GbiGfx* Gfx_TexScroll(u32 x, u32 y, s32 width, s32 height)
@@ -2311,6 +2319,7 @@ void WindowMainLoop(struct Scene *scene)
 			gInput.mouse.isControllingCamera = false;
 
 		if (isRaycasting)
+			worldRayData.isSelectingInstance = true,
 			worldRayData.renderGroup = RENDERGROUP_INST;
 		
 		// draw shape at each instance position
