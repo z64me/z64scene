@@ -53,6 +53,7 @@ struct CutsceneOot;
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
+	INSTANCE_PREV_DEFAULT, \
 	InstanceNewUuid(), \
 	INSTANCE_POS_PREV_INIT \
 }
@@ -328,6 +329,7 @@ struct Instance
 	uint16_t  zrot;
 	uint16_t  params;
 	
+	Vec3f     faceSnapVector;
 	Vec3f     snapAngle;
 	Vec3f     pos;
 	uint8_t   tab; // enum InstanceTab
@@ -347,6 +349,7 @@ struct Instance
 	
 	// for tracking changes
 	struct {
+		uint32_t id;
 		uint32_t xrot;
 		uint32_t yrot;
 		uint32_t zrot;

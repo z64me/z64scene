@@ -1407,6 +1407,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			|| inst->xrot != inst->prev.xrot
 			|| inst->yrot != inst->prev.yrot
 			|| inst->zrot != inst->prev.zrot
+			|| inst->id != inst->prev.id
 		);
 		inst->prev.params = inst->params;
 		inst->prev.xrot = inst->xrot;
@@ -1423,6 +1424,25 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		inst->xrot = wrenGetSlotDouble(vm, 1);
 		inst->yrot = wrenGetSlotDouble(vm, 2);
 		inst->zrot = wrenGetSlotDouble(vm, 3);
+	}
+	#define InstSetFaceSnapVector(INST, VEC) \
+		Vec3f A = VEC; \
+		Vec3f *B = &INST->faceSnapVector; \
+		if (A.x != B->x || A.y != B->y || A.z != B->z) \
+			INST->prev.triNormal16 = (Vec3s){0, 0, 0}; \
+		*B = A;
+	void InstSetFaceSnapVector0(WrenVM *vm) {
+		InstSetFaceSnapVector(WREN_UDATA, ((Vec3f){0, 1, 0}));
+	}
+	void InstSetFaceSnapVector3(WrenVM *vm) {
+		InstSetFaceSnapVector(WREN_UDATA, ((Vec3f) {
+			wrenGetSlotDouble(vm, 1),
+			wrenGetSlotDouble(vm, 2),
+			wrenGetSlotDouble(vm, 3),
+		}));
+	}
+	void InstClearFaceSnapVector(WrenVM *vm) {
+		InstSetFaceSnapVector(WREN_UDATA, ((Vec3f){0, 0, 0}));
 	}
 	
 	void DrawSetScale3(WrenVM* vm) {
@@ -1678,6 +1698,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "PropertyChanged")) return InstGetPropertyChanged;
 			else if (streq(signature, "PositionSnapped")) return InstGetPositionSnapped;
 			else if (streq(signature, "SetRotation(_,_,_)")) return InstSetRotation;
+			else if (streq(signature, "SetFaceSnapVector()")) return InstSetFaceSnapVector0;
+			else if (streq(signature, "SetFaceSnapVector(_,_,_)")) return InstSetFaceSnapVector3;
+			else if (streq(signature, "ClearFaceSnapVector()")) return InstClearFaceSnapVector;
 			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {
@@ -1847,17 +1870,28 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 		
 		n64_draw_dlist(setId);
 		
+		// reset certain instance vars
+		// TODO might want to also check rot/params, would avoid
+		//      needing ClearFaceSnapVector() in some instances
+		if (each->id != each->prev.id)
+		{
+			each->faceSnapVector = ((Vec3f){0, 0, 0});
+		}
+		
 		// rendercode
-		if (RenderCodeGo(each))
-			continue;
+		if (!RenderCodeGo(each))
+		{
+			// draw this actor
+			DrawDefaultActorPreview(each);
+			
+			// inline, less accurate rotations
+			//n64_mtx_model(model);
+			//n64_segment_set(0x06, meshPrismArrow);
+			//n64_draw_dlist(&meshPrismArrow[0x100]);
+		}
 		
-		// draw this actor
-		DrawDefaultActorPreview(each);
-		
-		// inline, less accurate rotations
-		//n64_mtx_model(model);
-		//n64_segment_set(0x06, meshPrismArrow);
-		//n64_draw_dlist(&meshPrismArrow[0x100]);
+		// prev = current
+		each->prev.id = each->id;
 	});
 }
 
@@ -2226,15 +2260,17 @@ void WindowMainLoop(struct Scene *scene)
 		n64_buffer_flush(true);
 		
 		// snap rotation
-		if (worldRayData.useSnapAngle && gGui->selectedInstance)
+		if (worldRayData.useSnapAngle
+			&& gGui->selectedInstance
+			&& Vec3f_IsNonZero(gGui->selectedInstance->faceSnapVector)
+		)
 		{
-			worldRayData.useSnapAngle = false;
 			Triangle tri = worldRayData.snapAngleTri;
 			
 			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
 			Vec3s triNormal16 = (Vec3s) { UNFOLD_VEC3_EXT(triNormal, * (32768.0f / M_PI)) };
 			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
-			Vec3f up = { 0, 1, 0 };
+			//Vec3f up = { 0, 1, 0 };
 			//Vec3f up = { 0, 0, 1 }; // eye switch
 			struct Instance *inst = gGui->selectedInstance;
 			
@@ -2246,13 +2282,14 @@ void WindowMainLoop(struct Scene *scene)
 				result = (Vec3f) { BinToRad(inst->xrot), BinToRad(inst->yrot), BinToRad(inst->zrot) };
 				
 				inst->prev.triNormal16 = triNormal16;
-				result = Vec3f_BruteforceEulerAnglesTowardsDirection(result, triNormal, up);
+				result = Vec3f_BruteforceEulerAnglesTowardsDirection(result, triNormal, inst->faceSnapVector);
 				
 				inst->xrot = RadToBin(result.x);
 				inst->yrot = RadToBin(result.y);
 				inst->zrot = RadToBin(result.z);
 			}
 		}
+		worldRayData.useSnapAngle = false;
 		
 		// left-click an instance to select it
 		// TODO consolidate it into the above block

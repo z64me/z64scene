@@ -184,6 +184,9 @@ struct ActorDatabase
 					foreign static Uuid
 					
 					foreign static SetRotation(xrot, yrot, zrot)
+					foreign static SetFaceSnapVector(x, y, z)
+					foreign static SetFaceSnapVector()
+					foreign static ClearFaceSnapVector()
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)

@@ -1104,6 +1104,7 @@
 	Category = "6"
 	Objects = [49]
 	RenderCode = """
+		Inst.SetFaceSnapVector()
 		Draw.SetScale(0.01)
 		Draw.Mesh(0x06000340) // gBombFlowerLeavesDL
 		Draw.Mesh(0x06000530) // gBombFlowerBaseLeavesDL
@@ -3698,6 +3699,7 @@
 		var type = Props.Type
 		// TODO different addresses for different game versions
 		if (Inst.PropertyChanged) {
+			Inst.SetFaceSnapVector()
 			if (type == 0) { // floor switch
 				var floorSwitchDLists = [
 					0x05005800, // Syms.gFloorSwitch1DL
@@ -3728,6 +3730,7 @@
 					],
 				]
 				Udata.mesh = eyeDlists[0] // TODO subtype
+				Inst.SetFaceSnapVector(0, 0, 1)
 			} else if (type == 3 || type == 4) { // crystal switch
 				var xluDLists = [
 					0x05006e60, // Syms.gCrystalSwitchCoreXluDL
@@ -3748,11 +3751,6 @@
 					xluDLists[0],
 				]
 			}
-		}
-		
-		// TODO this should be done some other way
-		if (Inst.PositionSnapped && false) {
-			Inst.SetRotation(Inst.SnapAngleX, Inst.SnapAngleY, Inst.SnapAngleZ - Math.DegToBin(90))
 		}
 		
 		if (type >= 0 && type <= 4) {
@@ -3835,20 +3833,46 @@
 	Category = "1"
 	Notes = "0001 can have switchflag"
 	Objects = [284]
+	RenderCode = """
+		var type = Props.Type
+		// consider a different preview for underground tower?
+		if (type == 1) {
+			Inst.ClearFaceSnapVector()
+			return
+		}
+		var envColor = [ 255, 255, 255 ]
+		var mesh = [
+			0x06000210, // gHookshotPostDL
+			0x06000210, // gHookshotPostDL
+			0x06000470, // gHookshotTargetDL
+		]
+		
+		// flat square target
+		if (type == 2) {
+			Inst.SetFaceSnapVector(0, 0, 1)
+		} else { // towers/posts
+			Inst.SetFaceSnapVector()
+			// underground
+			if (type == 1) {
+				Draw.SetGlobalPosition(Inst.Xpos, Inst.Ypos - 105, Inst.Zpos)
+			}
+		}
+		
+		Draw.SetEnvColor(envColor[0], envColor[1], envColor[2])
+		Draw.Mesh(mesh[Props.Type])
+	"""
 	[[Actor.Property]]
 		Mask = 16128
 		Name = "Switch Flag"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 49407
-		Name = "Presets"
+		Mask = 0b0011
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
-			[0,"Square hookshot target tower"],
-			[1,"Same, underground"],
-			[2,"Square hookshot stone"],
-			[3,"Corrupted graphics, cannot see (no mesh seems to be present)"],
-			[65474,"?? (Dodongo's Cavern)"]
+			[0, "Post (Tower)"],
+			[1, "Underground Post"],
+			[2, "Flat Square Target"],
 		]
 
 [[Actor]]

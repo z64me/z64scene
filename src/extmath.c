@@ -1318,6 +1318,10 @@ bool Vec3f_IsNaN(Vec3f a) {
 	return false;
 }
 
+bool Vec3f_IsNonZero(Vec3f a) {
+	return a.x || a.y || a.z;
+}
+
 bool Vec4f_IsNaN(Vec4f a) {
 	for (int i = 0; i < ArrCount(a.axis); i++)
 		if (isnan(a.axis[i])) true;

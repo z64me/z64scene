@@ -431,6 +431,8 @@ bool Vec2f_IsNaN(Vec2f a);
 bool Vec3f_IsNaN(Vec3f a);
 bool Vec4f_IsNaN(Vec4f a);
 
+bool Vec3f_IsNonZero(Vec3f a);
+
 f32 Vec2f_Cos(Vec2f a, Vec2f b);
 f32 Vec3f_Cos(Vec3f a, Vec3f b);
 f32 Vec4f_Cos(Vec4f a, Vec4f b);
