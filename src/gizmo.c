@@ -390,6 +390,14 @@ void GizmoSetupMove(struct Gizmo *gizmo)
 	gInput.textInput.maxChars = 10;
 }
 
+void GizmoSetupIdle(struct Gizmo *gizmo)
+{
+	GizmoSetState(gizmo, GIZMO_STATE_IDLE);
+	
+	memset(gizmo->axis, 0, sizeof(gizmo->axis));
+	gizmo->isInUse = false;
+}
+
 bool GizmoIsIdle(struct Gizmo *gizmo)
 {
 	return gizmo->state == GIZMO_STATE_IDLE;

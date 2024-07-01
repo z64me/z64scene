@@ -53,6 +53,9 @@ struct GuiInterop
 	bool rightClickedInViewport;
 	enum RenderGroup rightClickedRenderGroup;
 	int selectedRoomIndex;
+	
+	bool clipboardHasInstance;
+	struct Instance clipboardInstance;
 };
 
 #ifdef __cplusplus

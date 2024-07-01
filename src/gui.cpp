@@ -1151,6 +1151,10 @@ static void DrawSidebar(void)
 					QUEUE_POPUP(AddNewInstanceSearch);
 					gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
 				}
+				if (ImGui::MenuItem("Paste", "Ctrl+V"))
+				{
+					WindowTryInstancePaste(true);
+				}
 			}
 			// not current room
 			else
@@ -1166,20 +1170,17 @@ static void DrawSidebar(void)
 		{
 			if (ImGui::MenuItem("Delete", "Del"))
 			{
-				// TODO
-				gGuiSettings.PushModal("Deleted instance");
+				WindowTryInstanceDelete(true);
 			}
-			else if (ImGui::MenuItem("Cut", "Ctrl+X"))
+			if (ImGui::MenuItem("Cut", "Ctrl+X"))
 			{
-				// TODO
-				gGuiSettings.PushModal("Moved instance to clipboard");
+				WindowTryInstanceCut(true);
 			}
-			else if (ImGui::MenuItem("Copy", "Ctrl+C"))
+			if (ImGui::MenuItem("Copy", "Ctrl+C"))
 			{
-				// TODO
-				gGuiSettings.PushModal("Copied instance to clipboard");
+				WindowTryInstanceCopy(true);
 			}
-			else if (ImGui::MenuItem("Duplicate", "Shift+D"))
+			if (ImGui::MenuItem("Duplicate", "Shift+D"))
 			{
 				WindowTryInstanceDuplicate();
 			}

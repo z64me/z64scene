@@ -245,6 +245,10 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 {
 	int pressed = action != GLFW_RELEASE;
 	
+	#define SHORTCUT_CHECKS (!GuiHasFocus() \
+		&& action == GLFW_PRESS \
+	)
+	
 	switch (key)
 	{
 		case GLFW_KEY_W:
@@ -257,7 +261,9 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_S:
 			// ctrl + s ; Ctrl+S
-			if (pressed && (mods & GLFW_MOD_CONTROL))
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
 			{
 				// save as
 				if (mods & GLFW_MOD_SHIFT)
@@ -272,11 +278,35 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 		
 		case GLFW_KEY_D:
 			// Shift + D to Duplicate & Move
-			if ((mods & GLFW_MOD_SHIFT)
-				&& !GuiHasFocus()
-				&& !WindowTryInstanceDuplicate()
-			)
+			if (!((mods & GLFW_MOD_SHIFT)
+				&& SHORTCUT_CHECKS
+				&& WindowTryInstanceDuplicate()
+			))
 				gInput.key.d = pressed;
+			break;
+		
+		case GLFW_KEY_C:
+			// Ctrl+C to Copy
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
+				WindowTryInstanceCopy(true);
+			break;
+		
+		case GLFW_KEY_V:
+			// Ctrl+V to Paste
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
+				WindowTryInstancePaste(true);
+			break;
+		
+		case GLFW_KEY_X:
+			// Ctrl+X to Cut
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
+				WindowTryInstanceCut(true);
 			break;
 		
 		case GLFW_KEY_Q:
@@ -313,9 +343,15 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				gInput.textInput.text[strlen(gInput.textInput.text) - 1] = '\0';
 			break;
 		
+		case GLFW_KEY_DELETE:
+			if (SHORTCUT_CHECKS)
+				WindowTryInstanceDelete(true);
+		
 		case GLFW_KEY_O:
 			// ctrl + o ; Ctrl+O
-			if (pressed && (mods & GLFW_MOD_CONTROL))
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
 				WindowOpenFile();
 			break;
 	}
@@ -955,13 +991,18 @@ Vec4f WindowGetLocalScreenVec(Vec3f point)
 	return pos;
 }
 
-bool WindowTryInstanceDuplicate(void)
+bool WindowTryInstance(bool requireSelectedInstance)
 {
-	if (gGui->selectedInstance
+	return (!requireSelectedInstance || gGui->selectedInstance)
 		&& !gState.hasCameraMoved
 		&& GizmoIsIdle(gState.gizmo)
 		&& gGui->instanceList
-	)
+	;
+}
+
+bool WindowTryInstanceDuplicate(void)
+{
+	if (WindowTryInstance(true))
 	{
 		struct Instance newInst = *(gGui->selectedInstance);
 		
@@ -971,6 +1012,89 @@ bool WindowTryInstanceDuplicate(void)
 		
 		GuiPushModal("Duplicated instance.");
 		GizmoSetupMove(gState.gizmo);
+		
+		return true;
+	}
+	
+	return false;
+}
+
+bool WindowTryInstancePaste(bool showModal)
+{
+	if (!gGui->clipboardHasInstance)
+	{
+		if (showModal)
+			GuiPushModal("Clipboard is empty");
+		
+		return false;
+	}
+	
+	if (WindowTryInstance(false))
+	{
+		struct Instance newInst = gGui->clipboardInstance;
+		
+		newInst.pos = gGui->newSpawnPos;
+		sb_push(*gGui->instanceList, newInst);
+		gGui->selectedInstance = &sb_last(*gGui->instanceList);
+		gGui->selectedInstance->prev = (typeof(gGui->selectedInstance->prev))INSTANCE_PREV_INIT;
+		
+		GuiPushModal("Pasted instance.");
+		
+		return true;
+	}
+	
+	return false;
+}
+
+bool WindowTryInstanceDelete(bool showModal)
+{
+	if (WindowTryInstance(true))
+	{
+		int indexOf = sb_find_index(*gGui->instanceList, gGui->selectedInstance);
+		
+		if (indexOf >= 0)
+		{
+			LogDebug("delete instance %d", indexOf);
+			sb_remove(*gGui->instanceList, indexOf);
+			
+			GizmoSetupIdle(gState.gizmo);
+			GizmoRemoveChildren(gState.gizmo);
+			gGui->selectedInstance = 0;
+			
+			if (showModal)
+				GuiPushModal("Deleted instance");
+		}
+		
+		return true;
+	}
+	
+	return false;
+}
+
+bool WindowTryInstanceCut(bool showModal)
+{
+	if (WindowTryInstanceCopy(false)
+		&& WindowTryInstanceDelete(false)
+	)
+	{
+		if (showModal)
+			GuiPushModal("Moved instance to clipboard");
+		
+		return true;
+	}
+	
+	return false;
+}
+
+bool WindowTryInstanceCopy(bool showModal)
+{
+	if (WindowTryInstance(true))
+	{
+		gGui->clipboardHasInstance = true;
+		gGui->clipboardInstance = *(gGui->selectedInstance);
+		
+		if (showModal)
+			GuiPushModal("Copied instance to clipboard");
 		
 		return true;
 	}
