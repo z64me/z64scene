@@ -1617,27 +1617,10 @@ Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f
 	Vec3f distal = Vec3f_MulVal(Vec3f_Normalize(up), mag);
 	Vec3f idealDistal = Vec3f_MulVal(Vec3f_Normalize(dir), mag);
 	Vec3f result = angles;
-	
-	// TODO maybe brute-force 90 degree angles first so
-	//      perpendicular meshes don't suffer precision
-	//      (shouldn't be slow enough to matter)
-	
-	// try a bunch of random rotations, use whichever one is closest
-	for (int l = 0; l < 1000; ++l) {
+	float deviation;
+		
+	bool TryVariation(Vec3f variation) {
 		Vec3f thisDistal;
-		float deviation;
-		// testing axis alignment, revert to % 360 it causes problems
-		int i = rand() % 360;
-		int j = rand() % 180 + 180;
-		int k = 0;//rand() % 360;
-		Vec3f variation = {
-			DegToRad(i), DegToRad(j), DegToRad(k)
-		};
-		
-		// first pass: if the input angle is already good, use that
-		if (l == 0)
-			variation = angles;
-		
 		Matrix_Push(); {
 			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
 			Matrix_RotateY(variation.y, MTXMODE_APPLY);
@@ -1650,12 +1633,45 @@ Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f
 		if (deviation < nearest) {
 			nearest = deviation;
 			result = variation;
-			
-			// first pass: if input angle is already good, use that
-			if (l == 0 && sqrt(deviation) < mag * 0.01) {
-				break;
+			return true;
+		}
+		
+		return false;
+	}
+	
+	// first pass: if input angle is already good, preserve it
+	if (TryVariation(angles)
+		&& sqrt(deviation) < mag * 0.01
+	) return angles;
+	
+	// brute-force 45 degree angles first so
+	// perpendicular meshes don't suffer precision
+	// (shouldn't be slow enough to matter)
+	int bruteStep = 45;
+	for (int i = 0; i < 360; i += bruteStep) {
+		for (int j = 0; j < 360; j += bruteStep) {
+			for (int k = 0; k < 360; k += bruteStep) {
+				Vec3f variation = {
+					DegToRad(i), DegToRad(j), DegToRad(k)
+				};
+				if (TryVariation(variation)
+					&& sqrt(deviation) < mag * 0.01
+				) return result;
 			}
 		}
+	}
+	
+	// try a bunch of random rotations, use whichever one is closest
+	for (int l = 0; l < 1000; ++l) {
+		// testing axis alignment, revert to % 360 it causes problems
+		int i = rand() % 360;
+		int j = rand() % 180 + 180;
+		int k = 0;//rand() % 360;
+		Vec3f variation = {
+			DegToRad(i), DegToRad(j), DegToRad(k)
+		};
+		
+		TryVariation(variation);
 	}
 	
 	return result;
