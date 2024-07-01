@@ -188,6 +188,7 @@
 #define sb_free   stb_sb_free
 #define sb_push   stb_sb_push
 #define sb_insert stb_sb_insert
+#define sb_remove stb_sb_remove
 #define sb_pop    stb_sb_pop
 #define sb_count  stb_sb_count
 #define sb_add    stb_sb_add
@@ -214,6 +215,12 @@
 		(a)[i] = (a)[(i) - 1]; \
 	(a)[index] = (v); \
 	stb__sbn(a)++; \
+}
+
+#define stb_sb_remove(a, index) { \
+	for (int i = index; i < stb__sbn(a) - 1; ++i) \
+		(a)[i] = (a)[i + 1]; \
+	stb__sbn(a)--; \
 }
 
 #define stb__sbraw(a) ((int *) (void *) (a) - 2)
