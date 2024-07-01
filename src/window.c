@@ -23,15 +23,6 @@
 #define NOC_FILE_DIALOG_IMPLEMENTATION
 #include "noc_file_dialog.h"
 
-enum RenderGroup
-{
-	RENDERGROUP_IGNORE = 0,
-	RENDERGROUP_ROOM = 0x01000000,
-	RENDERGROUP_INST = 0x02000000,
-	RENDERGROUP_MASK_ID = 0x00ffffff,
-	RENDERGROUP_MASK_GROUP = 0xff000000,
-};
-
 static GbiGfx gfxEnableXray[] = { gsXPMode(0, GX_MODE_OUTLINE), gsSPEndDisplayList() };
 static GbiGfx gfxDisableXray[] = { gsXPMode(GX_MODE_OUTLINE, 0), gsSPEndDisplayList() };
 static double sGameplayFrames = 0;
@@ -130,6 +121,7 @@ struct CameraRay
 	struct Instance *currentInstance;
 	Triangle snapAngleTri;
 	bool useSnapAngle;
+	uint32_t renderGroupClicked;
 };
 static struct CameraRay worldRayData = { 0 };
 
@@ -158,6 +150,7 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 		, tri64->cullBackface
 		, tri64->cullFrontface
 	)) {
+		ud->renderGroupClicked = tri64->setId;
 		ud->renderGroup &= RENDERGROUP_MASK_GROUP;
 		bool isRoomGeometry = ud->renderGroup == RENDERGROUP_ROOM;
 		if (worldRayData.isSelectingInstance && ud->renderGroup == RENDERGROUP_INST)
@@ -2354,6 +2347,7 @@ void WindowMainLoop(struct Scene *scene)
 		if (gInput.mouse.clicked.right)
 		{
 			gGui->rightClickedInViewport = true;
+			gGui->rightClickedRenderGroup = worldRayData.renderGroupClicked;
 			gInput.mouse.clicked.right = false;
 			gInput.mouse.isControllingCamera = false;
 			

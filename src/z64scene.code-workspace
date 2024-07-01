@@ -15,7 +15,13 @@
 			"random": "c",
 			"limits": "c",
 			"valarray": "c",
-			"functional": "c"
+			"functional": "c",
+			"noc_file_dialog.h": "c",
+			"array": "cpp",
+			"string": "cpp",
+			"string_view": "cpp",
+			"ranges": "cpp",
+			"span": "cpp"
 		}
 	}
 }

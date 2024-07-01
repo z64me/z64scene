@@ -1125,20 +1125,40 @@ static void DrawSidebar(void)
 		ImGui::OpenPopup("##RightClickWorldMenu");
 	if (ImGui::BeginPopup("##RightClickWorldMenu"))
 	{
-		if (ImGui::Selectable("Add Actor Here"))
+		RenderGroup renderGroup = gGui->rightClickedRenderGroup;
+		uint32_t group = renderGroup & RENDERGROUP_MASK_GROUP;
+		uint32_t id = renderGroup & RENDERGROUP_MASK_ID;
+		
+		// right-clicked room geometry
+		if (group == RENDERGROUP_ROOM)
 		{
-			QUEUE_POPUP(AddNewInstanceSearch);
-			gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
-		}
-		if (ImGui::Selectable("Add Spawn Point Here"))
-		{
-			QUEUE_POPUP(AddNewInstanceSearch);
-			gAddNewInstanceSearchTab = INSTANCE_TAB_SPAWN;
-		}
-		if (ImGui::Selectable("Add Doorway Here"))
-		{
-			QUEUE_POPUP(AddNewInstanceSearch);
-			gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
+			// current room
+			if (id == gGui->selectedRoomIndex)
+			{
+				if (ImGui::Selectable("Add Actor Here"))
+				{
+					QUEUE_POPUP(AddNewInstanceSearch);
+					gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
+				}
+				if (ImGui::Selectable("Add Spawn Point Here"))
+				{
+					QUEUE_POPUP(AddNewInstanceSearch);
+					gAddNewInstanceSearchTab = INSTANCE_TAB_SPAWN;
+				}
+				if (ImGui::Selectable("Add Doorway Here"))
+				{
+					QUEUE_POPUP(AddNewInstanceSearch);
+					gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
+				}
+			}
+			// not current room
+			else
+			{
+				if (ImGui::Selectable("Select this room"))
+				{
+					gGui->selectedRoomIndex = id;
+				}
+			}
 		}
 		
 		ImGui::EndPopup();
@@ -1331,7 +1351,7 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	// handling this here for now
 	if (scene)
 	{
-		RoomHeader *roomHeader = &gScene->rooms[0].headers[0];
+		RoomHeader *roomHeader = &gScene->rooms[gGui->selectedRoomIndex].headers[0];
 		SceneHeader *sceneHeader = &gScene->headers[0];
 		
 		gGui->doorList = &(sceneHeader->doorways);
