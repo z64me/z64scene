@@ -76,7 +76,7 @@ Vec2f WindowGetLocalScreenPos(Vec3f point);
 bool WindowTryInstanceDuplicate(void);
 bool WindowTryInstanceDelete(bool showModal);
 bool WindowTryInstanceCut(bool showModal);
-bool WindowTryInstancePaste(bool showModal);
+bool WindowTryInstancePaste(bool showModal, bool deferWithRaycast);
 bool WindowTryInstanceCopy(bool showModal);
 
 struct Object *WindowLoadObject(const char *fn);

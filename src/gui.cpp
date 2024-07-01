@@ -1151,9 +1151,9 @@ static void DrawSidebar(void)
 					QUEUE_POPUP(AddNewInstanceSearch);
 					gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
 				}
-				if (ImGui::MenuItem("Paste", "Ctrl+V"))
+				if (ImGui::MenuItem("Paste Here", "Ctrl+V"))
 				{
-					WindowTryInstancePaste(true);
+					WindowTryInstancePaste(true, false);
 				}
 			}
 			// not current room

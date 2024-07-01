@@ -100,6 +100,7 @@ static struct State
 	struct CameraFly cameraFly;
 	bool cameraIgnoreLMB;
 	bool hasCameraMoved;
+	bool deferredInstancePaste;
 	struct Gizmo *gizmo;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
@@ -298,7 +299,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			if ((mods & GLFW_MOD_CONTROL)
 				&& SHORTCUT_CHECKS
 			)
-				WindowTryInstancePaste(true);
+				WindowTryInstancePaste(true, true);
 			break;
 		
 		case GLFW_KEY_X:
@@ -1019,12 +1020,19 @@ bool WindowTryInstanceDuplicate(void)
 	return false;
 }
 
-bool WindowTryInstancePaste(bool showModal)
+bool WindowTryInstancePaste(bool showModal, bool deferWithRaycast)
 {
 	if (!gGui->clipboardHasInstance)
 	{
 		if (showModal)
 			GuiPushModal("Clipboard is empty");
+		
+		return false;
+	}
+	
+	if (deferWithRaycast)
+	{
+		gState.deferredInstancePaste = true;
 		
 		return false;
 	}
@@ -2372,6 +2380,7 @@ void WindowMainLoop(struct Scene *scene)
 				|| gInput.key.lctrl != gInput.keyOld.lctrl
 			))
 			|| gInput.mouse.clicked.right
+			|| gState.deferredInstancePaste
 		)
 		{
 			worldRayData.ray = WindowGetCursorRayLine();
@@ -2490,6 +2499,16 @@ void WindowMainLoop(struct Scene *scene)
 				gGui->newSpawnPos = worldRayData.pos;
 				//LogDebug("newSpawnPos = %f %f %f", UNFOLD_VEC3(gGui->newSpawnPos));
 			}
+		}
+		
+		if (gState.deferredInstancePaste)
+		{
+			// paste at deferred raycast position
+			if (worldRayData.ray.nearest < FLT_MAX)
+				gGui->newSpawnPos = worldRayData.pos;
+			
+			gState.deferredInstancePaste = false;
+			WindowTryInstancePaste(true, false);
 		}
 		
 	L_skipSceneRender:
