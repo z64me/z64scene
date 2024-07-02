@@ -2427,10 +2427,12 @@ void WindowMainLoop(struct Scene *scene)
 				
 				inst->prev.triNormal16 = triNormal16;
 				result = Vec3f_BruteforceEulerAnglesTowardsDirection(result, triNormal, inst->faceSnapVector);
+				//LogDebug("BruteEulerAngles output = %f %f %f", UNFOLD_VEC3(result));
 				
 				inst->xrot = RadToBin(result.x);
 				inst->yrot = RadToBin(result.y);
 				inst->zrot = RadToBin(result.z);
+				//LogDebug("BruteEulerAngles result = %04x %04x %04x", inst->xrot, inst->yrot, inst->zrot);
 			}
 			worldRayData.useSnapAngle = false;
 		}

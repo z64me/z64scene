@@ -22,7 +22,8 @@
 			"string_view": "cpp",
 			"ranges": "cpp",
 			"span": "cpp",
-			"variant": "cpp"
+			"variant": "cpp",
+			"ctype.h": "c"
 		}
 	}
 }

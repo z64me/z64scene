@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include "logging.h"
 
 #if 1 // region: misc
 
@@ -1622,6 +1623,13 @@ Vec3f Vec3f_BruteforceEulerAnglesTowardsDirection(Vec3f angles, Vec3f dir, Vec3f
 	Vec3f idealDistal = Vec3f_MulVal(Vec3f_Normalize(dir), mag);
 	Vec3f result = angles;
 	float deviation;
+	
+	/*
+	LogDebug("BruteEulerAngles input:\n""angles = %f %f %f\n"
+		"idealDistal = %f %f %f\n""distal = %f %f %f\n",
+		UnfoldVec3(angles), UnfoldVec3(idealDistal), UnfoldVec3(distal)
+	);
+	*/
 		
 	bool TryVariation(Vec3f variation) {
 		Vec3f thisDistal;

@@ -26,6 +26,7 @@ typedef uint32_t u32;
 typedef int32_t s32;
 typedef float f32;
 typedef double f64;
+#define BINANGLE_CAST uint16_t // BinAngle must be u16 for RadToBin() to work on win32
 
 #if 1 // region: misc
 
@@ -41,12 +42,12 @@ int16_t coss(uint16_t angle);
 #define CosR(x) cosf(x)
 
 // trigonometry macros
-#define DegToBin(degreesf) (int16_t)(degreesf * 182.04167f + .5f)
-#define RadToBin(radf)     (int16_t)(radf * (32768.0f / M_PI))
+#define DegToBin(degreesf) (BINANGLE_CAST)(degreesf * 182.04167f + .5f)
+#define RadToBin(radf)     (BINANGLE_CAST)(radf * (32768.0f / M_PI))
 #define RadToDeg(radf)     (radf * (180.0f / M_PI))
 #define DegToRad(degf)     (degf * (M_PI / 180.0f))
-#define BinFlip(angle)     ((int16_t)(angle - 0x7FFF))
-#define BinSub(a, b)       ((int16_t)(a - b))
+#define BinFlip(angle)     ((BINANGLE_CAST)(angle - 0x7FFF))
+#define BinSub(a, b)       ((BINANGLE_CAST)(a - b))
 #define BinToDeg(binang)   ((float)binang * (360.0001525f / 65535.0f))
 #define BinToRad(binang)   (((float)binang / 32768.0f) * M_PI)
 
