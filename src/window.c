@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <ctype.h>
 
+// TODO the deferred paste/snap/rotate stuff is a bit messy,
+//      so do it with a queuedInstanceSnap or something later
+//      (current impl is acceptable for minimum viable product)
+
 #include "logging.h"
 #include "misc.h"
 #include "extmath.h"
@@ -172,7 +176,12 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 		ud->renderGroup |= tri64->setId & RENDERGROUP_MASK_ID;
 		
 		// adjust rotation when snapping to different surfaces
-		if (isRoomGeometry && gGui->selectedInstance && gInput.key.lctrl)
+		if (isRoomGeometry
+			&& ((gGui->selectedInstance && gInput.key.lctrl) // moving inst w/ ctrl held
+				|| gState.deferredInstancePaste // auto-rotate on paste via ctrl+v
+				|| gInput.mouse.clicked.right // auto-rotate on right-click->(new/paste)
+			)
+		)
 		{
 			ud->useSnapAngle = true;
 			ud->snapAngleTri = tri;
@@ -400,6 +409,7 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 		case GLFW_MOUSE_BUTTON_RIGHT:
 			gInput.mouse.button.right = pressed;
 			if (action == GLFW_RELEASE && gInput.mouseOld.button.right) // TODO make it timed
+				gGui->selectedInstance = 0,
 				gInput.mouse.clicked.right = true;
 			break;
 		
@@ -1033,6 +1043,7 @@ bool WindowTryInstancePaste(bool showModal, bool deferWithRaycast)
 	if (deferWithRaycast)
 	{
 		gState.deferredInstancePaste = true;
+		gGui->selectedInstance = 0;
 		
 		return false;
 	}
@@ -2400,7 +2411,6 @@ void WindowMainLoop(struct Scene *scene)
 		)
 		{
 			Triangle tri = worldRayData.snapAngleTri;
-			
 			Vec3f triNormal = Vec3f_NormalFromTriangleVertices(tri.v[0], tri.v[1], tri.v[2]);
 			Vec3s triNormal16 = (Vec3s) { UNFOLD_VEC3_EXT(triNormal, * (32768.0f / M_PI)) };
 			Vec3f result = Vec3f_FaceNormalToYawPitch64(triNormal);
@@ -2422,8 +2432,8 @@ void WindowMainLoop(struct Scene *scene)
 				inst->yrot = RadToBin(result.y);
 				inst->zrot = RadToBin(result.z);
 			}
+			worldRayData.useSnapAngle = false;
 		}
-		worldRayData.useSnapAngle = false;
 		
 		// left-click an instance to select it
 		// TODO consolidate it into the above block
