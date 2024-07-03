@@ -1761,28 +1761,27 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 		gSPDisplayList((*sRenderCodeSegment)++, result);
 	}
+	void DrawPopulateSegment(struct Object *obj, int segment, uint32_t address) {
+		if (!obj)
+			return;
+		const uint8_t *data = obj->file->data;
+		data += address & 0x00ffffff;
+		gSPSegment(POLY_OPA_DISP++, segment, data);
+		gSPSegment(POLY_XLU_DISP++, segment, data);
+		
+	}
 	void DrawPopulateSegment2(WrenVM *vm) {
-		if (sObject) {
-			int segment = wrenGetSlotDouble(vm, 1);
-			uint32_t address = wrenGetSlotDouble(vm, 2);
-			const uint8_t *data = sObject->file->data;
-			data += address & 0x00ffffff;
-			gSPSegment(POLY_OPA_DISP++, segment, data);
-			gSPSegment(POLY_XLU_DISP++, segment, data);
-		}
+		int segment = wrenGetSlotDouble(vm, 1);
+		uint32_t address = wrenGetSlotDouble(vm, 2);
+		DrawPopulateSegment(sObject, segment, address);
 	}
 	void DrawPopulateSegment3(WrenVM *vm) {
 		int slot = wrenGetSlotDouble(vm, 1);
 		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
 		struct Object *obj = GuiGetObjectDataFromId(objectId);
-		if (obj) {
-			int segment = wrenGetSlotDouble(vm, 1);
-			uint32_t address = wrenGetSlotDouble(vm, 2);
-			const uint8_t *data = obj->file->data;
-			data += address & 0x00ffffff;
-			gSPSegment(POLY_OPA_DISP++, segment, data);
-			gSPSegment(POLY_XLU_DISP++, segment, data);
-		}
+		int segment = wrenGetSlotDouble(vm, 2);
+		uint32_t address = wrenGetSlotDouble(vm, 3);
+		DrawPopulateSegment(obj, segment, address);
 	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
