@@ -3699,6 +3699,7 @@
 		var type = Props.Type
 		// TODO different addresses for different game versions
 		if (Inst.PropertyChanged) {
+			Udata.segments = []
 			Inst.SetFaceSnapVector()
 			if (type == 0) { // floor switch
 				var floorSwitchDLists = [
@@ -3729,6 +3730,7 @@
 						0x0500c0a0, // Syms.gEyeSwitchSilverClosedTex
 					],
 				]
+				Udata.segments.add([8, eyeTextures[0][0]])
 				Udata.mesh = eyeDlists[0] // TODO subtype
 				Inst.SetFaceSnapVector(0, 0, 1)
 			} else if (type == 3 || type == 4) { // crystal switch
@@ -3751,6 +3753,10 @@
 					xluDLists[0],
 				]
 			}
+		}
+		
+		for (seg in Udata.segments) {
+			Draw.PopulateSegment(seg[0], seg[1])
 		}
 		
 		if (type >= 0 && type <= 4) {

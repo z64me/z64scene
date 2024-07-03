@@ -1761,6 +1761,29 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 		gSPDisplayList((*sRenderCodeSegment)++, result);
 	}
+	void DrawPopulateSegment2(WrenVM *vm) {
+		if (sObject) {
+			int segment = wrenGetSlotDouble(vm, 1);
+			uint32_t address = wrenGetSlotDouble(vm, 2);
+			const uint8_t *data = sObject->file->data;
+			data += address & 0x00ffffff;
+			gSPSegment(POLY_OPA_DISP++, segment, data);
+			gSPSegment(POLY_XLU_DISP++, segment, data);
+		}
+	}
+	void DrawPopulateSegment3(WrenVM *vm) {
+		int slot = wrenGetSlotDouble(vm, 1);
+		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
+		struct Object *obj = GuiGetObjectDataFromId(objectId);
+		if (obj) {
+			int segment = wrenGetSlotDouble(vm, 1);
+			uint32_t address = wrenGetSlotDouble(vm, 2);
+			const uint8_t *data = obj->file->data;
+			data += address & 0x00ffffff;
+			gSPSegment(POLY_OPA_DISP++, segment, data);
+			gSPSegment(POLY_XLU_DISP++, segment, data);
+		}
+	}
 	void MathSinS(WrenVM* vm) {
 		double v = wrenGetSlotDouble(vm, 1);
 		wrenSetSlotDouble(vm, 0, sins(v) * (1.0 / 32767.0));
@@ -1869,6 +1892,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "MatrixNewFromBillboardCylinder()")) return DrawMatrixNewFromBillboardCylinder;
 			else if (streq(signature, "TwoTexScroll(_,_,_,_,_,_,_,_)")) return DrawTwoTexScroll8;
 			else if (streq(signature, "TwoTexScroll(_,_,_,_,_,_,_,_,_,_)")) return DrawTwoTexScroll10;
+			else if (streq(signature, "PopulateSegment(_,_)")) return DrawPopulateSegment2;
+			else if (streq(signature, "PopulateSegment(_,_,_)")) return DrawPopulateSegment3;
 		}
 		else if (streq(className, "Math")) {
 			if (streq(signature, "SinS(_)")) return MathSinS;
