@@ -305,6 +305,11 @@ void TestWrenSimple(void)
 		if (true)
 			for (i in 0..5)
 				System.print("if-for w/ newlines, no braces %(i) ")
+		
+		System.print("binary as decimal: %(0b0100_1101_0010) ") // expect 1234
+		//System.print("binary as decimal: %(0b1234) ") // error
+		//System.print("binary as decimal: %(0b1100_1101_0010_0010_0100_1101_0010_0010_0100_1101_0010_0010_0100_1101_0010_0010) ") // big number
+		//System.print("binary as decimal: %(0b1_1100_1101_0010_0010_0100_1101_0010_0010_0100_1101_0010_0010_0100_1101_0010_0010) ") // number too big error
 	)";
 	LogDebug("script = %s", script);
 	LogDebug("((bool)123) == true  : %d", ((bool)123) == true);
