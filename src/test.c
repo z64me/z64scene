@@ -12,6 +12,9 @@
 #include "logging.h"
 #include "misc.h"
 
+// for reporting the correct line number in wren callbacks
+static int sLine = 0;
+
 typedef struct TestWrenUdata
 {
 	float Xpos;
@@ -70,10 +73,10 @@ static void errorFn(WrenVM* vm, WrenErrorType errorType,
 	switch (errorType)
 	{
 		case WREN_ERROR_COMPILE:
-			LogDebug("[%s line %d] [Error] %s", module, line, msg);
+			LogDebug("[%s line %d] [Error] %s", module, line + sLine, msg);
 			break;
 		case WREN_ERROR_STACK_TRACE:
-			LogDebug("[%s line %d] in %s", module, line, msg);
+			LogDebug("[%s line %d] in %s", module, line + sLine, msg);
 			break;
 		case WREN_ERROR_RUNTIME:
 			LogDebug("[Runtime Error] %s", msg);
@@ -137,6 +140,7 @@ void TestWrenSimple(void)
 	WrenVM* vm = wrenNewVM(&config);
 	
 	const char *module = "main";
+	sLine = __LINE__;
 	const char *script = R"(
 		System.print("0 == false : %(0 == false) ")
 		System.print("1 == true  : %(1 == true) ")
@@ -173,6 +177,134 @@ void TestWrenSimple(void)
 		if (1) {
 			System.print("if (1) ")
 		}
+		if (false || true)
+		{
+			System.print("curly brace after newline")
+		}
+		
+		if (true) { System.print("same line if statement (block) ") }
+		if (true) System.print("same line if statement (no block) ")
+		System.print("next line")
+		System.print(Fn.new {
+			if (false) "no" else return "ok"
+		}.call()) // expect: ok
+		class TestClass
+		{
+			test { _test }
+			construct new()
+			{
+				_test = "test"
+			}
+			static what()
+			{
+				System.print("wow ok")
+			}
+			
+			PrintTest()
+			{
+				System.print("PrintTest() was invoked")
+			}
+		}
+		var testClass = TestClass.new()
+		System.print("testClass.test = %(testClass.test) ")
+		testClass.PrintTest()
+		
+		// simple function
+		var sayMessage = Fn.new
+		{
+			| recipient, message |
+			
+			System.print("message for %(recipient): %(message) ")
+		}
+		sayMessage.call("test", "hello world")
+		
+		for (i in 0..5)
+		{
+			System.print("%(i) for() loop with newline")
+		}
+		
+		var whileTest = 0
+		while (whileTest < 5)
+		{
+			System.print("%(whileTest) while() loop with newline")
+			whileTest = whileTest + 1
+		}
+		
+		//if (true)
+		if (false)
+		// test
+		// this
+		// comment
+		/* and
+		 /* this
+		    block */
+		 comment
+		*/
+		{
+			System.print("if() with brace on newline")
+		}
+		else if (false)
+		{
+			System.print("else if() with brace on newline")
+		}
+		// comments too
+		else
+		{
+			System.print("else{} with brace on newline")
+		}
+		
+		System.print("this precedes a standalone block")
+		// anonymous block
+		{
+			System.print("this is a standalone block")
+		}
+		{
+			System.print("this is another standalone block")
+		}
+		
+		if ((true)
+			&& true
+			&& (true
+				|| true
+				|| (true && true)
+			) && (1 + 1 == 2)
+		)
+		{
+			System.print("curly brace after complex block")
+		}
+		
+		var multiLineAdd = (
+			1
+			+ 2
+			+ 3
+		)
+		System.print("multiLineAdd result = %(multiLineAdd) ")
+		System.print("multiLineAdd inline = "
+			+ "%(
+				1
+				+ 2
+				+ 3
+			) "
+		)
+		
+		if (true) System.print("what")
+		else if (true) System.print("what-1")
+		else System.print("wow")
+		
+		if (false)
+			System.print("if w/ newline, no braces")
+		else if (true
+			&& true
+			&& (false || true)
+			&& false
+		)
+			System.print("if-else w/ newline, no braces")
+		else
+			System.print("else w/ newline, no braces")
+		
+		if (true)
+			for (i in 0..5)
+				System.print("if-for w/ newlines, no braces %(i) ")
 	)";
 	LogDebug("script = %s", script);
 	LogDebug("((bool)123) == true  : %d", ((bool)123) == true);
