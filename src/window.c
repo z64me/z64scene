@@ -106,6 +106,7 @@ static struct State
 	bool hasCameraMoved;
 	bool deferredInstancePaste;
 	struct Gizmo *gizmo;
+	struct Scene *queueSceneForFree;
 } gState = {
 	.winWidth = WINDOW_INITIAL_WIDTH
 	, .winHeight = WINDOW_INITIAL_HEIGHT
@@ -912,7 +913,7 @@ struct Scene *WindowLoadScene(const char *fn)
 	
 	// cleanup
 	if (*gSceneP)
-		SceneFree(*gSceneP);
+		gState.queueSceneForFree = *gSceneP;
 	n64_clear_cache();
 	
 	// view new scene
@@ -1768,7 +1769,6 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		data += address & 0x00ffffff;
 		gSPSegment(POLY_OPA_DISP++, segment, data);
 		gSPSegment(POLY_XLU_DISP++, segment, data);
-		
 	}
 	void DrawPopulateSegment2(WrenVM *vm) {
 		int segment = wrenGetSlotDouble(vm, 1);
@@ -2577,6 +2577,13 @@ void WindowMainLoop(struct Scene *scene)
 		gInput.mouse.clicked.right = false;
 		gInput.mouse.vel.x = gInput.mouse.vel.y = 0;
 		gGui->rightClickedInViewport = false;
+		
+		// queued scene cleanup (win32 needs this)
+		if (gState.queueSceneForFree)
+		{
+			SceneFree(gState.queueSceneForFree);
+			gState.queueSceneForFree = 0;
+		}
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
 		// -------------------------------------------------------------------------------
