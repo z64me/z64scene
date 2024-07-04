@@ -171,6 +171,7 @@ void CameraRayCallback(void *udata, const N64Tri *tri64)
 			GizmoSetPosition(gState.gizmo, UNFOLD_VEC3(each->pos));
 			GizmoAddChild(gState.gizmo, &each->pos);
 			gGui->selectedInstance = each;
+			ud->useSnapAngle = false;
 
 			LogDebug("RENDERGROUP_INST");
 		}
