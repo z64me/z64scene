@@ -478,6 +478,9 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 	
 	if (!scene && db)
 	{
+		int jsonCols = 0;
+		bool printJsonArray = true;
+		
 		for (int i = 0; i < dbCount; ++i)
 		{
 			type = &db[i];
@@ -493,7 +496,12 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 			if (log)
 			{
 				//fprintf(log, "%04x %d %d %d\n", i, type->isYrotRaw, type->isXrotRaw, type->isZrotRaw);
-				if (true)
+				if (printJsonArray)
+				{
+					fprintf(log, "[0x%04x, \"%s\"], ", i, type->set); // json array
+					if (++jsonCols > 4) fprintf(log, "\n"), jsonCols = 0;
+				}
+				else if (true)
 					fprintf(log, "%04x: [%s]\n", i, type->set);
 				else // print all unique variations
 				{
@@ -505,6 +513,7 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 				}
 			}
 		}
+		if (jsonCols) fprintf(log, "\n");
 		
 		free(db);
 		db = 0;
