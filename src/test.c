@@ -438,8 +438,13 @@ void TestWren(void)
 //    depending on the hour/minute of the day, but a variation of this
 //    actor that is used in the swamp for the owl song engraving (the
 //    rotation values seem to be unused in this case?)
+//    (is also used for diaries)
 //  - actor type 0x001c - the y rotation is only used in calculations
 //    if ((params & 3) == 1), and seems to be unused otherwise
+//  - actor type 0x0174 - x rotation encoding can vary but is never
+//    used in actor logic, only for visual rotation (ocean dungeon gears)
+//  - actor type 0x0091 - z rotation may or may not be encoded (whether
+//    the rotation is used depends on actor params) (bean spot/plant)
 //  - any other discrepancies where a yxz flag is not set, its rotation
 //    bits are all 0, which means the same rotation values will be
 //    derived whether or not the flag is set for that rotation axis
@@ -455,6 +460,7 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 		char set[5];
 		char *latestRoomName;
 		uint16_t params;
+		uint16_t id;
 	} *db = 0, *type, work;
 	static FILE *log = 0;
 	const int dbCount = 0xfff;
@@ -465,11 +471,10 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 		, ACCESSOR isZrotRaw ? 'z' : ' '
 	
 	if (!db)
-	{
 		db = calloc(dbCount, sizeof(*db));
-		if (logFilename)
-			log = fopen(logFilename, "w");
-	}
+	
+	if (!log && logFilename)
+		log = fopen(logFilename, "w");
 	
 	if (!scene && db)
 	{
@@ -520,27 +525,32 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 				uint16_t masked = id & 0xfff;
 				type = &db[masked];
 				work = *type;
-				work.isYrotRaw = id & 0x8000;
-				work.isXrotRaw = id & 0x4000;
-				work.isZrotRaw = id & 0x2000;
+				bool isYrotRaw = id & 0x8000;
+				bool isXrotRaw = id & 0x4000;
+				bool isZrotRaw = id & 0x2000;
+				work.isYrotRaw = MAX(isYrotRaw, work.isYrotRaw);
+				work.isXrotRaw = MAX(isXrotRaw, work.isXrotRaw);
+				work.isZrotRaw = MAX(isZrotRaw, work.isZrotRaw);
 				work.isInit = true;
 				uint16_t yrot = inst->yrot >> 7;
 				uint16_t xrot = inst->xrot >> 7;
 				uint16_t zrot = inst->zrot >> 7;
-				if (type->isInit)
+				if (type->isInit && log)
 				{
 					// report if any setting is turned off and uses a non-zero rotation
-					if ((work.isYrotRaw < type->isYrotRaw && yrot)
-						|| (work.isXrotRaw < type->isXrotRaw && xrot)
-						|| (work.isZrotRaw < type->isZrotRaw && zrot)
+					if ((isYrotRaw < type->isYrotRaw && yrot)
+						|| (isXrotRaw < type->isXrotRaw && xrot)
+						|| (isZrotRaw < type->isZrotRaw && zrot)
 					)
 					{
-						fprintf(log, "differing rot settings on 0x%04x(%04x->%04x): [%c%c%c] -> [%c%c%c]\n"
+						fprintf(log, "differing rot settings on 0x%04x(%04x->%04x),(%04x->%04x): [%c%c%c] -> [%c%c%c]\n"
 							, masked
+							, work.id
+							, id
 							, work.params
 							, inst->params
 							, ROT_CHARS(type->)
-							, ROT_CHARS(work.)
+							, ROT_CHARS( )
 						);
 						if (work.latestRoomName && strcmp(work.latestRoomName, currentRoomName))
 							fprintf(log, "   (%s -> %s)\n", work.latestRoomName, currentRoomName);
@@ -564,6 +574,7 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 					work.latestRoomName = strdup(currentRoomName);
 				}
 				work.params = inst->params;
+				work.id = id;
 				*type = work;
 			})
 		})

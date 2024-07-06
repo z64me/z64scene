@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 		const char *fn = "bin/exhaustive-mm.txt";
 		bool isAnalyzingScenes = true;
 		// multiple passes to assert consistent use of rotations
-		for (int i = 0; i < 1 /*+ isAnalyzingScenes*/; ++i)
+		for (int i = 0; i < 1 + isAnalyzingScenes; ++i)
 		{
 			struct File *file = FileFromFilename(fn);
 			char *src = file->data;
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 				*/
 				// want to analyze everything
 				if (isAnalyzingScenes)
-					TestAnalyzeSceneActors(scene, "bin/TestAnalyzeSceneActors.log");
+					TestAnalyzeSceneActors(scene, i < 1 ? 0 : "bin/TestAnalyzeSceneActors.log");
 				// want to batch open/save everything
 				else if (false)
 					SceneToFilename(scene, 0);
