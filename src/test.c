@@ -427,3 +427,145 @@ void TestWren(void)
 	wrenFreeVM(vm);
 	//exit(0);
 }
+
+//
+// analyze actors in every room in every scene, to better understand MM rotation flags
+//
+// findings:
+//  - anywhere rotation flags are used, they are used consistently for all
+//    instances of actors sharing that type (with only two exceptions)
+//  - actor type 0x01ab - the timer that kicks the player out of rooms
+//    depending on the hour/minute of the day, but a variation of this
+//    actor that is used in the swamp for the owl song engraving (the
+//    rotation values seem to be unused in this case?)
+//  - actor type 0x001c - the y rotation is only used in calculations
+//    if ((params & 3) == 1), and seems to be unused otherwise
+//  - any other discrepancies where a yxz flag is not set, its rotation
+//    bits are all 0, which means the same rotation values will be
+//    derived whether or not the flag is set for that rotation axis
+//
+void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
+{
+	static struct {
+		bool isInit;
+		bool isYrotRaw;
+		bool isXrotRaw;
+		bool isZrotRaw;
+		sb_array(char*, sets); // unique yxz flag variations
+		char set[5];
+		char *latestRoomName;
+		uint16_t params;
+	} *db = 0, *type, work;
+	static FILE *log = 0;
+	const int dbCount = 0xfff;
+	
+	#define ROT_CHARS(ACCESSOR) \
+		ACCESSOR isYrotRaw ? 'y' : ' ' \
+		, ACCESSOR isXrotRaw ? 'x' : ' ' \
+		, ACCESSOR isZrotRaw ? 'z' : ' '
+	
+	if (!db)
+	{
+		db = calloc(dbCount, sizeof(*db));
+		if (logFilename)
+			log = fopen(logFilename, "w");
+	}
+	
+	if (!scene && db)
+	{
+		for (int i = 0; i < dbCount; ++i)
+		{
+			type = &db[i];
+			
+			// no actors of this type encountered
+			if (type->isInit == false)
+				continue;
+			
+			// this actor doesn't use any rotation flags
+			if (!strcmp(type->set, "   "))
+				continue;
+			
+			if (log)
+			{
+				//fprintf(log, "%04x %d %d %d\n", i, type->isYrotRaw, type->isXrotRaw, type->isZrotRaw);
+				if (true)
+					fprintf(log, "%04x: [%s]\n", i, type->set);
+				else // print all unique variations
+				{
+					fprintf(log, "%04x: %s --- ", i, type->set);
+					sb_foreach(type->sets, {
+						fprintf(log, "[%s] ", *each);
+					})
+					fprintf(log, "\n");
+				}
+			}
+		}
+		
+		free(db);
+		db = 0;
+		
+		if (log)
+			fclose(log);
+		log = 0;
+	}
+	
+	if (!scene)
+		return;
+	
+	sb_foreach_named(scene->rooms, room, {
+		const char *currentRoomName = room->file->filename;
+		sb_foreach_named(room->headers, header, {
+			sb_foreach_named(header->instances, inst, {
+				uint16_t id = inst->id;
+				uint16_t masked = id & 0xfff;
+				type = &db[masked];
+				work = *type;
+				work.isYrotRaw = id & 0x8000;
+				work.isXrotRaw = id & 0x4000;
+				work.isZrotRaw = id & 0x2000;
+				work.isInit = true;
+				uint16_t yrot = inst->yrot >> 7;
+				uint16_t xrot = inst->xrot >> 7;
+				uint16_t zrot = inst->zrot >> 7;
+				if (type->isInit)
+				{
+					// report if any setting is turned off and uses a non-zero rotation
+					if ((work.isYrotRaw < type->isYrotRaw && yrot)
+						|| (work.isXrotRaw < type->isXrotRaw && xrot)
+						|| (work.isZrotRaw < type->isZrotRaw && zrot)
+					)
+					{
+						fprintf(log, "differing rot settings on 0x%04x(%04x->%04x): [%c%c%c] -> [%c%c%c]\n"
+							, masked
+							, work.params
+							, inst->params
+							, ROT_CHARS(type->)
+							, ROT_CHARS(work.)
+						);
+						if (work.latestRoomName && strcmp(work.latestRoomName, currentRoomName))
+							fprintf(log, "   (%s -> %s)\n", work.latestRoomName, currentRoomName);
+					}
+				}
+				char set[5];
+				bool setExists = false;
+				snprintf(set, sizeof(set), "%c%c%c", ROT_CHARS(work.));
+				sb_foreach(work.sets, {
+					if (!strcmp(*each, set))
+						setExists = true;
+				})
+				if (setExists == false)
+					sb_push(work.sets, strdup(set));
+				for (int i = 0; i < 3; ++i)
+					work.set[i] = MAX(work.set[i], set[i]);
+				if (!work.latestRoomName || strcmp(work.latestRoomName, currentRoomName))
+				{
+					if (work.latestRoomName)
+						free(work.latestRoomName);
+					work.latestRoomName = strdup(currentRoomName);
+				}
+				work.params = inst->params;
+				*type = work;
+			})
+		})
+	})
+}

@@ -12,6 +12,7 @@
 #include "misc.h"
 #include "test.h"
 #include "project.h"
+#include "logging.h"
 
 extern void WindowMainLoop(struct Scene *scene);
 extern void GuiTest(struct Project *project);
@@ -91,6 +92,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// test: open and re-export a list of scenes
+	// also does scene analysis
 	// one filename per line, e.g.
 	// bin/exhaustive/oot/scenes/0 - Dungeon/scene.zscene
 	// bin/exhaustive/oot/scenes/1 - House/scene.zscene
@@ -99,25 +101,37 @@ int main(int argc, char *argv[])
 	{
 		//const char *fn = "bin/exhaustive-oot.txt";
 		const char *fn = "bin/exhaustive-mm.txt";
-		struct File *file = FileFromFilename(fn);
-		char *src = file->data;
-		char *tok;
-		for (;;) {
-			tok = strtok(src, "\r\n");
-			if (!tok) break;
-			src = 0;
-			LogDebug("'%s'", tok);
-			scene = SceneFromFilenamePredictRooms(tok);
-			/*
-			if (scene->rooms[0].headers[0].meshFormat == 1
-				&& scene->rooms[0].headers[0].image.base.amountType
-					== ROOM_SHAPE_IMAGE_AMOUNT_MULTI
-			) Die("found ROOM_SHAPE_IMAGE_AMOUNT_MULTI");
-			*/
-			SceneToFilename(scene, 0);
-			SceneFree(scene);
+		bool isAnalyzingScenes = true;
+		// multiple passes to assert consistent use of rotations
+		for (int i = 0; i < 1 /*+ isAnalyzingScenes*/; ++i)
+		{
+			struct File *file = FileFromFilename(fn);
+			char *src = file->data;
+			char *tok;
+			for (;;) {
+				tok = strtok(src, "\r\n");
+				if (!tok) break;
+				src = 0;
+				LogDebug("'%s'", tok);
+				scene = SceneFromFilenamePredictRooms(tok);
+				/*
+				if (scene->rooms[0].headers[0].meshFormat == 1
+					&& scene->rooms[0].headers[0].image.base.amountType
+						== ROOM_SHAPE_IMAGE_AMOUNT_MULTI
+				) Die("found ROOM_SHAPE_IMAGE_AMOUNT_MULTI");
+				*/
+				// want to analyze everything
+				if (isAnalyzingScenes)
+					TestAnalyzeSceneActors(scene, "bin/TestAnalyzeSceneActors.log");
+				// want to batch open/save everything
+				else if (false)
+					SceneToFilename(scene, 0);
+				SceneFree(scene);
+			}
+			FileFree(file);
 		}
-		FileFree(file);
+		if (isAnalyzingScenes)
+			TestAnalyzeSceneActors(0, 0);
 		LogDebug("successfully wrote everything");
 		SceneWriterCleanup();
 		return 0;
