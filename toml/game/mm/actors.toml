@@ -1,0 +1,4247 @@
+
+[[Actor]]
+	Name = "Player"
+	Index = 0
+	Category = "1"
+	Objects = [0]
+
+[[Actor]]
+	Name = "En_Test"
+	Index = 1
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_GirlA"
+	Index = 2
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Part"
+	Index = 3
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Flame"
+	Index = 4
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Large Orange Flame"],
+			[1,"Large Orange Flame"],
+			[2,"Large Blue Flame"],
+			[3,"Large Green Flame"],
+			[4,"Small Orange Flame"],
+			[5,"Large Orange Flame"],
+			[6,"Large Green Flame"],
+			[7,"Large Blue Flame"],
+			[8,"Large Magenta Flame"],
+			[9,"Large Pale Orange Flame"],
+			[10,"Large Pale Yellow Flame"],
+			[11,"Large Pale Green Flame"],
+			[12,"Large Pale Pink Flame"],
+			[13,"Large Pale Purple Flame"],
+			[14,"Large Pale Indigo Flame"],
+			[15,"Large Pale Blue Flame"],
+			[33776,"Candle Flame"],
+			[65535,"Faint Blue Aura"]
+		]
+
+[[Actor]]
+	Name = "Wooden Door"
+	Index = 5
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Regular Wooden Door"],
+			[128,""],
+			[256,"Can't Open - Message: \".............\""],
+			[384,"Used in Termina"],
+			[512,"Can't Open - Message: \"It won't budge.\""],
+			[640,"Special Door"]
+		]
+
+[[Actor]]
+	Name = "Treasure Chest"
+	Index = 6
+	Category = "1"
+	Notes = "+0x0FE0 = Contents\n+0x1F = Chest Flag //If multiple chests share the same chest flag in a room, opening one will open the others with the same flag.\nZ ROTATION 0x3F80 = Switch Flag to spawn chest."
+	Objects = [12]
+	MmUseDegreeRotationFor = " xz"
+	[[Actor.Property]]
+		Mask = 4064
+		Name = "Get Item"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 31
+		Name = "Chest Flag"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 16256
+		Name = "Switch Flag"
+		Target = "ZRot"
+	[[Actor.Property]]
+		Mask = 127
+		Name = "Set to 7F!"
+		Target = "ZRot"
+	[[Actor.Property]]
+		Mask = 7
+		Name = "Set to 7!"
+		Target = "XRot"
+	[[Actor.Property]]
+		Mask = 61440
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Gold"],
+			[1,"Gold, Appears, Clear Flag"],
+			[2,"Boss Key’s Chest"],
+			[3,"Gold, Falling, Switch Flag"],
+			[4,"Gold, Invisible"],
+			[5,"Wooden"],
+			[6,"Wooden, Invisible"],
+			[7,"Wooden, Appears, Clear Flag"],
+			[8,"Wooden, Falls, Switch Flag"],
+			[9,"Crash"],
+			[10,"Crash"],
+			[11,"Gold, Appears, Switch Flag"],
+			[12,"Large Wooden, Appears, Switch Flag"]
+		]
+
+[[Actor]]
+	Name = "Gekko and Snapper Miniboss"
+	Index = 7
+	Category = "1"
+	Objects = [296]
+
+[[Actor]]
+	Name = "Octorok"
+	Index = 8
+	Category = "1"
+	Notes = "+0xFE00=shots number (default only)"
+	Objects = [5]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Default"],
+			[1,"Blue unkillable"]
+		]
+
+[[Actor]]
+	Name = "Powder Keg"
+	Index = 9
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Wallmaster"
+	Index = 10
+	Category = "1"
+	Objects = [9]
+	MmUseDegreeRotationFor = " x "
+
+[[Actor]]
+	Name = "Dodongo"
+	Index = 11
+	Category = "1"
+	Objects = [10]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Regular"],
+			[1,"Large"]
+		]
+
+[[Actor]]
+	Name = "Keese"
+	Index = 12
+	Category = "1"
+	Objects = [11]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Fire Keese"],
+			[1,""],
+			[2,""],
+			[3,""],
+			[4,"Ice Keese"]
+		]
+
+[[Actor]]
+	Name = "Child Epona (Cutscenes)"
+	Index = 13
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Collectable Item"
+	Index = 14
+	Category = "1"
+	Notes = "+0x7F00 = Collectible Flag\n+0x00FF = Type"
+	Objects = [0]
+	[[Actor.Property]]
+		Mask = 32512
+		Name = "Collectible Flag"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 33023
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Green Rupee"],
+			[1,"Blue Rupee"],
+			[2,"Red Rupee"],
+			[3,"Recovery Heart"],
+			[4,"Bomb (5)"],
+			[5,"Arrow (10)"],
+			[6,"Heart Piece"]
+		]
+
+[[Actor]]
+	Name = "Arrow"
+	Index = 15
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Healing Fairy and Tatl (Gameplay)"
+	Index = 16
+	Category = "1"
+	Notes = "+0xFE00 = Collectible Flag"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Tatl"],
+			[1,"Bottled Healing Fairy"],
+			[2,"Healing Fairy"],
+			[3,"Kokiri Fairy - Load with alternative actor spawn function."],
+			[4,"Group of Healing Fairies"],
+			[5,"Bottled Reviving Fairy [?]"],
+			[6,"Healing Fairy"],
+			[7,"Large Healing Fairy"],
+			[8,"Nothing [?]"],
+			[9,"Yellow Fairy"],
+			[10,"Yellow Fairy - Uncatchable, doesn't heal you."]
+		]
+
+[[Actor]]
+	Name = "Cucco"
+	Index = 17
+	Category = "1"
+	Objects = [15]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Regular Cucco"],
+			[1,"Mini Cucco"],
+			[2,"Held Cucco"],
+			[3,"Can't Interact [?]"],
+			[65535,"Regular Cucco"]
+		]
+
+[[Actor]]
+	Name = "Tektite"
+	Index = 18
+	Category = "1"
+	Objects = [18]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[65533,"Blue Buried in Snow"],
+			[65534,"Blue"],
+			[65535,"Red"]
+		]
+
+[[Actor]]
+	Name = "Peahat"
+	Index = 20
+	Category = "1"
+	Objects = [20]
+
+[[Actor]]
+	Name = "Butterfly"
+	Index = 21
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "Bug"
+	Index = 22
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Fish"
+	Index = 23
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Black Room Transition Plane"
+	Index = 24
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dinolfos"
+	Index = 25
+	Category = "1"
+	Objects = [23]
+
+[[Actor]]
+	Name = "Red Flag on Post"
+	Index = 26
+	Category = "1"
+	Objects = [95]
+
+[[Actor]]
+	Name = "Child Zelda"
+	Index = 27
+	Category = "1"
+	Objects = [25]
+
+[[Actor]]
+	Name = "En_Viewer"
+	Index = 28
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Shabom"
+	Index = 29
+	Category = "1"
+	Objects = [14]
+
+[[Actor]]
+	Name = "Dungeon Door"
+	Index = 30
+	Category = "1"
+	Notes = "+0x007F = Switch Flag"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Regular Door"],
+			[128,"Barred Door - Clear Flag"],
+			[256,"Barred Door - Switch Flag"],
+			[512,"Locked Door"],
+			[640,"Boss Door"]
+		]
+
+[[Actor]]
+	Name = "Zora Fins"
+	Index = 32
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Elegy Statues"
+	Index = 33
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Link Statue"],
+			[1,"Goron Statue"],
+			[2,"Zora Statue"],
+			[3,"Deku Statue"],
+			[4,"Link Statue"]
+		]
+
+[[Actor]]
+	Name = "Frog"
+	Index = 34
+	Category = "1"
+	Notes = "+0x00F0 = ?\n+0x000F = Color"
+	Objects = [188]
+
+[[Actor]]
+	Name = "Skulltula"
+	Index = 36
+	Category = "1"
+	Objects = [32]
+	[[Actor.Property]]
+		Mask = 63
+		Name = "Switch Flag"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 65472
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Default"],
+			[1,"Invisible"]
+		]
+
+[[Actor]]
+	Name = "Directional Sign and Square Sign [Early]"
+	Index = 38
+	Category = "1"
+	Notes = "0xFF00 = Sign Message ID - 03xx"
+	Objects = [0]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[9,"Square Sign [Early]"],
+			[10,"Directional Sign"]
+		]
+
+[[Actor]]
+	Name = "Stone Tower Temple Inverter"
+	Index = 39
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Sound Effects I"
+	Index = 40
+	Category = "1"
+	Notes = "+0x00FF = Sound\n+0xFF00 = Path [?]"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Middle-Aged Man"
+	Index = 42
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Curiosity Shop Proprietor"],
+			[1,"Part-Timer"]
+		]
+
+[[Actor]]
+	Name = "Death Armos"
+	Index = 45
+	Category = "1"
+	Objects = [29]
+	MmUseDegreeRotationFor = " x "
+
+[[Actor]]
+	Name = "Bomb Flower"
+	Index = 47
+	Category = "1"
+	Objects = [42]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Explode"],
+			[65535,"Default"]
+		]
+
+[[Actor]]
+	Name = "Armos"
+	Index = 50
+	Category = "1"
+	Objects = [48]
+
+[[Actor]]
+	Name = "Deku Baba"
+	Index = 51
+	Category = "1"
+	Objects = [49]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Default"],
+			[1,"Giant"]
+		]
+
+[[Actor]]
+	Name = "Deku Nut Effect"
+	Index = 52
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Spin Attack and Sword Beam Effects"
+	Index = 53
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Bg_Breakwall"
+	Index = 54
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Blue Warp"
+	Index = 56
+	Category = "1"
+	Notes = "+0xFF00 = Scene Exit Index"
+	Objects = [62]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Blue Warp"],
+			[1,"Blue Boss Warp"],
+			[2,"Boss Warp Pad  Light"],
+			[3,"Boss Warp Pad  Light"],
+			[4,"Boss Warp Pad  Light"],
+			[5,"Boss Warp Pad  Light"],
+			[6,"Boss Warp Light"]
+		]
+
+[[Actor]]
+	Name = "Torch Stand"
+	Index = 57
+	Category = "1"
+	Notes = "+0x780 = Torches to light to solve puzzle (Timed Torch)\n	+0x7F = Switch Flag\n	+0x0800 = Is lit"
+	Objects = [128]
+	[[Actor.Property]]
+		Mask = 1920
+		Name = "Num of torches"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 2048
+		Name = "Is lit"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 127
+		Name = "Switch Flag"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 61440
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Golden Torch Stand"],
+			[1,"Stick Torch Stand"],
+			[2,"Wooden Torch Stand"]
+		]
+
+[[Actor]]
+	Name = "Heart Container (Boss Lairs)"
+	Index = 58
+	Category = "1"
+	Objects = [150]
+
+[[Actor]]
+	Name = "Mad Scrub"
+	Index = 59
+	Category = "1"
+	Objects = [64]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Hostile w/ Straight Shot Trajectory"],
+			[1,"Non-Hostile"],
+			[2,"Hostile w/ Arced Shot Trajectory"]
+		]
+
+[[Actor]]
+	Name = "Red Bubble"
+	Index = 60
+	Category = "1"
+	Objects = [81]
+
+[[Actor]]
+	Name = "Hookshot"
+	Index = 61
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Blue Bubble"
+	Index = 62
+	Category = "1"
+	Objects = [81]
+
+[[Actor]]
+	Name = "Fountain Water"
+	Index = 63
+	Category = "1"
+	Objects = [382]
+
+[[Actor]]
+	Name = "Greenery"
+	Index = 65
+	Category = "1"
+	Notes = "+0xFF00 = Controls item(s) dropped (trees only)\n-0000 Random\n-0800 Deku seeds\n-0900 Magic jars\n-0A00 Bombs\n-0B00 Three Hearts\n-0C00 Three Blue Rupees\n-0D00 Random\n-0E00 Random\n-0F00 Nothing"
+	Objects = [97]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Large tree"],
+			[1,"Medium tree"],
+			[2,"Small tree"],
+			[3,"Group of trees"],
+			[4,"Medium tree"],
+			[5,"Medium tree, dark brown trunk, greener leaves"],
+			[6,"Group of trees, dark brown trunk, yellow leaves"],
+			[7,"Medium tree, dark brown trunk, yellow leaves"],
+			[8,"Group of trees, dark brown trunk, greener leaves"],
+			[9,"Medium tree, dark brown trunk, greener leaves"],
+			[10,"Ugly tree from Kakariko Village"],
+			[11,"Bush"],
+			[12,"Large bush"],
+			[13,"Group of bushes"],
+			[14,"Bush"],
+			[15,"Group of large bushes"],
+			[16,"Large bush"],
+			[17,"Dark bush"],
+			[18,"Large dark bush"],
+			[19,"Group of dark bushes"],
+			[20,"Dark bush"],
+			[21,"Group of large dark bushes"],
+			[22,"Large dark bush"],
+			[25,"Dancing dark bush //Disappears after several repetitions"]
+		]
+
+[[Actor]]
+	Name = "Gomess"
+	Index = 67
+	Category = "1"
+	Objects = [82]
+
+[[Actor]]
+	Name = "Gomess' Bats"
+	Index = 68
+	Category = "1"
+	Objects = [82]
+
+[[Actor]]
+	Name = "Beamos"
+	Index = 71
+	Category = "1"
+	Objects = [106]
+
+[[Actor]]
+	Name = "Demo_Effect"
+	Index = 72
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Environment Effects"
+	Index = 73
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Sparkling Motes"],
+			[1,"Bubbles"],
+			[2,"Dust Motes"]
+		]
+
+[[Actor]]
+	Name = "Floormaster"
+	Index = 74
+	Category = "1"
+	Objects = [9]
+
+[[Actor]]
+	Name = "Redead"
+	Index = 76
+	Category = "1"
+	Notes = "If not set to one of the dancing values they will ignore Captain's Hat, Garo Mask, and Gibdo Mask.\n+0x7F00 = Switch Flag"
+	Objects = [117]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Standing"],
+			[1,"Standing?"],
+			[2,"Crouched"],
+			[3,"Invisible"],
+			[4,"Frozen in Ice Block"],
+			[5,"Leg Dance"],
+			[6,"Lean Back Dance"],
+			[7,"Spinning Dance"]
+		]
+
+[[Actor]]
+	Name = "Stone Tower Temple Elevator [Early]"
+	Index = 77
+	Category = "1"
+	Objects = [92]
+
+[[Actor]]
+	Name = "Golden Gauntlets Rock (JP 1.0 Only)"
+	Index = 78
+	Category = "1"
+	Objects = [0]
+
+[[Actor]]
+	Name = "Fish, Bugs, Butterflies"
+	Index = 79
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[2,"Fish"],
+			[3,"Bug"],
+			[4,"Butterfly"]
+		]
+
+[[Actor]]
+	Name = "Skullwalltula"
+	Index = 80
+	Category = "1"
+	Notes = "+0x00FC = Chest Flag - Gold Skulltula only. 3F = No flag.\n+0xFF00 = Path - FF = No path.\nZrot +0x1FF = Unknown"
+	Objects = [32]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Skullwaltula"],
+			[1,"Hidden Gold Skultula"],
+			[2,"Gold Skulltula"],
+			[3,"Same as 02 [?]"]
+		]
+
+[[Actor]]
+	Name = "Environment Effects 2?"
+	Index = 81
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Child Epona (Gameplay)"
+	Index = 84
+	Category = "1"
+	Objects = [125]
+
+[[Actor]]
+	Name = "Grotto Hole"
+	Index = 85
+	Category = "1"
+	Notes = "+0x7000 = Destination Type\n00 [0000] Z Rotation + 1 = Exit Index\n01 [1000]+ Value - 1 = Exit Index"
+	Objects = [2]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Visible"],
+			[256,"Appears when bit 5 in half word at 803FF7F0 is set"],
+			[512,"Appears when bombed"]
+		]
+
+[[Actor]]
+	Name = "En_Encount1"
+	Index = 91
+	Category = "1"
+	Notes = "+0x003F = Max Spawn Amount\n+0x07C0 = Amount Spawned Together\nXrot +0x1FF = Respawn Interval While in Range (Frames)\nYrot +0x1FF = unk\nZrot +0x1FF = Spawn Range [?] - Value * 0x28 + 0x78"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"En_Grasshopper (Doesn't Respawn) Needs object 0109"],
+			[2048,"En_Wallmas Needs object 000A"],
+			[4096,"En_Pr2 Needs object 0180"],
+			[6144,"En_Pr2 Needs object 0180"]
+		]
+
+[[Actor]]
+	Name = "Treasure Chest Glow"
+	Index = 92
+	Category = "1"
+	Objects = [12]
+
+[[Actor]]
+	Name = "Majora Balloon"
+	Index = 95
+	Category = "1"
+	Notes = "+0x007F = Switch Flag"
+	Objects = [640]
+
+[[Actor]]
+	Name = "Rock and Beam of Light [OoT]"
+	Index = 96
+	Category = "1"
+	Objects = [112]
+
+[[Actor]]
+	Name = "Clock Tower Helix Path"
+	Index = 97
+	Category = "1"
+	Objects = [136]
+
+[[Actor]]
+	Name = "Mirror Shield Light Ray I [?]"
+	Index = 98
+	Category = "1"
+	Objects = [135]
+
+[[Actor]]
+	Name = "Shellblade"
+	Index = 100
+	Category = "1"
+	Objects = [142]
+
+[[Actor]]
+	Name = "Mad Jelly"
+	Index = 101
+	Category = "1"
+	Objects = [296]
+
+[[Actor]]
+	Name = "Deku Baba"
+	Index = 102
+	Category = "1"
+	Objects = [49]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Unkillable Wilted Deku Baba"],
+			[1,"Wilted Deku Baba"],
+			[2,"Mini Baba"]
+		]
+
+[[Actor]]
+	Name = "Gorman Bros."
+	Index = 103
+	Category = "1"
+	Notes = "+0x7E00 = Path"
+	Objects = [153]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Orange Gorman - Walking"],
+			[1,"Orange Gorman - Riding"],
+			[2,"Blue Gorman - Riding"],
+			[3,"Orange Gorman - Standing - Load with En_In variable 0004"],
+			[4,"Blue Gorman - Standing - Load with En_In variable 0003"]
+		]
+
+[[Actor]]
+	Name = "Adult Ruto [OoT]"
+	Index = 105
+	Category = "1"
+	Objects = [162]
+
+[[Actor]]
+	Name = "Bombchu"
+	Index = 106
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Horse_Game_Check"
+	Index = 107
+	Category = "1"
+	Objects = [401]
+
+[[Actor]]
+	Name = "Like Like"
+	Index = 108
+	Category = "1"
+	Objects = [171]
+
+[[Actor]]
+	Name = "En_Fr"
+	Index = 115
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Fishing Pond Owner (JP 1.0 Only)"
+	Index = 121
+	Category = "1"
+	Objects = [0]
+
+[[Actor]]
+	Name = "Pushable Block"
+	Index = 122
+	Category = "1"
+	Objects = [3]
+
+[[Actor]]
+	Name = "Spin Attack Charge Particles"
+	Index = 123
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Horse Jumping Fence"
+	Index = 124
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Fire Arrow"
+	Index = 125
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Ice Arrow"
+	Index = 126
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Light Arrow"
+	Index = 127
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Item_Etcetera"
+	Index = 128
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Small Wooden Crate"
+	Index = 129
+	Category = "1"
+	Notes = "+0x003F = Item Drop\n+0x0080 = Allows En_Bomjimb to hide under it, regardless of whether he's being chased or not."
+	Objects = [1]
+
+[[Actor]]
+	Name = "Pot"
+	Index = 130
+	Category = "1"
+	Notes = "+0x001F = Set Item Drops | Values\n+0x0010 = Random Item Override\n00 [0000] Drop an Item\n01 [0010] Do not drop an Item\n+0x000F = Random Item Drops | Values\n+0xFE00 = Collectible Flag\nZRot 0x01FF = Enemy Inside\n00 [0000] Nothing\n01 [0001] Black Boe\n02 [0002] Gold Skulltula"
+	Objects = [1]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Pot - Set Item //needs special object 0003"],
+			[128,"Large Green Magic Pot //needs object 019C"],
+			[256,"Pot - Set Item //needs object 00F9"],
+			[384,"Pot - Random Item ///needs special object 0003"]
+		]
+
+[[Actor]]
+	Name = "Iron Knuckle"
+	Index = 132
+	Category = "1"
+	Objects = [216]
+
+[[Actor]]
+	Name = "Demo_Shd"
+	Index = 137
+	Category = "1"
+	Objects = [339]
+
+[[Actor]]
+	Name = "Deku Scrub Guard (Royal Chamber)"
+	Index = 138
+	Category = "1"
+	Objects = [308]
+
+[[Actor]]
+	Name = "Elf_Msg"
+	Index = 139
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "En_Honotrap"
+	Index = 140
+	Category = "1"
+	Objects = [3]
+
+[[Actor]]
+	Name = "Flying Pot"
+	Index = 141
+	Category = "1"
+	Objects = [3]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Ice Sparkle Effect"
+	Index = 142
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Freezard"
+	Index = 143
+	Category = "1"
+	Objects = [228]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Immobile"],
+			[65535,"Rotate"]
+		]
+
+[[Actor]]
+	Name = "Cut-able Grass"
+	Index = 144
+	Category = "1"
+	Notes = "+0x0010 = Spawn set of 3 bugs\n+0x00FC = Item Drop //Only for specific types.\n+0x7F00 = Collectible Flag"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"(0002) Normal shrub. Random drops."],
+			[1,"(00F8) Cut-able, regenerating grass //Drops: Heart, Arrows or Deku Seeds"],
+			[2,"(00F8) Cut-able grass //Set drop table via Random Drop Table param"],
+			[3,"(00F8) Cut-able grass //Fixed Drops"]
+		]
+
+[[Actor]]
+	Name = "Magic Bean Plant"
+	Index = 145
+	Category = "1"
+	Objects = [238]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Bombable Rock"
+	Index = 146
+	Category = "1"
+	Notes = "+0x7F = Switch Flag"
+	Objects = [298]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Small"],
+			[256,"Large"]
+		]
+
+[[Actor]]
+	Name = "Dungeon Switches"
+	Index = 147
+	Category = "1"
+	Notes = "+0x0080 = Color/Behavior\n+0x0008 = Invisible\n+0x0080 = Frozen\n+0x7F00 = Switch Flag"
+	Objects = [3]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 112
+		Name = "Color/Behavior"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 8
+		Name = "Invisible"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 128
+		Name = "Frozen"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 32512
+		Name = "Switch Flag"
+		Target = "Var"
+	[[Actor.Property]]
+		Mask = 32775
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Floor"],
+			[1,"Rusted Floor"],
+			[2,"Yellow Eye"],
+			[3,"Crystal"],
+			[4,"Targetable Crystal"],
+			[5,"Large Floor Switch"]
+		]
+
+[[Actor]]
+	Name = "Dampé's House Elevator"
+	Index = 149
+	Category = "1"
+	Objects = [237]
+
+[[Actor]]
+	Name = "Stone Hookshot Pillar"
+	Index = 150
+	Category = "1"
+	Notes = "0001 can have switchflag"
+	Objects = [236]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Square hookshot target tower"],
+			[1,"Same, underground"],
+			[2,"Square hookshot stone"]
+		]
+
+[[Actor]]
+	Name = "Ocarina Song Spot"
+	Index = 151
+	Category = "1"
+	Notes = "+0x0780 = Song to Play\n+0x007F = Switch Flag"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Ocarina Song Spot - Set Switch Flag"],
+			[2048,"Ocarina Song Spot - Clear Switch Flag"],
+			[4096,"Ocarina Song Spot - Toggle Switch Flag"]
+		]
+
+[[Actor]]
+	Name = "Snowball and Rolling Boulder [?]"
+	Index = 153
+	Category = "1"
+	Objects = [239]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Carpenter (Clock Town)"
+	Index = 156
+	Category = "1"
+	Notes = "+0xFF00 = Pathway"
+	Objects = [241]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Ichiro //Red/Purple Pants, \"normal\" hair"],
+			[1,"Sabooro //Light-Blue Pants"],
+			[2,"Jiro //Green Pants"],
+			[3,"Shiro //Pink/Purple Pants, Two-Spiked Hair"]
+		]
+
+[[Actor]]
+	Name = "Cucco Chick"
+	Index = 157
+	Category = "1"
+	Objects = [242]
+
+[[Actor]]
+	Name = "Item_Inbox"
+	Index = 158
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Pirate Lieutenant"
+	Index = 159
+	Category = "1"
+	Objects = [230]
+
+[[Actor]]
+	Name = "Obj_Blockstop"
+	Index = 160
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dynamic Shadow (Glitchy)"
+	Index = 161
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Clear_Tag"
+	Index = 162
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Gorman"
+	Index = 164
+	Category = "1"
+	Objects = [584]
+
+[[Actor]]
+	Name = "Magic Bean Seller"
+	Index = 165
+	Category = "1"
+	Objects = [244]
+
+[[Actor]]
+	Name = "Grog"
+	Index = 166
+	Category = "1"
+	Objects = [245]
+
+[[Actor]]
+	Name = "Boat Cruise Canoe"
+	Index = 167
+	Category = "1"
+	Objects = [383]
+
+[[Actor]]
+	Name = "Square Signpost"
+	Index = 168
+	Category = "1"
+	Notes = "+0xFFFF = Sign Message ID - 0300 OR Value"
+	Objects = [252]
+
+[[Actor]]
+	Name = "Attacking Cucco"
+	Index = 170
+	Category = "1"
+	Objects = [15]
+
+[[Actor]]
+	Name = "Marine Scientist"
+	Index = 174
+	Category = "1"
+	Objects = [254]
+
+[[Actor]]
+	Name = "Owl"
+	Index = 175
+	Category = "1"
+	Notes = "+0x007F = Switch Flag - Type 01 Only [?]\n+0xF000 = Path - Type 02 Only [?]"
+	Objects = [253]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Owl - Head Upside Down, Can't Interact"],
+			[128,"Owl - Monkey's Text, Can't Close Text Box - Looking for a yes/no answer."],
+			[256,"Owl - Snowhead Appearance"],
+			[384,"Owl - Southern Swamp Appearance"],
+			[3840,"Feather"]
+		]
+
+[[Actor]]
+	Name = "Rock"
+	Index = 176
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "Orange Graveyard Flower"
+	Index = 177
+	Category = "1"
+	Objects = [442]
+
+[[Actor]]
+	Name = "Sun Switch"
+	Index = 178
+	Category = "1"
+	Objects = [247]
+
+[[Actor]]
+	Name = "Grass and Rock Cluster"
+	Index = 179
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Honey and Darling"
+	Index = 181
+	Category = "1"
+	Objects = [320]
+
+[[Actor]]
+	Name = "Water Spout"
+	Index = 184
+	Category = "1"
+	Objects = [262]
+
+[[Actor]]
+	Name = "Rock Sirloin"
+	Index = 185
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Weather_Tag"
+	Index = 188
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Part-Timer"
+	Index = 189
+	Category = "1"
+	Objects = [194]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Standing, Can't Interact"],
+			[1,"Hanging in Tree"]
+		]
+
+[[Actor]]
+	Name = "Moon Child"
+	Index = 191
+	Category = "1"
+	Notes = "+0x03F0 = Scene Exit Index\n+0xFC00 = Path"
+	Objects = [625]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Majora Child - Sit"],
+			[1,"Odolwa Child - Run"],
+			[2,"Goht Child - Run"],
+			[3,"Gyorg Child - Run"],
+			[4,"Twinmold Child - Run"],
+			[5,"Odolwa Child - Stand"],
+			[6,"Goht Child - Stand"],
+			[7,"Gyorg Child - Stand"],
+			[8,"Twinmold Child - Stand"],
+			[9,"Majora Child - Stand - Can't interact"]
+		]
+
+[[Actor]]
+	Name = "Song of Storms Effect I [?]"
+	Index = 196
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Title Logo"
+	Index = 197
+	Category = "1"
+	Objects = [277]
+
+[[Actor]]
+	Name = "Elf_Msg2"
+	Index = 198
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Stone Tower Temple Platform [Early]"
+	Index = 199
+	Category = "1"
+	Objects = [92]
+
+[[Actor]]
+	Name = "Scarecrow"
+	Index = 202
+	Category = "1"
+	Objects = [285]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Obj_Makeoshihiki"
+	Index = 203
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Sun's Song Effect"
+	Index = 204
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Treasure Chest (Grotto)"
+	Index = 206
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Shot_Sun"
+	Index = 208
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Obj_Roomtimer"
+	Index = 211
+	Category = "1"
+	Notes = "+0x01FF = Time\n    01F4 [01F4] Max Time (12 Minutes 20 Seconds)\n    01FF [01FF] No Timer\n+0xFE00 = Switch Flag"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Cursed Skulltula Man"
+	Index = 212
+	Category = "1"
+	Objects = [295]
+
+[[Actor]]
+	Name = "Song of Time Effect"
+	Index = 214
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Song of Storms Effect II [?]"
+	Index = 215
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Cutscene Trigger"
+	Index = 216
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Jelly Droplets"
+	Index = 217
+	Category = "1"
+	Objects = [296]
+
+[[Actor]]
+	Name = "Deku Nut Projectile"
+	Index = 218
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Epona's Song Effect"
+	Index = 223
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Saria's Song Effect"
+	Index = 224
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dog"
+	Index = 226
+	Category = "1"
+	Objects = [306]
+
+[[Actor]]
+	Name = "Gold Skulltula Token"
+	Index = 227
+	Category = "1"
+	Objects = [32]
+
+[[Actor]]
+	Name = "Beehive"
+	Index = 228
+	Category = "1"
+	Objects = [441]
+
+[[Actor]]
+	Name = "Wooden Crate"
+	Index = 229
+	Category = "1"
+	Objects = [307]
+
+[[Actor]]
+	Name = "En_Hs2"
+	Index = 231
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Rupee Cluster"
+	Index = 232
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Honey and Darling (Cutscenes)"
+	Index = 233
+	Category = "1"
+	Objects = [320]
+
+[[Actor]]
+	Name = "Wolfos"
+	Index = 236
+	Category = "1"
+	Objects = [321]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Stalchild"
+	Index = 237
+	Category = "1"
+	Objects = [322]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[2,"Sit on roof"],
+			[3,"Sit on floor"],
+			[4,"Roof hang"]
+		]
+
+[[Actor]]
+	Name = "Gossip Stone"
+	Index = 239
+	Category = "1"
+	Objects = [323]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Sound Effects II"
+	Index = 240
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Guay"
+	Index = 241
+	Category = "1"
+	Objects = [6]
+
+[[Actor]]
+	Name = "Cow"
+	Index = 243
+	Category = "1"
+	Objects = [326]
+
+[[Actor]]
+	Name = "Scarecrow's Song Effect"
+	Index = 246
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Zora [Early]"
+	Index = 248
+	Category = "1"
+	Objects = [208]
+
+[[Actor]]
+	Name = "Obj_Makekinsuta"
+	Index = 249
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Aveil"
+	Index = 250
+	Category = "1"
+	Objects = [304]
+
+[[Actor]]
+	Name = "Bronze Boulder"
+	Index = 252
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "En_Zl4"
+	Index = 253
+	Category = "1"
+	Objects = [402]
+
+[[Actor]]
+	Name = "Postman's Letter to Himself"
+	Index = 254
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Spiral Staircase"
+	Index = 256
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Majora Pushblock"
+	Index = 258
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Blade Trap"
+	Index = 259
+	Category = "1"
+	Objects = [100]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Armos Statue"
+	Index = 261
+	Category = "1"
+	Objects = [48]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Green Bumper"
+	Index = 262
+	Category = "1"
+	Objects = [335]
+
+[[Actor]]
+	Name = "Dragonfly"
+	Index = 265
+	Category = "1"
+	Objects = [334]
+
+[[Actor]]
+	Name = "Obj_Grass"
+	Index = 267
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "Obj_Grass_Carry"
+	Index = 268
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "Grass Cluster"
+	Index = 269
+	Category = "1"
+	Objects = [2]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Circle of shrubs with one in the middle, random drops"],
+			[1,"Scattered shrubs, random drops"],
+			[2,"Circle of rocks, random drops"]
+		]
+
+[[Actor]]
+	Name = "Proximity-Activated Firewall"
+	Index = 272
+	Category = "1"
+	Objects = [339]
+
+[[Actor]]
+	Name = "En_Bu"
+	Index = 273
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Circle of Light [?]"
+	Index = 274
+	Category = "1"
+	Objects = [571]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Garo Master I [?]"
+	Index = 275
+	Category = "1"
+	Objects = [341]
+
+[[Actor]]
+	Name = "Falling Block Row"
+	Index = 276
+	Category = "1"
+	Objects = [237]
+
+[[Actor]]
+	Name = "Igos du Ikana and Henchmen [?]"
+	Index = 277
+	Category = "1"
+	Objects = [342]
+
+[[Actor]]
+	Name = "Warp to Trial Entrance"
+	Index = 278
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Mamamu Yan"
+	Index = 279
+	Category = "1"
+	Objects = [215]
+
+[[Actor]]
+	Name = "En_Boj_01"
+	Index = 280
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Boj_02"
+	Index = 281
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Boj_03"
+	Index = 282
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Encount4"
+	Index = 283
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Bomber I [?]"
+	Index = 284
+	Category = "1"
+	Objects = [272]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Shooting Gallery Proprietors [?]"
+	Index = 285
+	Category = "1"
+	Objects = [428]
+
+[[Actor]]
+	Name = "Icicle"
+	Index = 287
+	Category = "1"
+	Objects = [343]
+
+[[Actor]]
+	Name = "Guay (Shooting Gallery)"
+	Index = 288
+	Category = "1"
+	Objects = [6]
+
+[[Actor]]
+	Name = "En_Boj_04"
+	Index = 289
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Thin Woman in Blue Dress [OoT]"
+	Index = 290
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Bomb Shop Proprietor's Mother [Early]"
+	Index = 291
+	Category = "1"
+	Objects = [223]
+
+[[Actor]]
+	Name = "Shikashi"
+	Index = 292
+	Category = "1"
+	Objects = [222]
+
+[[Actor]]
+	Name = "Spiderweb"
+	Index = 293
+	Category = "1"
+	Objects = [344]
+
+[[Actor]]
+	Name = "En_Mt_tag"
+	Index = 296
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Odolwa"
+	Index = 297
+	Category = "1"
+	Objects = [346]
+
+[[Actor]]
+	Name = "Twinmold"
+	Index = 298
+	Category = "1"
+	Objects = [347]
+
+[[Actor]]
+	Name = "Gyorg"
+	Index = 299
+	Category = "1"
+	Objects = [348]
+
+[[Actor]]
+	Name = "Wart"
+	Index = 300
+	Category = "1"
+	Objects = [349]
+
+[[Actor]]
+	Name = "Bio Deku Baba"
+	Index = 301
+	Category = "1"
+	Objects = [350]
+
+[[Actor]]
+	Name = "Igos du Ikana [?]"
+	Index = 302
+	Category = "1"
+	Objects = [342]
+
+[[Actor]]
+	Name = "Majora"
+	Index = 303
+	Category = "1"
+	Objects = [352]
+
+[[Actor]]
+	Name = "Great Fairy"
+	Index = 304
+	Category = "1"
+	Objects = [8]
+
+[[Actor]]
+	Name = "En_Boj_05"
+	Index = 306
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Sob1"
+	Index = 309
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Goron"
+	Index = 312
+	Category = "1"
+	Objects = [161]
+
+[[Actor]]
+	Name = "Carnivorous Lilypad"
+	Index = 314
+	Category = "1"
+	Objects = [353]
+
+[[Actor]]
+	Name = "Stone Tower Smoke Plume [Early]"
+	Index = 315
+	Category = "1"
+	Objects = [354]
+
+[[Actor]]
+	Name = "Elevator (Deku Palace and Woodfall Temple) [?]"
+	Index = 316
+	Category = "1"
+	Notes = "var X0YY x= type; y= pathway ; Z rotation AABB AA=speed BB=switch"
+	Objects = [355]
+	MmUseDegreeRotationFor = " xz"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Water temple"],
+			[32768,"Deku"],
+			[40960,"Deku that move after switch"]
+		]
+
+[[Actor]]
+	Name = "Wooden Flower"
+	Index = 317
+	Category = "1"
+	Objects = [356]
+
+[[Actor]]
+	Name = "Potted Plant"
+	Index = 318
+	Category = "1"
+	Objects = [357]
+
+[[Actor]]
+	Name = "Spiked Log (Horizontal)"
+	Index = 319
+	Category = "1"
+	Notes = "+0x007F = Pathway"
+	Objects = [358]
+
+[[Actor]]
+	Name = "Boss Remains (Cutscenes)"
+	Index = 320
+	Category = "1"
+	Objects = [460]
+
+[[Actor]]
+	Name = "Wolfos (Shooting Gallery)"
+	Index = 321
+	Category = "1"
+	Objects = [321]
+
+[[Actor]]
+	Name = "Ice Pushblock"
+	Index = 322
+	Category = "1"
+	Objects = [3]
+
+[[Actor]]
+	Name = "Frozen Enemy Ice Block"
+	Index = 323
+	Category = "1"
+	Objects = [359]
+
+[[Actor]]
+	Name = "Snapper (Mini-Boss)"
+	Index = 324
+	Category = "1"
+	Objects = [422]
+
+[[Actor]]
+	Name = "Mad Scrub (Shooting Gallery)"
+	Index = 325
+	Category = "1"
+	Objects = [64]
+
+[[Actor]]
+	Name = "Elf_Msg3"
+	Index = 326
+	Category = "1"
+	Notes = "+0x00FF = Tatl Message ID"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Frog II [?]"
+	Index = 327
+	Category = "1"
+	Objects = [188]
+
+[[Actor]]
+	Name = "Tree Trunk"
+	Index = 328
+	Category = "1"
+	Objects = [361]
+
+[[Actor]]
+	Name = "Dm_Sa"
+	Index = 329
+	Category = "1"
+	Objects = [402]
+
+[[Actor]]
+	Name = "Chuchu"
+	Index = 330
+	Category = "1"
+	Objects = [362]
+	MmUseDegreeRotationFor = " x "
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Blue"],
+			[1,"Green"],
+			[2,"Yellow"],
+			[3,"Red"]
+		]
+
+[[Actor]]
+	Name = "Desbreko"
+	Index = 331
+	Category = "1"
+	Objects = [363]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Clock Tower Spotlight"
+	Index = 332
+	Category = "1"
+	Objects = [365]
+
+[[Actor]]
+	Name = "Clock Town 2D Chimney Backdrop"
+	Index = 333
+	Category = "1"
+	Objects = [365]
+
+[[Actor]]
+	Name = "Stock Pot Inn Bell"
+	Index = 334
+	Category = "1"
+	Objects = [364]
+
+[[Actor]]
+	Name = "Octorok (Shooting Gallery)"
+	Index = 335
+	Category = "1"
+	Objects = [5]
+
+[[Actor]]
+	Name = "Clock Town Bank Shutter"
+	Index = 337
+	Category = "1"
+	Objects = [365]
+
+[[Actor]]
+	Name = "Child Zelda (Cutscenes)"
+	Index = 338
+	Category = "1"
+	Objects = [331]
+
+[[Actor]]
+	Name = "Group of Stray Fairies"
+	Index = 339
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Orange"],
+			[1,"Pink"],
+			[2,"Green"],
+			[3,"Blue"],
+			[4,"Yellow"]
+		]
+
+[[Actor]]
+	Name = "Deku Door/Spotlights"
+	Index = 340
+	Category = "1"
+	Objects = [415]
+
+[[Actor]]
+	Name = "Nejiron"
+	Index = 341
+	Category = "1"
+	Objects = [369]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Spiked Log (Vertical)"
+	Index = 342
+	Category = "1"
+	Notes = "+0x007F = Pathway (only 2 points)"
+	Objects = [358]
+
+[[Actor]]
+	Name = "Romani Ranch Chimney Smoke"
+	Index = 343
+	Category = "1"
+	Objects = [365]
+
+[[Actor]]
+	Name = "En_Test2"
+	Index = 344
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Kafei"
+	Index = 345
+	Category = "1"
+	Objects = [28]
+
+[[Actor]]
+	Name = "Three-Day Timer"
+	Index = 346
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Bad Bat"
+	Index = 347
+	Category = "1"
+	Objects = [370]
+
+[[Actor]]
+	Name = "Mikau's Grave and Song Pedestals [Early]"
+	Index = 348
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Triforce Song Pedestal"],
+			[1,"Goron Song Pedestal"],
+			[2,"Kokiri Song Pedestal"],
+			[3,"Song of Soaring Pedestal"],
+			[4,"Mikau's Grave"]
+		]
+
+[[Actor]]
+	Name = "Wizzrobe"
+	Index = 349
+	Category = "1"
+	Objects = [376]
+
+[[Actor]]
+	Name = "Wizzrobe Warp Platform"
+	Index = 350
+	Category = "1"
+	Objects = [376]
+
+[[Actor]]
+	Name = "Wizzrobe Fire Attack"
+	Index = 351
+	Category = "1"
+	Objects = [376]
+
+[[Actor]]
+	Name = "Camera Refocuser"
+	Index = 352
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Elegy Statue Light Beam [?]"
+	Index = 353
+	Category = "1"
+	Objects = [620]
+
+[[Actor]]
+	Name = "Circle of Flames"
+	Index = 354
+	Category = "1"
+	Notes = "+0x007F = Switch Flag"
+	Objects = [1]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Ladder"
+	Index = 355
+	Category = "1"
+	Objects = [377]
+
+[[Actor]]
+	Name = "Black and White Boes"
+	Index = 356
+	Category = "1"
+	Objects = [378]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Great Fairy's Mask and Great Fairy's Sword"
+	Index = 357
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "En_Dnb"
+	Index = 359
+	Category = "1"
+	Objects = [393]
+
+[[Actor]]
+	Name = "Boat Cruise Target Spot"
+	Index = 360
+	Category = "1"
+	Objects = [548]
+
+[[Actor]]
+	Name = "Mad Scrubs (Cutscenes)"
+	Index = 361
+	Category = "1"
+	Objects = [64]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[2,"Mad Scrub"],
+			[6,"Giant Mad Scrub"]
+		]
+
+[[Actor]]
+	Name = "Deku King"
+	Index = 362
+	Category = "1"
+	Objects = [395]
+
+[[Actor]]
+	Name = "Spiked Iron Fence"
+	Index = 364
+	Category = "1"
+	Objects = [382]
+
+[[Actor]]
+	Name = "Powder Keg Boulder"
+	Index = 365
+	Category = "1"
+	Objects = [298]
+
+[[Actor]]
+	Name = "En_Firefly2"
+	Index = 366
+	Category = "1"
+	Objects = [11]
+
+[[Actor]]
+	Name = "Real Bombchu"
+	Index = 367
+	Category = "1"
+	Objects = [385]
+
+[[Actor]]
+	Name = "Dripping Water"
+	Index = 368
+	Category = "1"
+	Objects = [386]
+
+[[Actor]]
+	Name = "Keaton Grass Cluster"
+	Index = 369
+	Category = "1"
+	Objects = [2]
+
+[[Actor]]
+	Name = "Proximity-Activated Firewall"
+	Index = 370
+	Category = "1"
+	Objects = [339]
+
+[[Actor]]
+	Name = "Great Bay Temple Gears"
+	Index = 372
+	Category = "1"
+	Objects = [388]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Great Fairy Healing Beam"
+	Index = 373
+	Category = "1"
+	Objects = [8]
+
+[[Actor]]
+	Name = "Tingle (Gameplay)"
+	Index = 374
+	Category = "1"
+	Objects = [389]
+
+[[Actor]]
+	Name = "Bank Teller, Sakon, Twin Jugglers"
+	Index = 375
+	Category = "1"
+	Objects = [227]
+
+[[Actor]]
+	Name = "Pirates' Fortress Telescope"
+	Index = 376
+	Category = "1"
+	Objects = [390]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Drifting Ice Platform"
+	Index = 377
+	Category = "1"
+	Objects = [391]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Deku Scrub Guard (Palace Gardens)"
+	Index = 378
+	Category = "1"
+	Objects = [309]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "En_Mushi2"
+	Index = 379
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "The Moon"
+	Index = 380
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Postman (Counting Game)"
+	Index = 381
+	Category = "1"
+	Objects = [263]
+
+[[Actor]]
+	Name = "Deku Shrine Door"
+	Index = 382
+	Category = "1"
+	Objects = [394]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Deku Butler"
+	Index = 383
+	Category = "1"
+	Objects = [499]
+
+[[Actor]]
+	Name = "Skullfish"
+	Index = 384
+	Category = "1"
+	Objects = [363]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Skullfish - Defeated"
+	Index = 385
+	Category = "1"
+	Objects = [363]
+
+[[Actor]]
+	Name = "Garo Master II [?]"
+	Index = 386
+	Category = "1"
+	Objects = [341]
+
+[[Actor]]
+	Name = "Deku Flower"
+	Index = 387
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Default"],
+			[383,"Yellow"]
+		]
+
+[[Actor]]
+	Name = "Eyegore"
+	Index = 388
+	Category = "1"
+	Objects = [397]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Spiked Metal Mine"
+	Index = 389
+	Category = "1"
+	Objects = [187]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Poisoned/Purified Water Elements"
+	Index = 390
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Koume (Gameplay) [?]"
+	Index = 391
+	Category = "1"
+	Objects = [398]
+
+[[Actor]]
+	Name = "Kotake (No Broom) [?]"
+	Index = 392
+	Category = "1"
+	Objects = [399]
+
+[[Actor]]
+	Name = "Spring Water"
+	Index = 395
+	Category = "1"
+	Objects = [1]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Spring Water"],
+			[1,"Hot Spring Water"]
+		]
+
+[[Actor]]
+	Name = "Song of Time Cutscene Effects"
+	Index = 396
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Beaver Bros."
+	Index = 397
+	Category = "1"
+	Objects = [408]
+
+[[Actor]]
+	Name = "Eyegore Rubble"
+	Index = 398
+	Category = "1"
+	Objects = [397]
+
+[[Actor]]
+	Name = "Snowhead Temple Central Pillar"
+	Index = 399
+	Category = "1"
+	Objects = [400]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Opening Cutscene Objects"
+	Index = 400
+	Category = "1"
+	Objects = [361]
+
+[[Actor]]
+	Name = "Skull Kid"
+	Index = 401
+	Category = "1"
+	Objects = [402]
+
+[[Actor]]
+	Name = "Tatl and Tael (Cutscenes) II [?]"
+	Index = 402
+	Category = "1"
+	Objects = [456]
+
+[[Actor]]
+	Name = "Woodfall Temple Rises Cutscene Objects"
+	Index = 403
+	Category = "1"
+	Objects = [418]
+
+[[Actor]]
+	Name = "Clock Tower Roof Cutscene - OoT and Majora's Mask"
+	Index = 404
+	Category = "1"
+	Objects = [446]
+
+[[Actor]]
+	Name = "Happy Mask Salesman (Cutscenes)"
+	Index = 405
+	Category = "1"
+	Objects = [419]
+
+[[Actor]]
+	Name = "Tatl and Tael (Cutscenes) I [?]"
+	Index = 406
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Masks (Cutscenes)"
+	Index = 407
+	Category = "1"
+	Objects = [531]
+
+[[Actor]]
+	Name = "Mountain Village Cutscene Objects [?]"
+	Index = 408
+	Category = "1"
+	Objects = [486]
+
+[[Actor]]
+	Name = "Milk Bar Stage (Cutscenes)"
+	Index = 409
+	Category = "1"
+	Objects = [530]
+
+[[Actor]]
+	Name = "Turtle (Cutscenes) [?]"
+	Index = 410
+	Category = "1"
+	Objects = [553]
+
+[[Actor]]
+	Name = "Giant Bee (Cutscenes)"
+	Index = 411
+	Category = "1"
+	Objects = [491]
+
+[[Actor]]
+	Name = "Clock Tower and Light Beam"
+	Index = 412
+	Category = "1"
+	Objects = [396]
+
+[[Actor]]
+	Name = "Monkey"
+	Index = 414
+	Category = "1"
+	Objects = [405]
+	MmUseDegreeRotationFor = " x "
+
+[[Actor]]
+	Name = "Eyegore Block"
+	Index = 415
+	Category = "1"
+	Objects = [397]
+
+[[Actor]]
+	Name = "Deku Scrub Guard (Palace Entrance) [?]"
+	Index = 416
+	Category = "1"
+	Objects = [309]
+
+[[Actor]]
+	Name = "Snowhead Temple Bombable Wall"
+	Index = 417
+	Category = "1"
+	Objects = [400]
+
+[[Actor]]
+	Name = "Clock Tower Doors"
+	Index = 418
+	Category = "1"
+	Objects = [407]
+
+[[Actor]]
+	Name = "Snowhead Temple Punchable Pillar Inserts"
+	Index = 419
+	Category = "1"
+	Objects = [400]
+
+[[Actor]]
+	Name = "Romani I [?]"
+	Index = 420
+	Category = "1"
+	Objects = [183]
+
+[[Actor]]
+	Name = "Beaver Race Ring"
+	Index = 421
+	Category = "1"
+	Objects = [409]
+
+[[Actor]]
+	Name = "Poe Balloon"
+	Index = 422
+	Category = "1"
+	Objects = [411]
+
+[[Actor]]
+	Name = "En_Door_Etc"
+	Index = 423
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Big Octo"
+	Index = 424
+	Category = "1"
+	Objects = [414]
+
+[[Actor]]
+	Name = "Ice Arrow Platform"
+	Index = 425
+	Category = "1"
+	Objects = [487]
+
+[[Actor]]
+	Name = "Triforce Elevator"
+	Index = 426
+	Category = "1"
+	Objects = [355]
+
+[[Actor]]
+	Name = "En_Time_Tag"
+	Index = 427
+	Category = "1"
+	Notes = "+ 0x007F = Switch Flag\nXRot +0x1FF = Hour When Kicked Out (Type 00)\nYRot +0x1FF = Minute When Kicked Out (Type 00)\nZRot +0x1FF ="
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Clocktown Room Timer"],
+			[8192,"Song of Soaring Pedestal"],
+			[16384,"Unknown"],
+			[24576,"Zora Scripture"],
+			[32768,"Unknown"]
+		]
+
+[[Actor]]
+	Name = "Deku Emblem Door"
+	Index = 428
+	Category = "1"
+	Objects = [415]
+
+[[Actor]]
+	Name = "Skull Kid Spotlights"
+	Index = 429
+	Category = "1"
+	Objects = [415]
+
+[[Actor]]
+	Name = "Honey and Darling's Shop Rotating Platform"
+	Index = 430
+	Category = "1"
+	Objects = [416]
+
+[[Actor]]
+	Name = "Poured Water"
+	Index = 431
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Stray Fairy"
+	Index = 432
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Stray Fairy Bubble"
+	Index = 433
+	Category = "1"
+	Objects = [14]
+
+[[Actor]]
+	Name = "Honey and Darling's Shop Target"
+	Index = 435
+	Category = "1"
+	Objects = [417]
+
+[[Actor]]
+	Name = "Honey and Darling's Shop Basket"
+	Index = 436
+	Category = "1"
+	Objects = [417]
+
+[[Actor]]
+	Name = "Happy Mask Salesman (Gameplay)"
+	Index = 437
+	Category = "1"
+	Objects = [419]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[1,"Happy Mask Man - Lying Prone"],
+			[2,"Rucksack"]
+		]
+
+[[Actor]]
+	Name = "Clock Tower Gear"
+	Index = 438
+	Category = "1"
+	Objects = [136]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Wooden gear"],
+			[1,"Rotating pillar, roof gear"],
+			[2,"Gear in water"]
+		]
+
+[[Actor]]
+	Name = "Kotake (Broom) [?]"
+	Index = 439
+	Category = "1"
+	Objects = [399]
+
+[[Actor]]
+	Name = "Clock Tower Roof Door"
+	Index = 440
+	Category = "1"
+	Objects = [420]
+
+[[Actor]]
+	Name = "Lilypad"
+	Index = 441
+	Category = "1"
+	Objects = [421]
+
+[[Actor]]
+	Name = "Snapper"
+	Index = 442
+	Category = "1"
+	Objects = [422]
+
+[[Actor]]
+	Name = "Treasure Chest Game Proximity-Activated Wall"
+	Index = 443
+	Category = "1"
+	Notes = "+0xFFFF = Spawned En_Box Variable\nZRot +0x1FF = Switch Flag"
+	Objects = [436]
+
+[[Actor]]
+	Name = "Honey and Darling's Shop Moat"
+	Index = 444
+	Category = "1"
+	Objects = [416]
+
+[[Actor]]
+	Name = "Business Scrub (Flying) [?]"
+	Index = 445
+	Category = "1"
+	Objects = [485]
+
+[[Actor]]
+	Name = "Woodfall Prison Ivy"
+	Index = 446
+	Category = "1"
+	Objects = [423]
+
+[[Actor]]
+	Name = "Lens of Truth Platform"
+	Index = 448
+	Category = "1"
+	Objects = [424]
+
+[[Actor]]
+	Name = "Treasure Chest Game Employee"
+	Index = 449
+	Category = "1"
+	Objects = [297]
+
+[[Actor]]
+	Name = "Fisherman (Great Bay)"
+	Index = 450
+	Category = "1"
+	Objects = [425]
+
+[[Actor]]
+	Name = "Potion Shop Proprietor (Updated) [OoT]"
+	Index = 451
+	Category = "1"
+	Objects = [426]
+
+[[Actor]]
+	Name = "Curiosity Shop Proprietor"
+	Index = 452
+	Category = "1"
+	Objects = [427]
+
+[[Actor]]
+	Name = "Swamp Tourist Center Guide"
+	Index = 453
+	Category = "1"
+	Objects = [428]
+
+[[Actor]]
+	Name = "Soldier (Gate Guard)"
+	Index = 455
+	Category = "1"
+	Objects = [438]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Ice Block"
+	Index = 456
+	Category = "1"
+	Notes = "+0x007F = Switch Flag"
+	Objects = [429]
+	MmUseDegreeRotationFor = " x "
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Wall"],
+			[65280,"Falling stalagtite"]
+		]
+
+[[Actor]]
+	Name = "Deku Scrub Playground Employee"
+	Index = 457
+	Category = "1"
+	Objects = [485]
+
+[[Actor]]
+	Name = "Dampé"
+	Index = 458
+	Category = "1"
+	Objects = [431]
+
+[[Actor]]
+	Name = "West Clock Town Steps"
+	Index = 460
+	Category = "1"
+	Objects = [432]
+
+[[Actor]]
+	Name = "Deku Scrub Playground Elevator"
+	Index = 461
+	Category = "1"
+	Objects = [355]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Song of Soaring Cutscene Activator"
+	Index = 462
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dissolvable Light Block"
+	Index = 463
+	Category = "1"
+	Notes = "+0x7F00 = Switch Flag, need to reload the scene?"
+	Objects = [435]
+
+[[Actor]]
+	Name = "Mirror Shield Reflectable Spotlight [?]"
+	Index = 464
+	Category = "1"
+	Objects = [135]
+	MmUseDegreeRotationFor = " x "
+
+[[Actor]]
+	Name = "Dexihand"
+	Index = 465
+	Category = "1"
+	Objects = [437]
+
+[[Actor]]
+	Name = "Deku Scrub Playground Rupee"
+	Index = 466
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dampé's House Objects"
+	Index = 467
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Snow-Covered Tree"
+	Index = 468
+	Category = "1"
+	Objects = [439]
+
+[[Actor]]
+	Name = "Postman (Delivering Letters)"
+	Index = 469
+	Category = "1"
+	Objects = [263]
+
+[[Actor]]
+	Name = "2D Music Staff"
+	Index = 470
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Elf_Msg4"
+	Index = 471
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Elf_Msg5"
+	Index = 472
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "y  "
+
+[[Actor]]
+	Name = "Piece of Heart"
+	Index = 473
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Gibdo (Ikana Well)"
+	Index = 474
+	Category = "1"
+	Objects = [117]
+
+[[Actor]]
+	Name = "Giant"
+	Index = 475
+	Category = "1"
+	Objects = [440]
+
+[[Actor]]
+	Name = "Large Snowball"
+	Index = 476
+	Category = "1"
+	Objects = [239]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Goht"
+	Index = 477
+	Category = "1"
+	Objects = [443]
+
+[[Actor]]
+	Name = "Ghost Hut Proprietor"
+	Index = 478
+	Category = "1"
+	Objects = [324]
+
+[[Actor]]
+	Name = "Monkey Instrument Prompt"
+	Index = 479
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Goron Shrine Gate"
+	Index = 480
+	Category = "1"
+	Objects = [447]
+
+[[Actor]]
+	Name = "En_Tag_Obj"
+	Index = 481
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dampé's House Facade"
+	Index = 482
+	Category = "1"
+	Objects = [449]
+
+[[Actor]]
+	Name = "Gravestone"
+	Index = 483
+	Category = "1"
+	Objects = [450]
+
+[[Actor]]
+	Name = "Goron Link Switch"
+	Index = 484
+	Category = "1"
+	Objects = [455]
+
+[[Actor]]
+	Name = "Big and Small Eeno"
+	Index = 486
+	Category = "1"
+	Objects = [452]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Small"],
+			[1,"Big"]
+		]
+
+[[Actor]]
+	Name = "TG_Sw"
+	Index = 487
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Poe Sisters"
+	Index = 488
+	Category = "1"
+	Objects = [453]
+
+[[Actor]]
+	Name = "Hiploop"
+	Index = 489
+	Category = "1"
+	Objects = [454]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Goht Debris"
+	Index = 490
+	Category = "1"
+	Objects = [443]
+
+[[Actor]]
+	Name = "Fireworks"
+	Index = 491
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Obj_Dowsing"
+	Index = 492
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Wind Funnel"
+	Index = 493
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dog (Doggie Racetrack)"
+	Index = 494
+	Category = "1"
+	Objects = [306]
+
+[[Actor]]
+	Name = "Swordsman"
+	Index = 495
+	Category = "1"
+	Objects = [271]
+
+[[Actor]]
+	Name = "Captain Keeta Race Gatepost"
+	Index = 496
+	Category = "1"
+	Objects = [457]
+
+[[Actor]]
+	Name = "Marine Research Lab Fish"
+	Index = 497
+	Category = "1"
+	Objects = [471]
+
+[[Actor]]
+	Name = "Postbox"
+	Index = 498
+	Category = "1"
+	Objects = [459]
+
+[[Actor]]
+	Name = "Poe"
+	Index = 499
+	Category = "1"
+	Objects = [451]
+
+[[Actor]]
+	Name = "Tent-Shaped Spider Web"
+	Index = 500
+	Category = "1"
+	Objects = [461]
+
+[[Actor]]
+	Name = "Zora Egg"
+	Index = 501
+	Category = "1"
+	Objects = [462]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Zubora"
+	Index = 502
+	Category = "1"
+	Objects = [463]
+
+[[Actor]]
+	Name = "Darmani's Ghost I [?]"
+	Index = 503
+	Category = "1"
+	Objects = [464]
+
+[[Actor]]
+	Name = "Swordsman's School Practice Log"
+	Index = 504
+	Category = "1"
+	Objects = [465]
+
+[[Actor]]
+	Name = "Small Snowball"
+	Index = 505
+	Category = "1"
+	Objects = [239]
+
+[[Actor]]
+	Name = "Darmani's Ghost II [?]"
+	Index = 506
+	Category = "1"
+	Objects = [464]
+
+[[Actor]]
+	Name = "Darmani's Gravestone"
+	Index = 507
+	Category = "1"
+	Objects = [466]
+
+[[Actor]]
+	Name = "Deku Princess"
+	Index = 508
+	Category = "1"
+	Objects = [468]
+
+[[Actor]]
+	Name = "Biggoron"
+	Index = 509
+	Category = "1"
+	Objects = [469]
+
+[[Actor]]
+	Name = "Hot Spring Water"
+	Index = 510
+	Category = "1"
+	Objects = [467]
+
+[[Actor]]
+	Name = "Gabora"
+	Index = 511
+	Category = "1"
+	Objects = [470]
+
+[[Actor]]
+	Name = "En_Invadepoh"
+	Index = 512
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Goron Elder's Son"
+	Index = 513
+	Category = "1"
+	Objects = [479]
+
+[[Actor]]
+	Name = "Anju (Gameplay)"
+	Index = 514
+	Category = "1"
+	Objects = [226]
+
+[[Actor]]
+	Name = "Giant Bee (Gameplay)"
+	Index = 516
+	Category = "1"
+	Objects = [491]
+
+[[Actor]]
+	Name = "Seahorse"
+	Index = 517
+	Category = "1"
+	Objects = [492]
+
+[[Actor]]
+	Name = "Deep Python"
+	Index = 518
+	Category = "1"
+	Objects = [493]
+
+[[Actor]]
+	Name = "Swordsman's School Gong"
+	Index = 519
+	Category = "1"
+	Objects = [494]
+
+[[Actor]]
+	Name = "Big Poe"
+	Index = 520
+	Category = "1"
+	Objects = [497]
+
+[[Actor]]
+	Name = "Swordsman's School Wooden Board"
+	Index = 521
+	Category = "1"
+	Objects = [494]
+
+[[Actor]]
+	Name = "Cow Figurine"
+	Index = 522
+	Category = "1"
+	Objects = [498]
+
+[[Actor]]
+	Name = "En_Sth"
+	Index = 523
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Bg_Sinkai_Kabe"
+	Index = 524
+	Category = "1"
+	Objects = [500]
+
+[[Actor]]
+	Name = "Beneath the Grave Curtain"
+	Index = 525
+	Category = "1"
+	Objects = [480]
+
+[[Actor]]
+	Name = "Oceanside Spider House Bombable Wall"
+	Index = 526
+	Category = "1"
+	Objects = [501]
+
+[[Actor]]
+	Name = "Oceanside Spider House Fireplace Grate"
+	Index = 527
+	Category = "1"
+	Objects = [501]
+
+[[Actor]]
+	Name = "Oceanside Spider House Skull Kid Painting"
+	Index = 528
+	Category = "1"
+	Objects = [501]
+
+[[Actor]]
+	Name = "Oceanside Spider House Drawers and Bookshelf"
+	Index = 529
+	Category = "1"
+	Objects = [501]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Drawers"],
+			[1,"Bookshelf"]
+		]
+
+[[Actor]]
+	Name = "Circle of Stalchildren"
+	Index = 530
+	Category = "1"
+	Objects = [322]
+
+[[Actor]]
+	Name = "Goron Elder"
+	Index = 531
+	Category = "1"
+	Objects = [504]
+
+[[Actor]]
+	Name = "Koume (Boat Cruise) [?]"
+	Index = 532
+	Category = "1"
+	Objects = [398]
+
+[[Actor]]
+	Name = "Cremia's Cart"
+	Index = 533
+	Category = "1"
+	Objects = [508]
+
+[[Actor]]
+	Name = "Leever"
+	Index = 534
+	Category = "1"
+	Objects = [513]
+
+[[Actor]]
+	Name = "Milk Bar Chair"
+	Index = 535
+	Category = "1"
+	Objects = [514]
+
+[[Actor]]
+	Name = "Bg_Ikana_Block"
+	Index = 536
+	Category = "1"
+	Objects = [3]
+
+[[Actor]]
+	Name = "Stone Tower Temple Mirror"
+	Index = 537
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Stone Tower Temple Rotating Room"
+	Index = 538
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Great Bay Temple See-Saw"
+	Index = 539
+	Category = "1"
+	Objects = [388]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Seesaw"],
+			[256,"Small platform1"],
+			[512,"Small platform2"],
+			[768,"Big rotating gears"]
+		]
+
+[[Actor]]
+	Name = "Great Bay Temple Water Spout"
+	Index = 540
+	Category = "1"
+	Notes = "+0x007F = Switch Flag"
+	Objects = [388]
+	MmUseDegreeRotationFor = "  z"
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Water, can be freeze with ice arrow"],
+			[256,"Glass, can be switched to spout"]
+		]
+
+[[Actor]]
+	Name = "Pirate [?]"
+	Index = 541
+	Category = "1"
+	Objects = [516]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Patrolling Pirate Guard"
+	Index = 542
+	Category = "1"
+	Objects = [302]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Romani II [?]"
+	Index = 543
+	Category = "1"
+	Objects = [183]
+
+[[Actor]]
+	Name = "Cremia"
+	Index = 544
+	Category = "1"
+	Objects = [167]
+
+[[Actor]]
+	Name = "South Clock Town Objects"
+	Index = 545
+	Category = "1"
+	Objects = [517]
+
+[[Actor]]
+	Name = "Great Bay Temple Elevator"
+	Index = 546
+	Category = "1"
+	Objects = [388]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Vertical"],
+			[256,"Horizontal"],
+			[512,"Horizontal 2"]
+		]
+
+[[Actor]]
+	Name = "Owl Statue"
+	Index = 547
+	Category = "1"
+	Objects = [368]
+
+[[Actor]]
+	Name = "Mikau"
+	Index = 548
+	Category = "1"
+	Objects = [518]
+
+[[Actor]]
+	Name = "Deku Moon Trial Rotating Platform"
+	Index = 549
+	Category = "1"
+	Objects = [519]
+
+[[Actor]]
+	Name = "Goron Elder's Drum"
+	Index = 550
+	Category = "1"
+	Objects = [504]
+
+[[Actor]]
+	Name = "Twinmold's Lair Objects [?]"
+	Index = 551
+	Category = "1"
+	Objects = [524]
+
+[[Actor]]
+	Name = "Zora (Land)"
+	Index = 552
+	Category = "1"
+	Notes = "var YYXX ? y=FC to not crash, or pathway for type A, x=text/anim type(0 text, 1 game reward loop, 2-6 various texts, 7 ask lulu things, 8-9 text, A walk on pathway)"
+	Objects = [208]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Fork-Branched Tree"
+	Index = 553
+	Category = "1"
+	Objects = [525]
+
+[[Actor]]
+	Name = "Pirates' Fortress Mesh Elevator"
+	Index = 554
+	Category = "1"
+	Objects = [526]
+
+[[Actor]]
+	Name = "Pirates' Fortress Interior Door"
+	Index = 555
+	Category = "1"
+	Objects = [526]
+
+[[Actor]]
+	Name = "Pirates' Fortress Boat"
+	Index = 556
+	Category = "1"
+	Objects = [526]
+
+[[Actor]]
+	Name = "Barrel"
+	Index = 557
+	Category = "1"
+	Objects = [592]
+
+[[Actor]]
+	Name = "Geyser"
+	Index = 558
+	Category = "1"
+	Objects = [573]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Boat Cruise Target"
+	Index = 559
+	Category = "1"
+	Objects = [398]
+
+[[Actor]]
+	Name = "Mirror Shield Light Ray II [?]"
+	Index = 560
+	Category = "1"
+	Objects = [135]
+	MmUseDegreeRotationFor = " x "
+
+[[Actor]]
+	Name = "Japas"
+	Index = 561
+	Category = "1"
+	Objects = [529]
+
+[[Actor]]
+	Name = "Elf_Msg6"
+	Index = 562
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Obj_Nozoki"
+	Index = 563
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = " xz"
+
+[[Actor]]
+	Name = "Toto"
+	Index = 564
+	Category = "1"
+	Objects = [570]
+
+[[Actor]]
+	Name = "Gibdo (Ikana Canyon)"
+	Index = 565
+	Category = "1"
+	Objects = [117]
+
+[[Actor]]
+	Name = "Bomb Shop Proprietor's Mother"
+	Index = 566
+	Category = "1"
+	Objects = [223]
+
+[[Actor]]
+	Name = "Sakon"
+	Index = 567
+	Category = "1"
+	Objects = [227]
+
+[[Actor]]
+	Name = "Tijo"
+	Index = 568
+	Category = "1"
+	Objects = [534]
+
+[[Actor]]
+	Name = "Lottery Shop Kiosk"
+	Index = 569
+	Category = "1"
+	Objects = [611]
+
+[[Actor]]
+	Name = "Don Gero"
+	Index = 570
+	Category = "1"
+	Objects = [161]
+
+[[Actor]]
+	Name = "Mushroom Scent Cloud"
+	Index = 571
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Palm Tree"
+	Index = 572
+	Category = "1"
+	Objects = [536]
+
+[[Actor]]
+	Name = "Swarm of Moths"
+	Index = 573
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Wart's Bubbles"
+	Index = 574
+	Category = "1"
+	Objects = [349]
+
+[[Actor]]
+	Name = "Gyorg's Fish"
+	Index = 575
+	Category = "1"
+	Objects = [348]
+
+[[Actor]]
+	Name = "Goron Village Chandelier"
+	Index = 576
+	Category = "1"
+	Objects = [542]
+
+[[Actor]]
+	Name = "Evan"
+	Index = 577
+	Category = "1"
+	Objects = [544]
+
+[[Actor]]
+	Name = "Goron (Goron Shrine and Bomb Shop) [?]"
+	Index = 578
+	Category = "1"
+	Objects = [161]
+
+[[Actor]]
+	Name = "Anju's Grandmother (Gameplay)"
+	Index = 579
+	Category = "1"
+	Objects = [4]
+
+[[Actor]]
+	Name = "Jugglers"
+	Index = 580
+	Category = "1"
+	Objects = [227]
+
+[[Actor]]
+	Name = "Stone Tower Temple Shifting Block"
+	Index = 581
+	Category = "1"
+	Objects = [92]
+
+[[Actor]]
+	Name = "Elegy Statue Switch"
+	Index = 582
+	Category = "1"
+	Objects = [546]
+
+[[Actor]]
+	Name = "Composer Brothers"
+	Index = 583
+	Category = "1"
+	Objects = [93]
+
+[[Actor]]
+	Name = "Guru-Guru"
+	Index = 584
+	Category = "1"
+	Objects = [255]
+
+[[Actor]]
+	Name = "Sonata of Awakening Effect"
+	Index = 585
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Shiro"
+	Index = 586
+	Category = "1"
+	Objects = [438]
+
+[[Actor]]
+	Name = "Song of Soaring Effect"
+	Index = 587
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Business Scrub (Telescope)"
+	Index = 588
+	Category = "1"
+	Objects = [485]
+
+[[Actor]]
+	Name = "Guay (Observatory Telescope)"
+	Index = 589
+	Category = "1"
+	Objects = [6]
+
+[[Actor]]
+	Name = "Song of Healing Effect"
+	Index = 590
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Turtle's Tsunami"
+	Index = 591
+	Category = "1"
+	Objects = [553]
+
+[[Actor]]
+	Name = "Pamela's Father (Normal)"
+	Index = 592
+	Category = "1"
+	Objects = [554]
+
+[[Actor]]
+	Name = "Pamela's Father (Cursed)"
+	Index = 593
+	Category = "1"
+	Objects = [554]
+
+[[Actor]]
+	Name = "Lulu"
+	Index = 594
+	Category = "1"
+	Objects = [555]
+
+[[Actor]]
+	Name = "Anju's Mother (Gameplay)"
+	Index = 595
+	Category = "1"
+	Objects = [7]
+
+[[Actor]]
+	Name = "Music Box House Cupboard Doors"
+	Index = 596
+	Category = "1"
+	Objects = [556]
+
+[[Actor]]
+	Name = "Stone Tower Temple Bombable Floor Tile and Wall"
+	Index = 597
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Stone Tower Temple Light Ray [?]"
+	Index = 598
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Stone Tower Temple Lattice Door"
+	Index = 599
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Beneath the Grave Bombable Wall"
+	Index = 600
+	Category = "1"
+	Objects = [480]
+
+[[Actor]]
+	Name = "Flat's Tomb"
+	Index = 601
+	Category = "1"
+	Objects = [480]
+
+[[Actor]]
+	Name = "Large Rotating Green Rupee"
+	Index = 602
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Sharp's Cave"
+	Index = 603
+	Category = "1"
+	Objects = [567]
+
+[[Actor]]
+	Name = "Ikana Canyon Objects"
+	Index = 604
+	Category = "1"
+	Objects = [567]
+
+[[Actor]]
+	Name = "Pamela"
+	Index = 605
+	Category = "1"
+	Objects = [568]
+
+[[Actor]]
+	Name = "Hookshot Stump"
+	Index = 606
+	Category = "1"
+	Objects = [569]
+
+[[Actor]]
+	Name = "Mad Scrub (Sleeping)"
+	Index = 607
+	Category = "1"
+	Objects = [299]
+
+[[Actor]]
+	Name = "Zora (Water)"
+	Index = 608
+	Category = "1"
+	Objects = [208]
+
+[[Actor]]
+	Name = "En_Talk"
+	Index = 609
+	Category = "1"
+	Notes = "var FEXX XX = message ID 1CXX"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Madame Aroma (Gameplay)"
+	Index = 610
+	Category = "1"
+	Objects = [13]
+
+[[Actor]]
+	Name = "Mr. Barten"
+	Index = 611
+	Category = "1"
+	Objects = [19]
+
+[[Actor]]
+	Name = "Bomb Shop Bag"
+	Index = 612
+	Category = "1"
+	Objects = [227]
+
+[[Actor]]
+	Name = "En_Hit_Tag"
+	Index = 613
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "yxz"
+
+[[Actor]]
+	Name = "Guay (Circling Clock Town)"
+	Index = 614
+	Category = "1"
+	Objects = [6]
+
+[[Actor]]
+	Name = "Flock of Seagulls"
+	Index = 615
+	Category = "1"
+	Objects = [575]
+
+[[Actor]]
+	Name = "En_Tanron5"
+	Index = 616
+	Category = "1"
+	Objects = [347]
+
+[[Actor]]
+	Name = "Swarm of Giant Bees"
+	Index = 617
+	Category = "1"
+	Objects = [576]
+
+[[Actor]]
+	Name = "Carpenter (Milk Road)"
+	Index = 618
+	Category = "1"
+	Objects = [241]
+
+[[Actor]]
+	Name = "Mutoh (Gameplay)"
+	Index = 619
+	Category = "1"
+	Objects = [240]
+
+[[Actor]]
+	Name = "Captain Viscen"
+	Index = 620
+	Category = "1"
+	Objects = [583]
+
+[[Actor]]
+	Name = "Soldier (Mayor's House)"
+	Index = 621
+	Category = "1"
+	Objects = [438]
+
+[[Actor]]
+	Name = "Soldier (Cutscenes) I [?]"
+	Index = 622
+	Category = "1"
+	Objects = [438]
+
+[[Actor]]
+	Name = "Mayor Dotour (Gameplay)"
+	Index = 623
+	Category = "1"
+	Objects = [577]
+
+[[Actor]]
+	Name = "Laundry Pool Bell [?]"
+	Index = 624
+	Category = "1"
+	Objects = [579]
+
+[[Actor]]
+	Name = "Cremia and Romani's Dinner"
+	Index = 625
+	Category = "1"
+	Objects = [580]
+
+[[Actor]]
+	Name = "Moon Fall Effects"
+	Index = 626
+	Category = "1"
+	Objects = [582]
+
+[[Actor]]
+	Name = "Ancient Castle of Ikana Punchable Pillar Segments"
+	Index = 627
+	Category = "1"
+	Objects = [515]
+
+[[Actor]]
+	Name = "Traveling Business Scrub"
+	Index = 628
+	Category = "1"
+	Objects = [485]
+
+[[Actor]]
+	Name = "Skull Kid Moon-Summoning Effects [?]"
+	Index = 629
+	Category = "1"
+	Objects = [446]
+
+[[Actor]]
+	Name = "Link the Goron"
+	Index = 630
+	Category = "1"
+	Objects = [469]
+
+[[Actor]]
+	Name = "Goron (Goron Racetrack)"
+	Index = 631
+	Category = "1"
+	Objects = [161]
+
+[[Actor]]
+	Name = "Igos du Ikana and Henchmen's Heads"
+	Index = 632
+	Category = "1"
+	Objects = [585]
+
+[[Actor]]
+	Name = "En_Sth2"
+	Index = 633
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Kamaro"
+	Index = 634
+	Category = "1"
+	Objects = [586]
+
+[[Actor]]
+	Name = "Rosa Sister"
+	Index = 635
+	Category = "1"
+	Objects = [587]
+
+[[Actor]]
+	Name = "En_Scopecoin"
+	Index = 636
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Hand in Toilet"
+	Index = 637
+	Category = "1"
+	Objects = [591]
+
+[[Actor]]
+	Name = "Jim I [?]"
+	Index = 638
+	Category = "1"
+	Objects = [272]
+
+[[Actor]]
+	Name = "Jim II [?]"
+	Index = 639
+	Category = "1"
+	Objects = [272]
+
+[[Actor]]
+	Name = "Bomber II [?]"
+	Index = 640
+	Category = "1"
+	Objects = [272]
+
+[[Actor]]
+	Name = "Bomber (Hideout Guard)"
+	Index = 641
+	Category = "1"
+	Objects = [272]
+
+[[Actor]]
+	Name = "Majora Balloon (North Clock Town)"
+	Index = 642
+	Category = "1"
+	Objects = [640]
+
+[[Actor]]
+	Name = "Moon's Tear"
+	Index = 643
+	Category = "1"
+	Objects = [433]
+
+[[Actor]]
+	Name = "Obj_Mu_Pict"
+	Index = 644
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Ancient Castle of Ikana Objects [?]"
+	Index = 645
+	Category = "1"
+	Objects = [566]
+
+[[Actor]]
+	Name = "Blue Spotlight Effect"
+	Index = 646
+	Category = "1"
+	Objects = [597]
+
+[[Actor]]
+	Name = "Gorman Track Buildings"
+	Index = 647
+	Category = "1"
+	Objects = [598]
+
+[[Actor]]
+	Name = "Cow Barn Roof (Exterior)"
+	Index = 648
+	Category = "1"
+	Objects = [599]
+
+[[Actor]]
+	Name = "Deku Butler's Son"
+	Index = 649
+	Category = "1"
+	Objects = [603]
+
+[[Actor]]
+	Name = "Metal Portcullis"
+	Index = 650
+	Category = "1"
+	Notes = "+0x7F00 = Switch Flag"
+	Objects = [608]
+
+[[Actor]]
+	Name = "Chateau Romani Delivery Bottle"
+	Index = 651
+	Category = "1"
+	Objects = [609]
+
+[[Actor]]
+	Name = "Keaton"
+	Index = 652
+	Category = "1"
+	Objects = [612]
+
+[[Actor]]
+	Name = "Astral Observatory Bombable Wall"
+	Index = 653
+	Category = "1"
+	Objects = [615]
+
+[[Actor]]
+	Name = "Hot Checkered Ceiling [?]"
+	Index = 654
+	Category = "1"
+	Objects = [566]
+
+[[Actor]]
+	Name = "Captain Keeta"
+	Index = 655
+	Category = "1"
+	Objects = [616]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Mayor's Receptionist"
+	Index = 656
+	Category = "1"
+	Objects = [297]
+
+[[Actor]]
+	Name = "Takkuri"
+	Index = 657
+	Category = "1"
+	Objects = [34]
+
+[[Actor]]
+	Name = "Fisherman (Fisherman's Jumping Game)"
+	Index = 658
+	Category = "1"
+	Objects = [425]
+
+[[Actor]]
+	Name = "Torch Stand (Fisherman's Jumping Game)"
+	Index = 659
+	Category = "1"
+	Objects = [128]
+
+[[Actor]]
+	Name = "Stockpot Inn Window"
+	Index = 660
+	Category = "1"
+	Objects = [622]
+
+[[Actor]]
+	Name = "Ikana Canyon Curse Lifted Effects"
+	Index = 661
+	Category = "1"
+	Objects = [623]
+
+[[Actor]]
+	Name = "Moon (Cutscenes)"
+	Index = 662
+	Category = "1"
+	Objects = [624]
+
+[[Actor]]
+	Name = "Rainbow Hookshot Pillar"
+	Index = 663
+	Category = "1"
+	Objects = [639]
+
+[[Actor]]
+	Name = "Link Moon Trial Bombable and Climbable Walls"
+	Index = 664
+	Category = "1"
+	Objects = [564]
+
+[[Actor]]
+	Name = "Anju (Wedding Dress)"
+	Index = 665
+	Category = "1"
+	Objects = [21]
+
+[[Actor]]
+	Name = "Invader Poe (Cutscenes)"
+	Index = 666
+	Category = "1"
+	Objects = [1]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Deku Shrine and Snowhead Temple Elevator [?]"
+	Index = 667
+	Category = "1"
+	Objects = [627]
+	MmUseDegreeRotationFor = "  z"
+
+[[Actor]]
+	Name = "Falling Moon"
+	Index = 668
+	Category = "1"
+	Objects = [617]
+
+[[Actor]]
+	Name = "Madame Aroma (Cutscenes)"
+	Index = 669
+	Category = "1"
+	Objects = [13]
+
+[[Actor]]
+	Name = "Anju Cutscene Animations"
+	Index = 670
+	Category = "1"
+	Objects = [226]
+
+[[Actor]]
+	Name = "Anju's Mother (Cutscenes)"
+	Index = 671
+	Category = "1"
+	Objects = [7]
+
+[[Actor]]
+	Name = "Anju's Grandmother (Cutscenes)"
+	Index = 672
+	Category = "1"
+	Objects = [4]
+
+[[Actor]]
+	Name = "Wedding Dress Mannequin"
+	Index = 673
+	Category = "1"
+	Objects = [24]
+
+[[Actor]]
+	Name = "Mayor Dotour (Cutscenes)"
+	Index = 674
+	Category = "1"
+	Objects = [577]
+
+[[Actor]]
+	Name = "Tingle (Cutscenes)"
+	Index = 675
+	Category = "1"
+	Objects = [389]
+
+[[Actor]]
+	Name = "Tingle Confetti"
+	Index = 676
+	Category = "1"
+	Objects = [389]
+
+[[Actor]]
+	Name = "Stalchild (Oceanside Spider House)"
+	Index = 677
+	Category = "1"
+	Objects = [322]
+
+[[Actor]]
+	Name = "Dm_Tag"
+	Index = 678
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Brown Bird"
+	Index = 679
+	Category = "1"
+	Objects = [634]
+
+[[Actor]]
+	Name = "Viscen (Cutscenes)"
+	Index = 680
+	Category = "1"
+	Objects = [583]
+
+[[Actor]]
+	Name = "Mutoh (Cutscenes)"
+	Index = 681
+	Category = "1"
+	Objects = [240]
+
+[[Actor]]
+	Name = "Soldier (Cutscenes) II [?]"
+	Index = 682
+	Category = "1"
+	Objects = [438]
+
+[[Actor]]
+	Name = "Carpenter (Cutscenes)"
+	Index = 683
+	Category = "1"
+	Objects = [241]
+
+[[Actor]]
+	Name = "En_Ending_Hero6"
+	Index = 684
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Dm_Gm"
+	Index = 685
+	Category = "1"
+	Objects = [226]
+
+[[Actor]]
+	Name = "Obj_Swprize"
+	Index = 686
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Invisible - Rupee"
+	Index = 687
+	Category = "1"
+	Objects = [1]
+
+[[Actor]]
+	Name = "Epilogue Cutscene Objects"
+	Index = 688
+	Category = "1"
+	Objects = [641]
+	[[Actor.Property]]
+		Mask = 65535
+		Name = "Presets"
+		Target = "Var"
+		Dropdown = [
+			[0,"Tree with sketch and light beam"],
+			[1,"Light beam"]
+		]
+
+[[Actor]]
+	Name = "Bomb Shop Proprietor"
+	Index = 689
+	Category = "1"
+	Objects = [1]
