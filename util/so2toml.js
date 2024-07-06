@@ -58,6 +58,24 @@ require.extensions['.xml'] = function(module, filename) {
 	module.exports = replaceProperty(JSON.parse(xml2json.toJson(_xml)), "$t", "tagInnerText")
 }
 
+// mm actor rotation
+const mmUseDegreeRotationFor = [
+	[0x0006, " xz"], [0x000a, " x "], [0x0017, " xz"], [0x001c, "yxz"], [0x002d, " x "],
+	[0x0041, "  z"], [0x0050, "  z"], [0x0055, "  z"], [0x005b, "yxz"], [0x0082, "  z"],
+	[0x008b, "yxz"], [0x008d, "  z"], [0x008f, "  z"], [0x0091, "  z"], [0x0093, "  z"],
+	[0x0099, "yxz"], [0x00c6, "yxz"], [0x00ca, " xz"], [0x00cb, "  z"], [0x00d8, " xz"],
+	[0x00ec, " xz"], [0x00ef, "  z"], [0x0102, " xz"], [0x0103, "  z"], [0x0105, " xz"],
+	[0x0112, "  z"], [0x011c, "  z"], [0x013c, " xz"], [0x0146, "yxz"], [0x014a, " x "],
+	[0x014b, "  z"], [0x0153, "  z"], [0x0155, "  z"], [0x0162, " xz"], [0x0164, " xz"],
+	[0x0174, " xz"], [0x0178, "  z"], [0x0179, " xz"], [0x017a, "  z"], [0x017e, " xz"],
+	[0x0180, "  z"], [0x0184, " xz"], [0x0185, "  z"], [0x018f, " xz"], [0x019e, " x "],
+	[0x01ab, "yxz"], [0x01c7, "  z"], [0x01c8, " x "], [0x01cd, "  z"], [0x01d0, " x "],
+	[0x01d7, "yxz"], [0x01d8, "y  "], [0x01dc, "yxz"], [0x01e7, "yxz"], [0x01e9, "  z"],
+	[0x01eb, "yxz"], [0x01f5, " xz"], [0x021c, "  z"], [0x021d, "  z"], [0x021e, " xz"],
+	[0x0228, "  z"], [0x022e, "  z"], [0x0230, " x "], [0x0232, "yxz"], [0x0233, " xz"],
+	[0x0261, "yxz"], [0x0265, "yxz"], [0x028f, "  z"], [0x029a, "  z"], [0x029b, "  z"],
+]
+
 // load the room
 const _test = require(_inFilename)
 //console.log(_test)
@@ -98,6 +116,11 @@ for (const _actor of _test.Table.Actor)
 		continue
 	}
 	_newActor.Index = parseInt('0x' + _newActor.Index)
+	
+	// mm degree rotations
+	for (const _pair of mmUseDegreeRotationFor)
+		if (_pair[0] == _newActor.Index)
+			_newActor.MmUseDegreeRotationFor = _pair[1]
 	
 	// this should never happen, but squash them all down to one
 	if (Array.isArray(_newActor.Notes))
@@ -281,6 +304,7 @@ for (const _actor of _result)
 			_toml += PrintIndent() + `Notes = "${_actor.Notes.replace(/\n/g, '\\n').replace(/"/g, '\\"')}"`
 		}
 		if (_actor.Objects) _toml += PrintIndent() + `Objects = ${JSON.stringify(_actor.Objects)}`
+		if (_actor.MmUseDegreeRotationFor) _toml += PrintIndent() + `MmUseDegreeRotationFor = ${JSON.stringify(_actor.MmUseDegreeRotationFor)}`
 		if (_actor.Property)
 		{
 			//console.log(_actor.Property)
