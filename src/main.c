@@ -14,7 +14,7 @@
 #include "project.h"
 #include "logging.h"
 
-extern void WindowMainLoop(struct Scene *scene);
+extern void WindowMainLoop(const char *sceneFn);
 extern void GuiTest(struct Project *project);
 
 int main(int argc, char *argv[])
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	{
 		//const char *fn = "bin/exhaustive-oot.txt";
 		const char *fn = "bin/exhaustive-mm.txt";
-		bool isAnalyzingScenes = true;
+		bool isAnalyzingScenes = false;
 		// multiple passes to assert consistent use of rotations
 		for (int i = 0; i < 1 + isAnalyzingScenes; ++i)
 		{
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
 				if (isAnalyzingScenes)
 					TestAnalyzeSceneActors(scene, i < 1 ? 0 : "bin/TestAnalyzeSceneActors.log");
 				// want to batch open/save everything
-				else if (false)
+				else if (true)
 					SceneToFilename(scene, 0);
 				SceneFree(scene);
 			}
@@ -140,7 +140,7 @@ int main(int argc, char *argv[])
 	
 	ExePath(argv[0]);
 	
-	if (argc == 2)
+	if (false && argc == 2)
 	{
 		scene = SceneFromFilenamePredictRooms(argv[1]);
 		
@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 		scene->textureBlobs = texBlobs;
 	}
 	
-	WindowMainLoop(scene);
+	WindowMainLoop(argv[1]);
 	
 	SceneWriterCleanup();
 	return 0;

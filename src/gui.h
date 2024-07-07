@@ -56,6 +56,10 @@ struct GuiInterop
 	bool rightClickedInViewport;
 	enum RenderGroup rightClickedRenderGroup;
 	int selectedRoomIndex;
+	int selectedHeaderIndex;
+	int selectedDayIndex;
+	uint16_t halfDayBits;
+	bool isMM;
 	
 	bool clipboardHasInstance;
 	struct Instance clipboardInstance;
@@ -80,6 +84,7 @@ CPP_FUNC_PREFIX void GuiApplyActorRenderCodeProperties(struct Instance *inst);
 CPP_FUNC_PREFIX int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot);
 CPP_FUNC_PREFIX struct Object *GuiGetObjectDataFromId(int objectId);
 CPP_FUNC_PREFIX void GuiLoadBaseDatabases(const char *gameId);
+CPP_FUNC_PREFIX void GuiSetInterop(struct GuiInterop *interop);
 
 #endif /* Z64SCENE_GUI_H_INCLUDED */
 

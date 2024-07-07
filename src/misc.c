@@ -1053,6 +1053,10 @@ struct Instance InstanceMakeReadable(struct Instance inst)
 		#undef HANDLE_AXIS
 	}
 	
+	// oot default + safety for mm door actors
+	if (!inst.mm.halfDayBits)
+		inst.mm.halfDayBits = 0xffff;
+	
 	return inst;
 }
 

@@ -38,7 +38,8 @@
 			"project.h": "c",
 			"bitset": "c",
 			"set": "c",
-			"inttypes.h": "c"
+			"inttypes.h": "c",
+			"algorithm": "c"
 		}
 	}
 }

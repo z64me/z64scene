@@ -491,6 +491,55 @@ static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const cha
 	}
 	
 	ImGui::SeparatorText(QuickFmt("%s List", tabType));
+	// new code, with filtering by day
+	char previewText[256];
+	if (instanceCurIndex >= 0)
+		snprintf(previewText, sizeof(previewText), "%d: %s 0x%04x"
+			, instanceCurIndex
+			, gGuiSettings.actorDatabase.GetActorName(inst->id)
+			, inst->id
+		);
+	else
+		strcpy(previewText, "");
+	if (ImGui::BeginCombo("##Instance##InstanceCombo", previewText, 0))
+	{
+		int count = sb_count(instances);
+		uint16_t guiHalfDayBits = gGui->halfDayBits;
+		
+		for (int i = 0; i < count; ++i)
+		{
+			Instance *inst = instances + i;
+			
+			if (!(inst->mm.halfDayBits & guiHalfDayBits))
+				continue;
+			
+			const bool isSelected = (gGui->selectedInstance - instances == i);
+			// TODO DRY
+			snprintf(previewText, sizeof(previewText), "%d: %s 0x%04x"
+				, i
+				, gGuiSettings.actorDatabase.GetActorName(inst->id)
+				, inst->id
+			);
+			
+			if (ImGui::Selectable(previewText, isSelected))
+				gGui->selectedInstance = inst;
+
+			// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+			if (isSelected)
+				ImGui::SetItemDefaultFocus();
+		}
+		ImGui::EndCombo();
+	}
+	// on mousewheel, select next actor with matching halfDayBits
+	for (bool keepLooping = instanceCurIndex >= 0; keepLooping; ) {
+		IMGUI_COMBO_HOVER_ONCHANGE(instanceCurIndex, sb_count(instances), {
+			if ((instances[instanceCurIndex].mm.halfDayBits & gGui->halfDayBits))
+				keepLooping = false;
+		}) else
+			break;
+	}
+	// old code, for reference
+	/*
 	ImGui::Combo(
 		"##Instance##InstanceCombo"
 		, &instanceCurIndex
@@ -507,6 +556,7 @@ static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const cha
 		, sb_count(instances)
 	);
 	IMGUI_COMBO_HOVER(instanceCurIndex, sb_count(instances));
+	*/
 	
 	inst = &instances[instanceCurIndex];
 	if (instanceCurIndex < 0) inst = 0;
@@ -1297,6 +1347,98 @@ static void DrawMenuBar(void)
 			ImGui::EndMenu();
 		}
 		ImGui::Text("%.02f fps", ImGui::GetIO().Framerate);
+		
+		// menu bar items, aligned right-to-left
+		if (gScene)
+		{
+			int pad = 10;
+			int right = ImGui::GetWindowWidth();
+			int width;
+			
+			#define WITH_WIDTH(X) \
+				width = X; \
+				ImGui::SameLine((right -= (width + pad))); \
+				ImGui::SetNextItemWidth(width);
+			
+			// room select
+			WITH_WIDTH(80)
+			ImGui::Combo(
+				"##MenuBar##RoomIndex"
+				, &gGui->selectedRoomIndex
+				, [](void* data, int n) {
+					static char test[256];
+					sprintf(test, "Room %d", n);
+					return (const char*)test;
+				}
+				, 0
+				, sb_count(gScene->rooms)
+			);
+			IMGUI_COMBO_HOVER(gGui->selectedRoomIndex, sb_count(gScene->rooms));
+			
+			// header select
+			WITH_WIDTH(128)
+			ImGui::Combo(
+				"##MenuBar##HeaderIndex"
+				, &gGui->selectedHeaderIndex
+				, [](void* data, int n) {
+					static char test[256];
+					sprintf(test, "Header %d", n);
+					return (const char*)test;
+				}
+				, 0
+				, sb_count(gScene->headers)
+			);
+			IMGUI_COMBO_HOVER(gGui->selectedHeaderIndex, sb_count(gScene->headers));
+			
+			// day select
+			gGui->halfDayBits = 0xffff; // using for oot and mm (mm overrides it)
+			if (gGui->isMM)
+			{
+				const int days = 11;
+				WITH_WIDTH(80)
+				ImGui::Combo(
+					"##MenuBar##DayIndex"
+					, &gGui->selectedDayIndex
+					, [](void* data, int n) {
+						static char test[256];
+						if (n == 0)
+							sprintf(test, "All");
+						else if (n & 1)
+							sprintf(test, "Day %d", (n + 1) / 2);
+						else
+							sprintf(test, "Night %d", (n + 1) / 2);
+						return (const char*)test;
+					}
+					, 0
+					, days
+				);
+				IMGUI_COMBO_HOVER(gGui->selectedDayIndex, days);
+				
+				// calculate new halfDayBits
+				{
+					int i = gGui->selectedDayIndex;
+					
+					if (i == 0)
+						gGui->halfDayBits = 0xffff;
+					else {
+						int shift = 9 - (i - 1);
+						gGui->halfDayBits = 1 << shift;
+					}
+				}
+			}
+			
+			// if any of those changed, update accordingly
+			bool reset = false;
+			ON_CHANGE(gGui->selectedDayIndex) reset = true;
+			ON_CHANGE(gGui->selectedRoomIndex) reset = true;
+			ON_CHANGE(gGui->selectedHeaderIndex) reset = true;
+			if (reset) {
+				gGui->selectedInstance = 0;
+			}
+			
+			#undef WITH_WIDTH
+		}
+		
 		ImGui::EndMainMenuBar();
 	}
 }
@@ -1357,6 +1499,11 @@ extern "C" void GuiCleanup(void)
 	ImGui::DestroyContext();
 }
 
+extern "C" void GuiSetInterop(struct GuiInterop *interop)
+{
+	gGui = interop;
+}
+
 extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop)
 {
 	// reset settings on extern scene load (handles Ctrl+O and dropped files)
@@ -1380,8 +1527,8 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	// handling this here for now
 	if (scene)
 	{
-		RoomHeader *roomHeader = &gScene->rooms[gGui->selectedRoomIndex].headers[0];
-		SceneHeader *sceneHeader = &gScene->headers[0];
+		RoomHeader *roomHeader = &gScene->rooms[gGui->selectedRoomIndex].headers[gGui->selectedHeaderIndex];
+		SceneHeader *sceneHeader = &gScene->headers[gGui->selectedHeaderIndex];
 		
 		gGui->doorList = &(sceneHeader->doorways);
 		gGui->spawnList = &(sceneHeader->spawns);
@@ -1536,9 +1683,16 @@ extern "C" void GuiLoadBaseDatabases(const char *gameId)
 {
 	char tmp[256];
 	
+	// unsafe
+	if (!gGui)
+		return;
+	
 	// don't override databases if a project is already loaded
 	if (gGuiSettings.projectIsReady)
 		return;
+	
+	if (gGui)
+		gGui->isMM = !strcmp(gameId, "mm");
 	
 	snprintf(tmp, sizeof(tmp), "toml/game/%s/actors.toml", gameId);
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase(tmp);

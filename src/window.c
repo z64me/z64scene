@@ -920,6 +920,10 @@ struct Scene *WindowLoadScene(const char *fn)
 	// view new scene
 	*gSceneP = scene;
 	
+	// reset these
+	gGui->selectedRoomIndex = 0;
+	gGui->selectedHeaderIndex = 0;
+	
 	return scene;
 }
 
@@ -2013,7 +2017,13 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 	if (!(instances = *instanceList))
 		return;
 	
+	uint16_t guiHalfDayBits = gGui->halfDayBits;
+	
 	sb_foreach(instances, {
+		
+		if (!(each->mm.halfDayBits & guiHalfDayBits))
+			continue;
+		
 		identity(model);
 		{
 			mtx_translate_rot(
@@ -2064,8 +2074,9 @@ static void DrawInstanceList(sb_array(struct Instance, *instanceList))
 	});
 }
 
-void WindowMainLoop(struct Scene *scene)
+void WindowMainLoop(const char *sceneFn)
 {
+	struct Scene *scene = 0;
 	gState.input = &gInput;
 	struct Gizmo *gizmo = GizmoNew();
 	gState.gizmo = gizmo;
@@ -2080,6 +2091,10 @@ void WindowMainLoop(struct Scene *scene)
 		}
 	};
 	gGui = &gui;
+	GuiSetInterop(gGui);
+	
+	if (sceneFn)
+		scene = SceneFromFilenamePredictRooms(sceneFn);
 	
 	// glfw: initialize and configure
 	// ------------------------------
