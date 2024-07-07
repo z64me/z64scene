@@ -1,0 +1,2572 @@
+
+[[Object]]
+	Index = 0
+	Name = "(intentionally blank)"
+
+[[Object]]
+	Index = 1
+	Name = "Global Gameplay Objects"
+
+[[Object]]
+	Index = 2
+	Name = "Global Field Objects"
+
+[[Object]]
+	Index = 3
+	Name = "Global Dungeon Objects"
+
+[[Object]]
+	Index = 4
+	Name = "Anju's Grandmother"
+
+[[Object]]
+	Index = 5
+	Name = "Octorok"
+
+[[Object]]
+	Index = 6
+	Name = "Guay"
+
+[[Object]]
+	Index = 7
+	Name = "Anju's Mother"
+
+[[Object]]
+	Index = 8
+	Name = "Great Fairy & Healing Beam"
+
+[[Object]]
+	Index = 9
+	Name = "Wallmaster & Floormaster"
+
+[[Object]]
+	Index = 10
+	Name = "Dodongo"
+
+[[Object]]
+	Index = 11
+	Name = "Keese"
+
+[[Object]]
+	Index = 12
+	Name = "Treasure Chest & Glow"
+
+[[Object]]
+	Index = 13
+	Name = "Madame Aroma"
+
+[[Object]]
+	Index = 14
+	Name = "Shabom & Stray Fairy Bubble"
+
+[[Object]]
+	Index = 15
+	Name = "Cucco"
+
+[[Object]]
+	Index = 16
+	Name = "Fierce Deity Link"
+
+[[Object]]
+	Index = 17
+	Name = "Young Link"
+
+[[Object]]
+	Index = 18
+	Name = "Tektite"
+
+[[Object]]
+	Index = 19
+	Name = "Mr. Barten"
+
+[[Object]]
+	Index = 20
+	Name = "Peahat"
+
+[[Object]]
+	Index = 21
+	Name = "Anju (Wedding Dress)"
+
+[[Object]]
+	Index = 22
+	Name = "Moon Mask"
+
+[[Object]]
+	Index = 23
+	Name = "Dinolfos"
+
+[[Object]]
+	Index = 24
+	Name = "Wedding Dress Mannequin"
+
+[[Object]]
+	Index = 25
+	Name = "Young Zelda [OoT]"
+
+[[Object]]
+	Index = 26
+	Name = "Anju Animations [todo]"
+
+[[Object]]
+	Index = 27
+	Name = "(blank)"
+
+[[Object]]
+	Index = 28
+	Name = "Kafei"
+
+[[Object]]
+	Index = 29
+	Name = "Death Armos"
+
+[[Object]]
+	Index = 30
+	Name = "(blank)"
+
+[[Object]]
+	Index = 31
+	Name = "(blank)"
+
+[[Object]]
+	Index = 32
+	Name = "Skulltula, Skullwalltula, Gold Skulltula Token"
+
+[[Object]]
+	Index = 33
+	Name = "(blank)"
+
+[[Object]]
+	Index = 34
+	Name = "Takkuri"
+
+[[Object]]
+	Index = 35
+	Name = "(blank)"
+
+[[Object]]
+	Index = 36
+	Name = "(blank)"
+
+[[Object]]
+	Index = 37
+	Name = "(blank)"
+
+[[Object]]
+	Index = 38
+	Name = "(blank)"
+
+[[Object]]
+	Index = 39
+	Name = "(blank)"
+
+[[Object]]
+	Index = 40
+	Name = "(blank)"
+
+[[Object]]
+	Index = 41
+	Name = "(blank)"
+
+[[Object]]
+	Index = 42
+	Name = "Bomb Flower"
+
+[[Object]]
+	Index = 43
+	Name = "(blank)"
+
+[[Object]]
+	Index = 44
+	Name = "(blank)"
+
+[[Object]]
+	Index = 45
+	Name = "(blank)"
+
+[[Object]]
+	Index = 46
+	Name = "(blank)"
+
+[[Object]]
+	Index = 47
+	Name = "(blank)"
+
+[[Object]]
+	Index = 48
+	Name = "Armos & Armos Statue"
+
+[[Object]]
+	Index = 49
+	Name = "Deku Baba, Wilted Deku Baba, Mini Baba"
+
+[[Object]]
+	Index = 50
+	Name = "(blank)"
+
+[[Object]]
+	Index = 51
+	Name = "(blank)"
+
+[[Object]]
+	Index = 52
+	Name = "(blank)"
+
+[[Object]]
+	Index = 53
+	Name = "(blank)"
+
+[[Object]]
+	Index = 54
+	Name = "(blank)"
+
+[[Object]]
+	Index = 55
+	Name = "(blank)"
+
+[[Object]]
+	Index = 56
+	Name = "(blank)"
+
+[[Object]]
+	Index = 57
+	Name = "(blank)"
+
+[[Object]]
+	Index = 58
+	Name = "(blank)"
+
+[[Object]]
+	Index = 59
+	Name = "(blank)"
+
+[[Object]]
+	Index = 60
+	Name = "(blank)"
+
+[[Object]]
+	Index = 61
+	Name = "(blank)"
+
+[[Object]]
+	Index = 62
+	Name = "Blue Warp"
+
+[[Object]]
+	Index = 63
+	Name = "(blank)"
+
+[[Object]]
+	Index = 64
+	Name = "Mad Scrub"
+
+[[Object]]
+	Index = 65
+	Name = "(blank)"
+
+[[Object]]
+	Index = 66
+	Name = "(blank)"
+
+[[Object]]
+	Index = 67
+	Name = "(blank)"
+
+[[Object]]
+	Index = 68
+	Name = "(blank)"
+
+[[Object]]
+	Index = 69
+	Name = "(blank)"
+
+[[Object]]
+	Index = 70
+	Name = "(blank)"
+
+[[Object]]
+	Index = 71
+	Name = "(blank)"
+
+[[Object]]
+	Index = 72
+	Name = "(blank)"
+
+[[Object]]
+	Index = 73
+	Name = "(blank)"
+
+[[Object]]
+	Index = 74
+	Name = "(blank)"
+
+[[Object]]
+	Index = 75
+	Name = "(blank)"
+
+[[Object]]
+	Index = 76
+	Name = "(blank)"
+
+[[Object]]
+	Index = 77
+	Name = "(blank)"
+
+[[Object]]
+	Index = 78
+	Name = "(blank)"
+
+[[Object]]
+	Index = 79
+	Name = "(blank)"
+
+[[Object]]
+	Index = 80
+	Name = "(blank)"
+
+[[Object]]
+	Index = 81
+	Name = "Red & Blue Bubble"
+
+[[Object]]
+	Index = 82
+	Name = "Gomess & Bats"
+
+[[Object]]
+	Index = 83
+	Name = "(blank)"
+
+[[Object]]
+	Index = 84
+	Name = "(blank)"
+
+[[Object]]
+	Index = 85
+	Name = "(blank)"
+
+[[Object]]
+	Index = 86
+	Name = "(blank)"
+
+[[Object]]
+	Index = 87
+	Name = "(blank)"
+
+[[Object]]
+	Index = 88
+	Name = "(blank)"
+
+[[Object]]
+	Index = 89
+	Name = "(blank)"
+
+[[Object]]
+	Index = 90
+	Name = "(blank)"
+
+[[Object]]
+	Index = 91
+	Name = "(blank)"
+
+[[Object]]
+	Index = 92
+	Name = "Stone Tower Temple Elevators [Early], Platforms [Early], Shifting Blocks"
+
+[[Object]]
+	Index = 93
+	Name = "Composer Brothers"
+
+[[Object]]
+	Index = 94
+	Name = "(blank)"
+
+[[Object]]
+	Index = 95
+	Name = "Flagpole"
+
+[[Object]]
+	Index = 96
+	Name = "(blank)"
+
+[[Object]]
+	Index = 97
+	Name = "Trees & Bushes"
+
+[[Object]]
+	Index = 98
+	Name = "(blank)"
+
+[[Object]]
+	Index = 99
+	Name = "(blank)"
+
+[[Object]]
+	Index = 100
+	Name = "Blade Trap"
+
+[[Object]]
+	Index = 101
+	Name = "(blank)"
+
+[[Object]]
+	Index = 102
+	Name = "(blank)"
+
+[[Object]]
+	Index = 103
+	Name = "(blank)"
+
+[[Object]]
+	Index = 104
+	Name = "(blank)"
+
+[[Object]]
+	Index = 105
+	Name = "(blank)"
+
+[[Object]]
+	Index = 106
+	Name = "Beamos"
+
+[[Object]]
+	Index = 107
+	Name = "(blank)"
+
+[[Object]]
+	Index = 108
+	Name = "(blank)"
+
+[[Object]]
+	Index = 109
+	Name = "(blank)"
+
+[[Object]]
+	Index = 110
+	Name = "(blank)"
+
+[[Object]]
+	Index = 111
+	Name = "(blank)"
+
+[[Object]]
+	Index = 112
+	Name = "Rock & Beam of Light [OoT]"
+
+[[Object]]
+	Index = 113
+	Name = "(blank)"
+
+[[Object]]
+	Index = 114
+	Name = "(blank)"
+
+[[Object]]
+	Index = 115
+	Name = "(blank)"
+
+[[Object]]
+	Index = 116
+	Name = "(blank)"
+
+[[Object]]
+	Index = 117
+	Name = "Redead & Gibdo"
+
+[[Object]]
+	Index = 118
+	Name = "Mountain Village Ladder, Chimney Smoke, Embers"
+
+[[Object]]
+	Index = 119
+	Name = "Golden Gauntlets Rock"
+
+[[Object]]
+	Index = 120
+	Name = "(blank)"
+
+[[Object]]
+	Index = 121
+	Name = "(blank)"
+
+[[Object]]
+	Index = 122
+	Name = "(blank)"
+
+[[Object]]
+	Index = 123
+	Name = "(blank)"
+
+[[Object]]
+	Index = 124
+	Name = "(blank)"
+
+[[Object]]
+	Index = 125
+	Name = "Young Epona"
+
+[[Object]]
+	Index = 126
+	Name = "(blank)"
+
+[[Object]]
+	Index = 127
+	Name = "(blank)"
+
+[[Object]]
+	Index = 128
+	Name = "Torch Stand"
+
+[[Object]]
+	Index = 129
+	Name = "(blank)"
+
+[[Object]]
+	Index = 130
+	Name = "(blank)"
+
+[[Object]]
+	Index = 131
+	Name = "(blank)"
+
+[[Object]]
+	Index = 132
+	Name = "(blank)"
+
+[[Object]]
+	Index = 133
+	Name = "(blank)"
+
+[[Object]]
+	Index = 134
+	Name = "Small Key (Get Item)"
+
+[[Object]]
+	Index = 135
+	Name = "Mirror Shield Light Ray [todo]"
+
+[[Object]]
+	Index = 136
+	Name = "Clock Tower Gear & Helix Path"
+
+[[Object]]
+	Index = 137
+	Name = "(blank)"
+
+[[Object]]
+	Index = 138
+	Name = "Boss Doors"
+
+[[Object]]
+	Index = 139
+	Name = "(blank)"
+
+[[Object]]
+	Index = 140
+	Name = "(blank)"
+
+[[Object]]
+	Index = 141
+	Name = "(blank)"
+
+[[Object]]
+	Index = 142
+	Name = "Shellblade"
+
+[[Object]]
+	Index = 143
+	Name = "Music Notes (Get Item)"
+
+[[Object]]
+	Index = 144
+	Name = "Recovery Heart (Get Item)"
+
+[[Object]]
+	Index = 145
+	Name = "Compass (Get Item)"
+
+[[Object]]
+	Index = 146
+	Name = "Boss Key (Get Item)"
+
+[[Object]]
+	Index = 147
+	Name = "(blank)"
+
+[[Object]]
+	Index = 148
+	Name = "Deku Nuts (Get Item)"
+
+[[Object]]
+	Index = 149
+	Name = "(blank)"
+
+[[Object]]
+	Index = 150
+	Name = "Heart Container (Boss Lairs)"
+
+[[Object]]
+	Index = 151
+	Name = "Quivers (Get Item)"
+
+[[Object]]
+	Index = 152
+	Name = "Bomb Bags (Get Item)"
+
+[[Object]]
+	Index = 153
+	Name = "Gorman Bros."
+
+[[Object]]
+	Index = 154
+	Name = "(blank)"
+
+[[Object]]
+	Index = 155
+	Name = "(blank)"
+
+[[Object]]
+	Index = 156
+	Name = "(blank)"
+
+[[Object]]
+	Index = 157
+	Name = "(blank)"
+
+[[Object]]
+	Index = 158
+	Name = "Empty Bottle (Get Item)"
+
+[[Object]]
+	Index = 159
+	Name = "Deku Stick (Get Item)"
+
+[[Object]]
+	Index = 160
+	Name = "Dungeon Map & Stone of Agony (Get Item)"
+
+[[Object]]
+	Index = 161
+	Name = "Goron (Generic), Medigoron, Powder Keg Shop Goron, Don Gero [todo]"
+
+[[Object]]
+	Index = 162
+	Name = "Adult Ruto [OoT]"
+
+[[Object]]
+	Index = 163
+	Name = "(blank)"
+
+[[Object]]
+	Index = 164
+	Name = "Magic Jars (Get Item)"
+
+[[Object]]
+	Index = 165
+	Name = "Bomb (Get Item)"
+
+[[Object]]
+	Index = 166
+	Name = "(blank)"
+
+[[Object]]
+	Index = 167
+	Name = "Cremia"
+
+[[Object]]
+	Index = 168
+	Name = "Wallets (Get Item)"
+
+[[Object]]
+	Index = 169
+	Name = "(blank)"
+
+[[Object]]
+	Index = 170
+	Name = "(blank)"
+
+[[Object]]
+	Index = 171
+	Name = "Like Like"
+
+[[Object]]
+	Index = 172
+	Name = "(blank)"
+
+[[Object]]
+	Index = 173
+	Name = "(blank)"
+
+[[Object]]
+	Index = 174
+	Name = "(blank)"
+
+[[Object]]
+	Index = 175
+	Name = "Arrow Bundles (Get Item)"
+
+[[Object]]
+	Index = 176
+	Name = "Bombchu (Get Item)"
+
+[[Object]]
+	Index = 177
+	Name = "(blank)"
+
+[[Object]]
+	Index = 178
+	Name = "(blank)"
+
+[[Object]]
+	Index = 179
+	Name = "Hero's Shield (Get Item)"
+
+[[Object]]
+	Index = 180
+	Name = "Hookshot (Get Item)"
+
+[[Object]]
+	Index = 181
+	Name = "Ocarina of Time (Get Item)"
+
+[[Object]]
+	Index = 182
+	Name = "Milk (Get Item)"
+
+[[Object]]
+	Index = 183
+	Name = "Romani"
+
+[[Object]]
+	Index = 184
+	Name = "(blank)"
+
+[[Object]]
+	Index = 185
+	Name = "(blank)"
+
+[[Object]]
+	Index = 186
+	Name = "(blank)"
+
+[[Object]]
+	Index = 187
+	Name = "Spiked Metal Mine"
+
+[[Object]]
+	Index = 188
+	Name = "Frog"
+
+[[Object]]
+	Index = 189
+	Name = "(blank)"
+
+[[Object]]
+	Index = 190
+	Name = "(blank)"
+
+[[Object]]
+	Index = 191
+	Name = "Hero's Bow (Get Item)"
+
+[[Object]]
+	Index = 192
+	Name = "Lens of Truth (Get Item)"
+
+[[Object]]
+	Index = 193
+	Name = "Red, Blue, Green Potion (Get Item)"
+
+[[Object]]
+	Index = 194
+	Name = "Part-Timer"
+
+[[Object]]
+	Index = 195
+	Name = "Mirror Shield (Get Item)"
+
+[[Object]]
+	Index = 196
+	Name = "(blank)"
+
+[[Object]]
+	Index = 197
+	Name = "(blank)"
+
+[[Object]]
+	Index = 198
+	Name = "Magic Bean (Get Item)"
+
+[[Object]]
+	Index = 199
+	Name = "Fish (Get Item)"
+
+[[Object]]
+	Index = 200
+	Name = "(blank)"
+
+[[Object]]
+	Index = 201
+	Name = "(blank)"
+
+[[Object]]
+	Index = 202
+	Name = "(blank)"
+
+[[Object]]
+	Index = 203
+	Name = "Biggoron's Sword (Get Item)"
+
+[[Object]]
+	Index = 204
+	Name = "(blank)"
+
+[[Object]]
+	Index = 205
+	Name = "(blank)"
+
+[[Object]]
+	Index = 206
+	Name = "(blank)"
+
+[[Object]]
+	Index = 207
+	Name = "(blank)"
+
+[[Object]]
+	Index = 208
+	Name = "Zora"
+
+[[Object]]
+	Index = 209
+	Name = "(blank)"
+
+[[Object]]
+	Index = 210
+	Name = "Horse Jumping Fence"
+
+[[Object]]
+	Index = 211
+	Name = "(blank)"
+
+[[Object]]
+	Index = 212
+	Name = "(blank)"
+
+[[Object]]
+	Index = 213
+	Name = "(blank)"
+
+[[Object]]
+	Index = 214
+	Name = "(blank)"
+
+[[Object]]
+	Index = 215
+	Name = "Mamamu Yan"
+
+[[Object]]
+	Index = 216
+	Name = "Iron Knuckle"
+
+[[Object]]
+	Index = 217
+	Name = "Bearded Man [OoT]"
+
+[[Object]]
+	Index = 218
+	Name = "Thin Woman in Blue Dress [OoT]"
+
+[[Object]]
+	Index = 219
+	Name = "(blank)"
+
+[[Object]]
+	Index = 220
+	Name = "(blank)"
+
+[[Object]]
+	Index = 221
+	Name = "Anju's Broom"
+
+[[Object]]
+	Index = 222
+	Name = "Shikashi"
+
+[[Object]]
+	Index = 223
+	Name = "Bomb Shop Proprietor's Mother"
+
+[[Object]]
+	Index = 224
+	Name = "Anju's Umbrella"
+
+[[Object]]
+	Index = 225
+	Name = "(blank)"
+
+[[Object]]
+	Index = 226
+	Name = "Anju"
+
+[[Object]]
+	Index = 227
+	Name = "Bank Teller, Jugglers, Sakon, Bomb Shop Bag"
+
+[[Object]]
+	Index = 228
+	Name = "Freezard"
+
+[[Object]]
+	Index = 229
+	Name = "Carpenter Boss's Wife [OoT]"
+
+[[Object]]
+	Index = 230
+	Name = "Pirate Lieutenant"
+
+[[Object]]
+	Index = 231
+	Name = "Mini-Game Point Textures"
+
+[[Object]]
+	Index = 232
+	Name = "(blank)"
+
+[[Object]]
+	Index = 233
+	Name = "(blank)"
+
+[[Object]]
+	Index = 234
+	Name = "(blank)"
+
+[[Object]]
+	Index = 235
+	Name = "(blank)"
+
+[[Object]]
+	Index = 236
+	Name = "Stone Hookshot Pillar"
+
+[[Object]]
+	Index = 237
+	Name = "Dampé's House Elevator & Falling Block Row"
+
+[[Object]]
+	Index = 238
+	Name = "Magic Bean Plant"
+
+[[Object]]
+	Index = 239
+	Name = "Snowball & Rolling Boulder"
+
+[[Object]]
+	Index = 240
+	Name = "Mutoh"
+
+[[Object]]
+	Index = 241
+	Name = "Carpenter"
+
+[[Object]]
+	Index = 242
+	Name = "Cucco Chick"
+
+[[Object]]
+	Index = 243
+	Name = "[Empty]"
+
+[[Object]]
+	Index = 244
+	Name = "Magic Bean Seller"
+
+[[Object]]
+	Index = 245
+	Name = "Grog"
+
+[[Object]]
+	Index = 246
+	Name = "(blank)"
+
+[[Object]]
+	Index = 247
+	Name = "Sun Switch"
+
+[[Object]]
+	Index = 248
+	Name = "Grass"
+
+[[Object]]
+	Index = 249
+	Name = "Pot"
+
+[[Object]]
+	Index = 250
+	Name = "(blank)"
+
+[[Object]]
+	Index = 251
+	Name = "(blank)"
+
+[[Object]]
+	Index = 252
+	Name = "Square Sign"
+
+[[Object]]
+	Index = 253
+	Name = "Owl"
+
+[[Object]]
+	Index = 254
+	Name = "Marine Scientist"
+
+[[Object]]
+	Index = 255
+	Name = "Guru-Guru"
+
+[[Object]]
+	Index = 256
+	Name = "Keaton Mask  (Get Item)"
+
+[[Object]]
+	Index = 257
+	Name = "(blank)"
+
+[[Object]]
+	Index = 258
+	Name = "Captain's Hat (Get Item)"
+
+[[Object]]
+	Index = 259
+	Name = "Bunny Hood (Get Item)"
+
+[[Object]]
+	Index = 260
+	Name = "Mask of Truth  (Get Item)"
+
+[[Object]]
+	Index = 261
+	Name = "(blank)"
+
+[[Object]]
+	Index = 262
+	Name = "Water Spout"
+
+[[Object]]
+	Index = 263
+	Name = "Postman"
+
+[[Object]]
+	Index = 264
+	Name = "(blank)"
+
+[[Object]]
+	Index = 265
+	Name = "(blank)"
+
+[[Object]]
+	Index = 266
+	Name = "(blank)"
+
+[[Object]]
+	Index = 267
+	Name = "(blank)"
+
+[[Object]]
+	Index = 268
+	Name = "(blank)"
+
+[[Object]]
+	Index = 269
+	Name = "(blank)"
+
+[[Object]]
+	Index = 270
+	Name = "(blank)"
+
+[[Object]]
+	Index = 271
+	Name = "Swordsman"
+
+[[Object]]
+	Index = 272
+	Name = "Bombers & Jim"
+
+[[Object]]
+	Index = 273
+	Name = "(blank)"
+
+[[Object]]
+	Index = 274
+	Name = "(blank)"
+
+[[Object]]
+	Index = 275
+	Name = "SOLD OUT (Get Item)"
+
+[[Object]]
+	Index = 276
+	Name = "(blank)"
+
+[[Object]]
+	Index = 277
+	Name = "Title Logo"
+
+[[Object]]
+	Index = 278
+	Name = "(blank)"
+
+[[Object]]
+	Index = 279
+	Name = "(blank)"
+
+[[Object]]
+	Index = 280
+	Name = "(blank)"
+
+[[Object]]
+	Index = 281
+	Name = "Goron Mask (Get Item)"
+
+[[Object]]
+	Index = 282
+	Name = "Zora Mask (Get Item)"
+
+[[Object]]
+	Index = 283
+	Name = "(blank)"
+
+[[Object]]
+	Index = 284
+	Name = "(blank)"
+
+[[Object]]
+	Index = 285
+	Name = "Pierre"
+
+[[Object]]
+	Index = 286
+	Name = "(blank)"
+
+[[Object]]
+	Index = 287
+	Name = "Ganon's Tower Gate [OoT]"
+
+[[Object]]
+	Index = 288
+	Name = "(blank)"
+
+[[Object]]
+	Index = 289
+	Name = "Fire, Ice, Light Arrows (Get Item)"
+
+[[Object]]
+	Index = 290
+	Name = "Potion Shop Proprietor [OoT]"
+
+[[Object]]
+	Index = 291
+	Name = "(blank)"
+
+[[Object]]
+	Index = 292
+	Name = "Fishing Pond & Proprietor [OoT]"
+
+[[Object]]
+	Index = 293
+	Name = "Gold Skulltula Token (Get Item)"
+
+[[Object]]
+	Index = 294
+	Name = "(blank)"
+
+[[Object]]
+	Index = 295
+	Name = "Cursed Skulltula Man"
+
+[[Object]]
+	Index = 296
+	Name = "Gekko (Mini-Boss), Mad Jelly, Droplets"
+
+[[Object]]
+	Index = 297
+	Name = "Treasure Chest Game Employee & Mayor's Receptionist"
+
+[[Object]]
+	Index = 298
+	Name = "Bombable Rock & Powder Keg Boulder"
+
+[[Object]]
+	Index = 299
+	Name = "Mad Scrub (Sleeping)"
+
+[[Object]]
+	Index = 300
+	Name = "Bomb Shop Proprietor"
+
+[[Object]]
+	Index = 301
+	Name = "(blank)"
+
+[[Object]]
+	Index = 302
+	Name = "Patrolling Pirate Guard"
+
+[[Object]]
+	Index = 303
+	Name = "(blank)"
+
+[[Object]]
+	Index = 304
+	Name = "Aveil"
+
+[[Object]]
+	Index = 305
+	Name = "(blank)"
+
+[[Object]]
+	Index = 306
+	Name = "Dog"
+
+[[Object]]
+	Index = 307
+	Name = "Wooden Crate (Large)"
+
+[[Object]]
+	Index = 308
+	Name = "Deku Scrub Guard (Royal Chamber)"
+
+[[Object]]
+	Index = 309
+	Name = "Deku Scrub Guard [todo]"
+
+[[Object]]
+	Index = 310
+	Name = "(blank)"
+
+[[Object]]
+	Index = 311
+	Name = "Bug (Get Item)"
+
+[[Object]]
+	Index = 312
+	Name = "(blank)"
+
+[[Object]]
+	Index = 313
+	Name = "Poe Soul (Get Item)"
+
+[[Object]]
+	Index = 314
+	Name = "Fairy's Spirit (Get Item)"
+
+[[Object]]
+	Index = 315
+	Name = "(blank)"
+
+[[Object]]
+	Index = 316
+	Name = "(blank)"
+
+[[Object]]
+	Index = 317
+	Name = "(blank)"
+
+[[Object]]
+	Index = 318
+	Name = "(blank)"
+
+[[Object]]
+	Index = 319
+	Name = "Rupees (Get Item)"
+
+[[Object]]
+	Index = 320
+	Name = "Honey & Darling"
+
+[[Object]]
+	Index = 321
+	Name = "Wolfos"
+
+[[Object]]
+	Index = 322
+	Name = "Stalchild"
+
+[[Object]]
+	Index = 323
+	Name = "Gossip Stone"
+
+[[Object]]
+	Index = 324
+	Name = "Ghost Hut Proprietor"
+
+[[Object]]
+	Index = 325
+	Name = "Cow Barn Roof (Interior)"
+
+[[Object]]
+	Index = 326
+	Name = "Cow"
+
+[[Object]]
+	Index = 327
+	Name = "(blank)"
+
+[[Object]]
+	Index = 328
+	Name = "Kokiri Sword (Get Item)"
+
+[[Object]]
+	Index = 329
+	Name = "(blank)"
+
+[[Object]]
+	Index = 330
+	Name = "(blank)"
+
+[[Object]]
+	Index = 331
+	Name = "Young Zelda (Cutscenes)"
+
+[[Object]]
+	Index = 332
+	Name = "Goron Link"
+
+[[Object]]
+	Index = 333
+	Name = "Zora Link"
+
+[[Object]]
+	Index = 334
+	Name = "Dragonfly"
+
+[[Object]]
+	Index = 335
+	Name = "Bumper"
+
+[[Object]]
+	Index = 336
+	Name = "(blank)"
+
+[[Object]]
+	Index = 337
+	Name = "(blank)"
+
+[[Object]]
+	Index = 338
+	Name = "(blank)"
+
+[[Object]]
+	Index = 339
+	Name = "Proximity-Activated Fire Wall"
+
+[[Object]]
+	Index = 340
+	Name = "Deku Link"
+
+[[Object]]
+	Index = 341
+	Name = "Garo Master"
+
+[[Object]]
+	Index = 342
+	Name = "Igos du Ikana & Henchmen"
+
+[[Object]]
+	Index = 343
+	Name = "Icicle"
+
+[[Object]]
+	Index = 344
+	Name = "Spiderweb"
+
+[[Object]]
+	Index = 345
+	Name = "(blank)"
+
+[[Object]]
+	Index = 346
+	Name = "Odolwa"
+
+[[Object]]
+	Index = 347
+	Name = "Twinmold [todo]"
+
+[[Object]]
+	Index = 348
+	Name = "Gyorg & Fish"
+
+[[Object]]
+	Index = 349
+	Name = "Wart & Bubbles"
+
+[[Object]]
+	Index = 350
+	Name = "Bio Deku Baba"
+
+[[Object]]
+	Index = 351
+	Name = "[Removed]"
+
+[[Object]]
+	Index = 352
+	Name = "Majora"
+
+[[Object]]
+	Index = 353
+	Name = "Carnivorous Lilypad"
+
+[[Object]]
+	Index = 354
+	Name = "Stone Tower Smoke Plume [Early]"
+
+[[Object]]
+	Index = 355
+	Name = "(blank)"
+
+[[Object]]
+	Index = 356
+	Name = "Wooden Flower"
+
+[[Object]]
+	Index = 357
+	Name = "Potted Plant"
+
+[[Object]]
+	Index = 358
+	Name = "Spiked Log"
+
+[[Object]]
+	Index = 359
+	Name = "Frozen Enemy Ice Block"
+
+[[Object]]
+	Index = 360
+	Name = "(blank)"
+
+[[Object]]
+	Index = 361
+	Name = "Tree Trunk & Opening Cutscene Objects [todo]"
+
+[[Object]]
+	Index = 362
+	Name = "Chuchu"
+
+[[Object]]
+	Index = 363
+	Name = "Desbreko & Skullfish"
+
+[[Object]]
+	Index = 364
+	Name = "Stock Pot Inn Bell"
+
+[[Object]]
+	Index = 365
+	Name = "Clock Tower Spotlight, Romani Ranch Chimney Smoke, Clock Town 2D Chimney Backdrop, West Clock Town Bank Shutter"
+
+[[Object]]
+	Index = 366
+	Name = "(blank)"
+
+[[Object]]
+	Index = 367
+	Name = "Wooden Crate (Small)"
+
+[[Object]]
+	Index = 368
+	Name = "Owl Statue"
+
+[[Object]]
+	Index = 369
+	Name = "Nejiron"
+
+[[Object]]
+	Index = 370
+	Name = "Bad Bat"
+
+[[Object]]
+	Index = 371
+	Name = "Triforce Song Pedestal"
+
+[[Object]]
+	Index = 372
+	Name = "Goron Song Pedestal"
+
+[[Object]]
+	Index = 373
+	Name = "Kokiri Song Pedestal"
+
+[[Object]]
+	Index = 374
+	Name = "Song of Soaring Pedestal"
+
+[[Object]]
+	Index = 375
+	Name = "(blank)"
+
+[[Object]]
+	Index = 376
+	Name = "Wizzrobe, Warp Platform, Fire Attack"
+
+[[Object]]
+	Index = 377
+	Name = "Ladder"
+
+[[Object]]
+	Index = 378
+	Name = "Black & White Boe"
+
+[[Object]]
+	Index = 379
+	Name = "(blank)"
+
+[[Object]]
+	Index = 380
+	Name = "(blank)"
+
+[[Object]]
+	Index = 381
+	Name = "(blank)"
+
+[[Object]]
+	Index = 382
+	Name = "Fountain Water, Spiked Iron Fence, Field Volcano Backdrop"
+
+[[Object]]
+	Index = 383
+	Name = "Boat Cruise Canoe"
+
+[[Object]]
+	Index = 384
+	Name = "(blank)"
+
+[[Object]]
+	Index = 385
+	Name = "Real Bombchu"
+
+[[Object]]
+	Index = 386
+	Name = "Dripping Water"
+
+[[Object]]
+	Index = 387
+	Name = "(blank)"
+
+[[Object]]
+	Index = 388
+	Name = "Great Bay Temple Gears, See-Saw, Water Spout, Elevator"
+
+[[Object]]
+	Index = 389
+	Name = "Tingle & Confetti"
+
+[[Object]]
+	Index = 390
+	Name = "Pirates' Fortress Telescope"
+
+[[Object]]
+	Index = 391
+	Name = "Drifting Ice Platform"
+
+[[Object]]
+	Index = 392
+	Name = "Falling Moon"
+
+[[Object]]
+	Index = 393
+	Name = "(blank)"
+
+[[Object]]
+	Index = 394
+	Name = "Deku Shrine Door Shutters"
+
+[[Object]]
+	Index = 395
+	Name = "Deku King"
+
+[[Object]]
+	Index = 396
+	Name = "Clock Tower & Light Beam"
+
+[[Object]]
+	Index = 397
+	Name = "Eyegore, Rubble, Block"
+
+[[Object]]
+	Index = 398
+	Name = "Koume & Broom"
+
+[[Object]]
+	Index = 399
+	Name = "Kotake & Broom"
+
+[[Object]]
+	Index = 400
+	Name = "Snowhead Temple Central Pillar, Bombable Wall, Punchable Pillar Inserts"
+
+[[Object]]
+	Index = 401
+	Name = "(blank)"
+
+[[Object]]
+	Index = 402
+	Name = "Skull Kid, Flute, Ocarina, Link Mask, Majora's Mask"
+
+[[Object]]
+	Index = 403
+	Name = "(blank)"
+
+[[Object]]
+	Index = 404
+	Name = "(blank)"
+
+[[Object]]
+	Index = 405
+	Name = "Monkey"
+
+[[Object]]
+	Index = 406
+	Name = "Bottled Red Potion (Get Item)"
+
+[[Object]]
+	Index = 407
+	Name = "Clock Tower Doors"
+
+[[Object]]
+	Index = 408
+	Name = "Beaver Bros."
+
+[[Object]]
+	Index = 409
+	Name = "Beaver Race Ring"
+
+[[Object]]
+	Index = 410
+	Name = "Deku Palace Water & Swamp Volcano Backdrop"
+
+[[Object]]
+	Index = 411
+	Name = "Poe Balloon"
+
+[[Object]]
+	Index = 412
+	Name = "Goron Race Magic Pot"
+
+[[Object]]
+	Index = 413
+	Name = "Donkey"
+
+[[Object]]
+	Index = 414
+	Name = "Big Octo"
+
+[[Object]]
+	Index = 415
+	Name = "Deku Emblem Door & Skull Kid Spotlights"
+
+[[Object]]
+	Index = 416
+	Name = "Honey & Darling's Shop Rotating Platform & Moat"
+
+[[Object]]
+	Index = 417
+	Name = "Honey & Darling's Shop Target & Basket"
+
+[[Object]]
+	Index = 418
+	Name = "Woodfall Temple Rises Cutscene Objects [todo]"
+
+[[Object]]
+	Index = 419
+	Name = "Happy Mask Salesman"
+
+[[Object]]
+	Index = 420
+	Name = "Clock Tower Roof Door"
+
+[[Object]]
+	Index = 421
+	Name = "Lilypad"
+
+[[Object]]
+	Index = 422
+	Name = "Snapper"
+
+[[Object]]
+	Index = 423
+	Name = "Woodfall Prison Ivy"
+
+[[Object]]
+	Index = 424
+	Name = "Lens of Truth Platform"
+
+[[Object]]
+	Index = 425
+	Name = "Fisherman"
+
+[[Object]]
+	Index = 426
+	Name = "Potion Shop Proprietor (Updated) [OoT]"
+
+[[Object]]
+	Index = 427
+	Name = "Curiosity Shop Proprietor"
+
+[[Object]]
+	Index = 428
+	Name = "Swamp Tourist Center Guide & Shooting Gallery Proprietors"
+
+[[Object]]
+	Index = 429
+	Name = "Ice Block"
+
+[[Object]]
+	Index = 430
+	Name = "Bottled Zora Egg (Get Item)"
+
+[[Object]]
+	Index = 431
+	Name = "Dampé"
+
+[[Object]]
+	Index = 432
+	Name = "West Clock Town Steps"
+
+[[Object]]
+	Index = 433
+	Name = "Moon's Tear (Get Item)"
+
+[[Object]]
+	Index = 434
+	Name = "Title Deeds (Get Item)"
+
+[[Object]]
+	Index = 435
+	Name = "Dissolvable Light Block"
+
+[[Object]]
+	Index = 436
+	Name = "Treasure Chest Game Proximity-Activated Wall"
+
+[[Object]]
+	Index = 437
+	Name = "Dexihand"
+
+[[Object]]
+	Index = 438
+	Name = "Soldier"
+
+[[Object]]
+	Index = 439
+	Name = "Snow-Covered Tree"
+
+[[Object]]
+	Index = 440
+	Name = "Giant"
+
+[[Object]]
+	Index = 441
+	Name = "Beehive"
+
+[[Object]]
+	Index = 442
+	Name = "Orange Graveyard Flower"
+
+[[Object]]
+	Index = 443
+	Name = "Goht & Debris"
+
+[[Object]]
+	Index = 444
+	Name = "Ladder & Stone Wall"
+
+[[Object]]
+	Index = 445
+	Name = "Deku Mask (Get Item)"
+
+[[Object]]
+	Index = 446
+	Name = "(blank)"
+
+[[Object]]
+	Index = 447
+	Name = "Goron Shrine Gate"
+
+[[Object]]
+	Index = 448
+	Name = "Dampé's House Stairs"
+
+[[Object]]
+	Index = 449
+	Name = "Dampé's House Facade"
+
+[[Object]]
+	Index = 450
+	Name = "Gravestone"
+
+[[Object]]
+	Index = 451
+	Name = "Poe"
+
+[[Object]]
+	Index = 452
+	Name = "Big & Small Eeno"
+
+[[Object]]
+	Index = 453
+	Name = "Poe Sisters"
+
+[[Object]]
+	Index = 454
+	Name = "Hiploop"
+
+[[Object]]
+	Index = 455
+	Name = "Goron Switch"
+
+[[Object]]
+	Index = 456
+	Name = "Tatl & Tael (Cutscenes)"
+
+[[Object]]
+	Index = 457
+	Name = "Captain Keeta Race Gatepost"
+
+[[Object]]
+	Index = 458
+	Name = "Powder Keg (Get Item)"
+
+[[Object]]
+	Index = 459
+	Name = "Postbox"
+
+[[Object]]
+	Index = 460
+	Name = "Boss Remains"
+
+[[Object]]
+	Index = 461
+	Name = "Tent-Shaped Spider Web"
+
+[[Object]]
+	Index = 462
+	Name = "Zora Egg"
+
+[[Object]]
+	Index = 463
+	Name = "Zubora"
+
+[[Object]]
+	Index = 464
+	Name = "Darmani's Ghost"
+
+[[Object]]
+	Index = 465
+	Name = "Swordsman's School Practice Log"
+
+[[Object]]
+	Index = 466
+	Name = "Darmani's Gravestone"
+
+[[Object]]
+	Index = 467
+	Name = "Hot Spring Water"
+
+[[Object]]
+	Index = 468
+	Name = "Deku Princess"
+
+[[Object]]
+	Index = 469
+	Name = "Biggoron & Link the Goron"
+
+[[Object]]
+	Index = 470
+	Name = "Gabora"
+
+[[Object]]
+	Index = 471
+	Name = "Marine Research Lab Fish"
+
+[[Object]]
+	Index = 472
+	Name = "(blank)"
+
+[[Object]]
+	Index = 473
+	Name = "Mask of Scents (Field Model)"
+
+[[Object]]
+	Index = 474
+	Name = "Keaton Mask (Field Model)"
+
+[[Object]]
+	Index = 475
+	Name = "Bunny Hood (Field Model)"
+
+[[Object]]
+	Index = 476
+	Name = "Captain's Hat (Field Model)"
+
+[[Object]]
+	Index = 477
+	Name = "Blast Mask (Field Model)"
+
+[[Object]]
+	Index = 478
+	Name = "Mask of Truth (Field Model)"
+
+[[Object]]
+	Index = 479
+	Name = "Goron Elder's Son"
+
+[[Object]]
+	Index = 480
+	Name = "Beneath the Grave Curtain, Bombable Wall, Flat's Tomb"
+
+[[Object]]
+	Index = 481
+	Name = "Goron Transformation Assets"
+
+[[Object]]
+	Index = 482
+	Name = "Zora Transformation Assets"
+
+[[Object]]
+	Index = 483
+	Name = "Deku Transformation Assets"
+
+[[Object]]
+	Index = 484
+	Name = "Fierce Deity Transformation Assets"
+
+[[Object]]
+	Index = 485
+	Name = "Business Scrub & Deku Scrub Playground Employee"
+
+[[Object]]
+	Index = 486
+	Name = "(blank)"
+
+[[Object]]
+	Index = 487
+	Name = "Ice Arrow Platform"
+
+[[Object]]
+	Index = 488
+	Name = "Gold Dust (Get Item)"
+
+[[Object]]
+	Index = 489
+	Name = "Bottled Gold Dust (Get Item)"
+
+[[Object]]
+	Index = 490
+	Name = "Bottled Hylian Loach (Get Item)"
+
+[[Object]]
+	Index = 491
+	Name = "Giant Bee"
+
+[[Object]]
+	Index = 492
+	Name = "Seahorse"
+
+[[Object]]
+	Index = 493
+	Name = "Deep Python"
+
+[[Object]]
+	Index = 494
+	Name = "Swordsman's School Gong & Wooden Board"
+
+[[Object]]
+	Index = 495
+	Name = "Hylian Loach (Get Item)"
+
+[[Object]]
+	Index = 496
+	Name = "Seahorse (Get Item)"
+
+[[Object]]
+	Index = 497
+	Name = "Big Poe"
+
+[[Object]]
+	Index = 498
+	Name = "Cow Figurine"
+
+[[Object]]
+	Index = 499
+	Name = "Deku Butler"
+
+[[Object]]
+	Index = 500
+	Name = "(blank)"
+
+[[Object]]
+	Index = 501
+	Name = "Oceanside Spider House Bombable Wall, Fireplace Grate, Skull Kid Painting, Drawers & Bookshelf"
+
+[[Object]]
+	Index = 502
+	Name = "Rock"
+
+[[Object]]
+	Index = 503
+	Name = "(blank)"
+
+[[Object]]
+	Index = 504
+	Name = "Goron Elder & Drum"
+
+[[Object]]
+	Index = 505
+	Name = "Razor Sword (Get Item)"
+
+[[Object]]
+	Index = 506
+	Name = "Gilded Sword (Get Item)"
+
+[[Object]]
+	Index = 507
+	Name = "Great Fairy's Sword (Get Item)"
+
+[[Object]]
+	Index = 508
+	Name = "Cremia's Cart"
+
+[[Object]]
+	Index = 509
+	Name = "Gibdo Mask (Field Model)"
+
+[[Object]]
+	Index = 510
+	Name = "Garo's Mask (Field Model)"
+
+[[Object]]
+	Index = 511
+	Name = "Kafei's Mask (Field Model)"
+
+[[Object]]
+	Index = 512
+	Name = "Great Fairy Mask (Field Model)"
+
+[[Object]]
+	Index = 513
+	Name = "Leever"
+
+[[Object]]
+	Index = 514
+	Name = "Milk Bar Chair"
+
+[[Object]]
+	Index = 515
+	Name = "Stone Tower Temple Mirror, Rotating Room, Bombable Floor Tile & Wall, Light Ray [todo], Lattice Door, Ancient Castle of Ikana Punchable Pillar Segments"
+
+[[Object]]
+	Index = 516
+	Name = "(blank)"
+
+[[Object]]
+	Index = 517
+	Name = "String of Flags & Carnival Platform"
+
+[[Object]]
+	Index = 518
+	Name = "Mikau, Guitar, Grave [todo]"
+
+[[Object]]
+	Index = 519
+	Name = "Deku Moon Trial Rotating Platform"
+
+[[Object]]
+	Index = 520
+	Name = "Postman's Hat, Bag, Closet Curtain"
+
+[[Object]]
+	Index = 521
+	Name = "Garo's Mask (Get Item)"
+
+[[Object]]
+	Index = 522
+	Name = "Great Fairy Mask (Get Item)"
+
+[[Object]]
+	Index = 523
+	Name = "Gibdo Mask (Get Item)"
+
+[[Object]]
+	Index = 524
+	Name = "Twinmold's Lair Objects [todo]"
+
+[[Object]]
+	Index = 525
+	Name = "Fork-Branched Tree"
+
+[[Object]]
+	Index = 526
+	Name = "Pirates' Fortress Mesh Elevator, Interior Door, Boat"
+
+[[Object]]
+	Index = 527
+	Name = "Room Key (Get Item)"
+
+[[Object]]
+	Index = 528
+	Name = "Letter to Kafei (Get Item)"
+
+[[Object]]
+	Index = 529
+	Name = "Japas"
+
+[[Object]]
+	Index = 530
+	Name = "Milk Bar Stage (Cutscenes)"
+
+[[Object]]
+	Index = 531
+	Name = "Masks (Cutscenes)"
+
+[[Object]]
+	Index = 532
+	Name = "Giant's Mask (Field Model)"
+
+[[Object]]
+	Index = 533
+	Name = "Pendant of Memories (Get Item)"
+
+[[Object]]
+	Index = 534
+	Name = "Tijo"
+
+[[Object]]
+	Index = 535
+	Name = "Great Bay Whirlwind"
+
+[[Object]]
+	Index = 536
+	Name = "Palm Tree"
+
+[[Object]]
+	Index = 537
+	Name = "Romani's Mask (Field Model)"
+
+[[Object]]
+	Index = 538
+	Name = "[Empty]"
+
+[[Object]]
+	Index = 539
+	Name = "(blank)"
+
+[[Object]]
+	Index = 540
+	Name = "(blank)"
+
+[[Object]]
+	Index = 541
+	Name = "Magic Mushroom (Get Item)"
+
+[[Object]]
+	Index = 542
+	Name = "Goron Shrine Chandelier"
+
+[[Object]]
+	Index = 543
+	Name = "Romani's Mask (Get Item)"
+
+[[Object]]
+	Index = 544
+	Name = "Evan"
+
+[[Object]]
+	Index = 545
+	Name = "Postman's Hat (Field Model)"
+
+[[Object]]
+	Index = 546
+	Name = "Elegy Statue Switch"
+
+[[Object]]
+	Index = 547
+	Name = "Moon"
+
+[[Object]]
+	Index = 548
+	Name = "Boat Cruise Target Spot"
+
+[[Object]]
+	Index = 549
+	Name = "Postman's Hat (Get Item)"
+
+[[Object]]
+	Index = 550
+	Name = "Giant's Mask (Get Item)"
+
+[[Object]]
+	Index = 551
+	Name = "Bottled Chateau Romani (Get Item)"
+
+[[Object]]
+	Index = 552
+	Name = "Pictograph Box (Get Item)"
+
+[[Object]]
+	Index = 553
+	Name = "Turtle & Tsunami"
+
+[[Object]]
+	Index = 554
+	Name = "Pamela's Father"
+
+[[Object]]
+	Index = 555
+	Name = "Lulu"
+
+[[Object]]
+	Index = 556
+	Name = "Music Box House Cupboard Doors"
+
+[[Object]]
+	Index = 557
+	Name = "(blank)"
+
+[[Object]]
+	Index = 558
+	Name = "(blank)"
+
+[[Object]]
+	Index = 559
+	Name = "(blank)"
+
+[[Object]]
+	Index = 560
+	Name = "Astral Observatory & Marine Research Lab Door"
+
+[[Object]]
+	Index = 561
+	Name = "Zora Hall Interior Door"
+
+[[Object]]
+	Index = 562
+	Name = "Swamp Tourist Center & Swamp Shooting Gallery Door"
+
+[[Object]]
+	Index = 563
+	Name = "Magic Hags' Potion Shop Door"
+
+[[Object]]
+	Index = 564
+	Name = "Link Moon Trial Bombable Wall, Climbable Wall, Door"
+
+[[Object]]
+	Index = 565
+	Name = "Beneath the Well Interior Door"
+
+[[Object]]
+	Index = 566
+	Name = "Ancient Castle of Ikana Objects [todo]"
+
+[[Object]]
+	Index = 567
+	Name = "Sharp's Cave & Ikana Canyon Objects [todo]"
+
+[[Object]]
+	Index = 568
+	Name = "Pamela"
+
+[[Object]]
+	Index = 569
+	Name = "Hookshot Stump"
+
+[[Object]]
+	Index = 570
+	Name = "Toto"
+
+[[Object]]
+	Index = 571
+	Name = "(blank)"
+
+[[Object]]
+	Index = 572
+	Name = "Sakon's Hideout Objects [todo]"
+
+[[Object]]
+	Index = 573
+	Name = "Geyser"
+
+[[Object]]
+	Index = 574
+	Name = "Ghost Alien"
+
+[[Object]]
+	Index = 575
+	Name = "Flock of Seagulls"
+
+[[Object]]
+	Index = 576
+	Name = "Swarm of Giant Bees"
+
+[[Object]]
+	Index = 577
+	Name = "Mayor Dotour"
+
+[[Object]]
+	Index = 578
+	Name = "Fierce Deity Mask (Get Item)"
+
+[[Object]]
+	Index = 579
+	Name = "Laundry Pool Bell [todo]"
+
+[[Object]]
+	Index = 580
+	Name = "Cremia & Romani's Dinner"
+
+[[Object]]
+	Index = 581
+	Name = "Letter to Mama (Get Item)"
+
+[[Object]]
+	Index = 582
+	Name = "Moon Fall Effects"
+
+[[Object]]
+	Index = 583
+	Name = "Viscen"
+
+[[Object]]
+	Index = 584
+	Name = "Gorman"
+
+[[Object]]
+	Index = 585
+	Name = "Igos du Ikana & Henchmen's Heads"
+
+[[Object]]
+	Index = 586
+	Name = "Kamaro"
+
+[[Object]]
+	Index = 587
+	Name = "Rosa Sisters"
+
+[[Object]]
+	Index = 588
+	Name = "Circus Leader's Mask (Field Model)"
+
+[[Object]]
+	Index = 589
+	Name = "Tingle's Map (Get Item)"
+
+[[Object]]
+	Index = 590
+	Name = "Stone Mask (Field Model)"
+
+[[Object]]
+	Index = 591
+	Name = "Hand in Toilet"
+
+[[Object]]
+	Index = 592
+	Name = "Barrel"
+
+[[Object]]
+	Index = 593
+	Name = "(blank)"
+
+[[Object]]
+	Index = 594
+	Name = "Bremen Mask (Field Model)"
+
+[[Object]]
+	Index = 595
+	Name = "Bomber's Notebook (Get Item)"
+
+[[Object]]
+	Index = 596
+	Name = "Stone Mask (Get Item)"
+
+[[Object]]
+	Index = 597
+	Name = "Blue Spotlight Effect"
+
+[[Object]]
+	Index = 598
+	Name = "Gorman Track Buildings"
+
+[[Object]]
+	Index = 599
+	Name = "Cow Barn Roof (Exterior)"
+
+[[Object]]
+	Index = 600
+	Name = "Kafei's Mask (Get Item)"
+
+[[Object]]
+	Index = 601
+	Name = "Circus Leader's Mask (Get Item)"
+
+[[Object]]
+	Index = 602
+	Name = "Bremen Mask (Get Item)"
+
+[[Object]]
+	Index = 603
+	Name = "Deku Butler's Son"
+
+[[Object]]
+	Index = 604
+	Name = "Don Gero's Mask (Field Model)"
+
+[[Object]]
+	Index = 605
+	Name = "All-Night Mask (Field Model)"
+
+[[Object]]
+	Index = 606
+	Name = "Couple's Mask (Field Model)"
+
+[[Object]]
+	Index = 607
+	Name = "Kamaro's Mask (Field Model)"
+
+[[Object]]
+	Index = 608
+	Name = "Metal Portcullis"
+
+[[Object]]
+	Index = 609
+	Name = "Chateau Romani Delivery Bottle"
+
+[[Object]]
+	Index = 610
+	Name = "Secret Shrine Interior Door"
+
+[[Object]]
+	Index = 611
+	Name = "Lottery Shop Kiosk"
+
+[[Object]]
+	Index = 612
+	Name = "Keaton"
+
+[[Object]]
+	Index = 613
+	Name = "All-Night Mask (Get Item)"
+
+[[Object]]
+	Index = 614
+	Name = "Don Gero's Mask (Get Item)"
+
+[[Object]]
+	Index = 615
+	Name = "Astral Observatory Bombable Wall"
+
+[[Object]]
+	Index = 616
+	Name = "Captain Keeta"
+
+[[Object]]
+	Index = 617
+	Name = "Falling Moon"
+
+[[Object]]
+	Index = 618
+	Name = "(blank)"
+
+[[Object]]
+	Index = 619
+	Name = "Sun Mask (Get Item)"
+
+[[Object]]
+	Index = 620
+	Name = "(blank)"
+
+[[Object]]
+	Index = 621
+	Name = "Blast Mask (Get Item)"
+
+[[Object]]
+	Index = 622
+	Name = "Stockpot Inn Window"
+
+[[Object]]
+	Index = 623
+	Name = "Ikana Canyon Curse Lifted Effects"
+
+[[Object]]
+	Index = 624
+	Name = "Moon (Cutscenes)"
+
+[[Object]]
+	Index = 625
+	Name = "Moon Child"
+
+[[Object]]
+	Index = 626
+	Name = "Bottled Fairy (Get Item)"
+
+[[Object]]
+	Index = 627
+	Name = "(blank)"
+
+[[Object]]
+	Index = 628
+	Name = "Lottery Shop, Curiosity Shop, Mayor's Residence Door"
+
+[[Object]]
+	Index = 629
+	Name = "Trading Post & Post Office Door"
+
+[[Object]]
+	Index = 630
+	Name = "Stockpot Inn & Swordsman's School Door"
+
+[[Object]]
+	Index = 631
+	Name = "Skull Kid Animation File [todo]"
+
+[[Object]]
+	Index = 632
+	Name = "Swamp Spider House Interior Door"
+
+[[Object]]
+	Index = 633
+	Name = "Oceanside Spider House Interior Door"
+
+[[Object]]
+	Index = 634
+	Name = "Brown Bird"
+
+[[Object]]
+	Index = 635
+	Name = "Milk Bar Door"
+
+[[Object]]
+	Index = 636
+	Name = "Music Box House Door"
+
+[[Object]]
+	Index = 637
+	Name = "Kamaro's Mask (Get Item)"
+
+[[Object]]
+	Index = 638
+	Name = "Mask of Scents (Get Item)"
+
+[[Object]]
+	Index = 639
+	Name = "Rainbow Hookshot Pillar"
+
+[[Object]]
+	Index = 640
+	Name = "Majora Balloon"
+
+[[Object]]
+	Index = 641
+	Name = "Epilogue Cutscene Objects [todo]"
+
+[[Object]]
+	Index = 642
+	Name = "Couple's Mask (Get Item)"
