@@ -60,13 +60,16 @@ struct CutsceneOot;
 
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
+#define CONCAT_(A, B) A##B
+#define CONCAT(A, B) CONCAT_(A, B)
+
 #define ON_CHANGE(VARIABLE) \
-	static typeof(VARIABLE) onchange##__LINE__; \
-	if (onchange##__LINE__ != (VARIABLE) && ((onchange##__LINE__ = (VARIABLE)) == (VARIABLE)))
+	static typeof(VARIABLE) CONCAT(onchange, __LINE__); \
+	if (CONCAT(onchange, __LINE__) != (VARIABLE) && ((CONCAT(onchange, __LINE__) = (VARIABLE)) == (VARIABLE)))
 
 #define ON_CHANGE_DEFAULT(VARIABLE, DEFAULT) \
-	static typeof(VARIABLE) onchange##__LINE__ = DEFAULT; \
-	if (onchange##__LINE__ != (VARIABLE) && ((onchange##__LINE__ = (VARIABLE)) == (VARIABLE)))
+	static typeof(VARIABLE) CONCAT(onchange, __LINE__) = DEFAULT; \
+	if (CONCAT(onchange, __LINE__) != (VARIABLE) && ((CONCAT(onchange, __LINE__) = (VARIABLE)) == (VARIABLE)))
 
 #define u8r3(X)  {  u8r(X),  u8r(((const uint8_t*)(X)) + 1),  u8r(((const uint8_t*)(X)) + 1) }
 #define u16r3(X) { u16r(X), u16r(((const uint8_t*)(X)) + 2), u16r(((const uint8_t*)(X)) + 4) }
