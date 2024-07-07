@@ -345,6 +345,17 @@ struct Instance
 		uint8_t room;
 	} spawnpoint;
 	
+	struct misc
+	{
+		uint32_t halfDayBits;
+		uint8_t csId;
+		struct {
+			bool y;
+			bool x;
+			bool z;
+		} useDegreeRotationFor;
+	} mm;
+	
 	SkelAnime skelanime;
 	
 	// for tracking changes
@@ -471,6 +482,8 @@ void SceneWriterCleanup(void);
 struct Instance *InstanceAddToListGeneric(struct Instance **list, const void *src);
 void InstanceDeleteFromListGeneric(struct Instance **list, const void *src);
 uint32_t InstanceNewUuid(void);
+struct Instance InstanceMakeWritable(struct Instance inst);
+struct Instance InstanceMakeReadable(struct Instance inst);
 
 struct Scene *WindowOpenFile(void);
 struct Scene *WindowLoadScene(const char *fn);

@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdio.h>
+#include <ctype.h>
 
 // toml stuff
 #include <toml.hpp>
@@ -104,6 +105,25 @@ static ActorDatabase::Entry ActorDatabaseEntryFromToml(toml::value tomlActor)
 				entry.categoryInt = categoryInt;
 			
 			free(category);
+		}
+	}
+	
+	if (tomlActor.contains("MmUseDegreeRotationFor")
+		&& tomlActor["MmUseDegreeRotationFor"].is_string()
+	)
+	{
+		char *tmp = TOML_CSTRING(tomlActor["MmUseDegreeRotationFor"]);
+		
+		if (tmp)
+		{
+			for (int i = 0; i < strlen(tmp); ++i)
+				tmp[i] = tolower(tmp[i]);
+			
+			entry.mmUseDegreeRotationFor.y = strchr(tmp, 'y') != 0;
+			entry.mmUseDegreeRotationFor.x = strchr(tmp, 'x') != 0;
+			entry.mmUseDegreeRotationFor.z = strchr(tmp, 'z') != 0;
+			
+			free(tmp);
 		}
 	}
 	

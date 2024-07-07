@@ -147,6 +147,11 @@ struct ActorDatabase
 		ActorRenderCode rendercode = {};
 		// compilation errors should report:
 		// (lineError - rendercodeLineNumberOffset) + rendercodeLineNumberInToml
+		struct {
+			bool y;
+			bool x;
+			bool z;
+		} mmUseDegreeRotationFor;
 		
 		void AddProperty(Property property)
 		{

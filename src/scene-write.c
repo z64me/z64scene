@@ -425,14 +425,15 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		WorkblobPush(4);
 		
 		sb_foreach(header->instances, {
-			WorkblobPut16(each->id);
-			WorkblobPut16(rintf(each->pos.x));
-			WorkblobPut16(rintf(each->pos.y));
-			WorkblobPut16(rintf(each->pos.z));
-			WorkblobPut16(each->xrot);
-			WorkblobPut16(each->yrot);
-			WorkblobPut16(each->zrot);
-			WorkblobPut16(each->params);
+			struct Instance inst = InstanceMakeWritable(*each);
+			WorkblobPut16(inst.id);
+			WorkblobPut16(rintf(inst.pos.x));
+			WorkblobPut16(rintf(inst.pos.y));
+			WorkblobPut16(rintf(inst.pos.z));
+			WorkblobPut16(inst.xrot);
+			WorkblobPut16(inst.yrot);
+			WorkblobPut16(inst.zrot);
+			WorkblobPut16(inst.params);
 		});
 		
 		WorkblobPut32(WorkblobPop());
@@ -583,14 +584,15 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPut32(0x00000000 | (sb_count(header->spawns) << 16));
 		WorkblobPush(4);
 		sb_foreach(header->spawns, {
-			WorkblobPut16(each->id);
-			WorkblobPut16(rintf(each->pos.x));
-			WorkblobPut16(rintf(each->pos.y));
-			WorkblobPut16(rintf(each->pos.z));
-			WorkblobPut16(each->xrot);
-			WorkblobPut16(each->yrot);
-			WorkblobPut16(each->zrot);
-			WorkblobPut16(each->params);
+			struct Instance inst = InstanceMakeWritable(*each);
+			WorkblobPut16(inst.id);
+			WorkblobPut16(rintf(inst.pos.x));
+			WorkblobPut16(rintf(inst.pos.y));
+			WorkblobPut16(rintf(inst.pos.z));
+			WorkblobPut16(inst.xrot);
+			WorkblobPut16(inst.yrot);
+			WorkblobPut16(inst.zrot);
+			WorkblobPut16(inst.params);
 		});
 		WorkblobPop();
 		WorkblobPut32(gWorkblobAddr);
@@ -625,16 +627,17 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		
 		WorkblobPush(4);
 		sb_foreach(header->doorways, {
-			WorkblobPut8(each->doorway.frontRoom);
-			WorkblobPut8(each->doorway.frontCamera);
-			WorkblobPut8(each->doorway.backRoom);
-			WorkblobPut8(each->doorway.backCamera);
-			WorkblobPut16(each->id);
-			WorkblobPut16(rintf(each->pos.x));
-			WorkblobPut16(rintf(each->pos.y));
-			WorkblobPut16(rintf(each->pos.z));
-			WorkblobPut16(each->yrot);
-			WorkblobPut16(each->params);
+			struct Instance inst = InstanceMakeWritable(*each);
+			WorkblobPut8(inst.doorway.frontRoom);
+			WorkblobPut8(inst.doorway.frontCamera);
+			WorkblobPut8(inst.doorway.backRoom);
+			WorkblobPut8(inst.doorway.backCamera);
+			WorkblobPut16(inst.id);
+			WorkblobPut16(rintf(inst.pos.x));
+			WorkblobPut16(rintf(inst.pos.y));
+			WorkblobPut16(rintf(inst.pos.z));
+			WorkblobPut16(inst.yrot);
+			WorkblobPut16(inst.params);
 		});
 		WorkblobPop();
 		

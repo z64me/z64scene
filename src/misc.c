@@ -18,6 +18,8 @@
 #include <inttypes.h>
 #include <bigendian.h>
 
+int gInstanceHandlerMm = true;
+
 #define TRY_ALTERNATE_HEADERS(FUNC, PARAM, SEGMENT, FIRST) \
 if (altHeadersArray) { \
 	const uint8_t *headers = altHeadersArray; \
@@ -1006,6 +1008,53 @@ void InstanceDeleteFromListGeneric(struct Instance **list, const void *src)
 }
 */
 
+struct Instance InstanceMakeWritable(struct Instance inst)
+{
+	// mm stuff
+	if (gInstanceHandlerMm)
+	{
+		inst.id &= 0xfff;
+		#define HANDLE_AXIS(AXIS, MASK) \
+			if (inst.mm.useDegreeRotationFor.AXIS) \
+				inst.id |= MASK; \
+			else \
+				inst.AXIS##rot = rintf(inst.AXIS##rot / 182.04444444444444444f); \
+			inst.AXIS##rot <<= 7;
+		HANDLE_AXIS(y, 0x8000)
+		HANDLE_AXIS(x, 0x4000)
+		HANDLE_AXIS(z, 0x2000)
+		inst.yrot |= inst.mm.csId & 0x7f;
+		inst.xrot |= (inst.mm.halfDayBits >> 7) & 0x7f;
+		inst.zrot |= inst.mm.halfDayBits & 0x7f;
+		#undef HANDLE_AXIS
+	}
+	
+	return inst;
+}
+
+struct Instance InstanceMakeReadable(struct Instance inst)
+{
+	// mm stuff
+	if (gInstanceHandlerMm)
+	{
+		inst.mm.halfDayBits = ((inst.xrot & 0x7f) << 7) | (inst.zrot & 0x7f);
+		inst.mm.csId = inst.yrot & 0x7f;
+		// TODO compensate if useDegreeRotationFor differs from actorDatabase
+		#define HANDLE_AXIS(AXIS, MASK) \
+			inst.mm.useDegreeRotationFor.AXIS = inst.id & MASK; \
+			inst.AXIS##rot >>= 7; \
+			if (!inst.mm.useDegreeRotationFor.AXIS) \
+				inst.AXIS##rot = rintf(inst.AXIS##rot * 182.04444444444444444f);
+		HANDLE_AXIS(y, 0x8000)
+		HANDLE_AXIS(x, 0x4000)
+		HANDLE_AXIS(z, 0x2000)
+		inst.id &= 0xfff;
+		#undef HANDLE_AXIS
+	}
+	
+	return inst;
+}
+
 
 #if 1 /* region: private function implementations */
 
@@ -1013,7 +1062,7 @@ static struct Instance private_InstanceParse(const void *data, enum InstanceTab 
 {
 	const uint8_t *data8 = data;
 	
-	return (struct Instance) {
+	struct Instance inst = {
 		.id = u16r(data8 + 0)
 		, .pos = { s16r3(data8 + 2) }
 		, .prev = INSTANCE_PREV_INIT
@@ -1023,6 +1072,8 @@ static struct Instance private_InstanceParse(const void *data, enum InstanceTab 
 		, .params = u16r(data8 + 14)
 		, .tab = tab
 	};
+	
+	return InstanceMakeReadable(inst);
 }
 
 static struct ZeldaLight private_ZeldaLightParse(const void *data)
@@ -1195,6 +1246,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 							.backCamera = arr[3],
 						}
 					};
+					doorway = InstanceMakeReadable(doorway);
 					
 					sb_push(result->doorways, doorway);
 				}
