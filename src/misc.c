@@ -8,6 +8,7 @@
 #include "stretchy_buffer.h"
 #include "cutscene.h"
 #include "logging.h"
+#include "gui.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -18,7 +19,7 @@
 #include <inttypes.h>
 #include <bigendian.h>
 
-int gInstanceHandlerMm = true;
+static int gInstanceHandlerMm = false; // keeping as int b/c can == -1
 
 #define TRY_ALTERNATE_HEADERS(FUNC, PARAM, SEGMENT, FIRST) \
 if (altHeadersArray) { \
@@ -1597,7 +1598,27 @@ static struct Scene *private_SceneParseAfterLoad(struct Scene *scene)
 	
 	n64_segment_set(0x02, file->data);
 	
+	// just in case user alternates between MM and OoT scenes
+	gInstanceHandlerMm = false;
+	for (const uint8_t *tmp = file->data; *tmp != 0x14; tmp += 8)
+		if (*tmp == 0x1B)
+			gInstanceHandlerMm = true;
+	
 	private_SceneParseAddHeader(scene, 0x02000000);
+	
+	ON_CHANGE_DEFAULT(gInstanceHandlerMm, -1)
+	{
+		switch (gInstanceHandlerMm)
+		{
+			case false:
+				GuiLoadBaseDatabases("oot");
+				break;
+			
+			case true:
+				GuiLoadBaseDatabases("mm");
+				break;
+		}
+	}
 	
 	return scene;
 }

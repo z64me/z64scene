@@ -64,6 +64,10 @@ struct CutsceneOot;
 	static typeof(VARIABLE) onchange##__LINE__; \
 	if (onchange##__LINE__ != (VARIABLE) && ((onchange##__LINE__ = (VARIABLE)) == (VARIABLE)))
 
+#define ON_CHANGE_DEFAULT(VARIABLE, DEFAULT) \
+	static typeof(VARIABLE) onchange##__LINE__ = DEFAULT; \
+	if (onchange##__LINE__ != (VARIABLE) && ((onchange##__LINE__ = (VARIABLE)) == (VARIABLE)))
+
 #define u8r3(X)  {  u8r(X),  u8r(((const uint8_t*)(X)) + 1),  u8r(((const uint8_t*)(X)) + 1) }
 #define u16r3(X) { u16r(X), u16r(((const uint8_t*)(X)) + 2), u16r(((const uint8_t*)(X)) + 4) }
 #define u32r3(X) { u32r(X), u32r(((const uint8_t*)(X)) + 4), u32r(((const uint8_t*)(X)) + 8) }

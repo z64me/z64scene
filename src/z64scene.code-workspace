@@ -23,7 +23,22 @@
 			"ranges": "cpp",
 			"span": "cpp",
 			"variant": "cpp",
-			"ctype.h": "c"
+			"ctype.h": "c",
+			"any": "c",
+			"compare": "c",
+			"ratio": "c",
+			"tuple": "c",
+			"type_traits": "c",
+			"utility": "c",
+			"optional": "c",
+			"system_error": "c",
+			"regex": "c",
+			"condition_variable": "c",
+			"thread": "c",
+			"project.h": "c",
+			"bitset": "c",
+			"set": "c",
+			"inttypes.h": "c"
 		}
 	}
 }

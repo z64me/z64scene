@@ -1272,8 +1272,8 @@ static void DrawMenuBar(void)
 					gGuiSettings.project = ProjectNewFromFilename(fn);
 					
 					// assume oot for now
-					gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
-					gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+					GuiLoadBaseDatabases("oot");
+					
 					TomlInjectDataFromProject(
 						gGuiSettings.project
 						, &gGuiSettings.actorDatabase
@@ -1334,9 +1334,9 @@ extern "C" void GuiInit(GLFWwindow *window)
 	
 	//JsonTest();
 	//TomlTest();
-	gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
-	gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
-	TestAllActorRenderCodeGen();
+	//gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");
+	//gGuiSettings.objectDatabase = TomlLoadObjectDatabase("toml/game/oot/objects.toml");
+	//TestAllActorRenderCodeGen();
 	
 	// test modals
 	return;
@@ -1526,6 +1526,16 @@ extern "C" struct Object *GuiGetObjectDataFromId(int objectId)
 	
 	object.TryLoadData();
 	return 0;
+}
+
+extern "C" void GuiLoadBaseDatabases(const char *gameId)
+{
+	char tmp[256];
+	
+	snprintf(tmp, sizeof(tmp), "toml/game/%s/actors.toml", gameId);
+	gGuiSettings.actorDatabase = TomlLoadActorDatabase(tmp);
+	snprintf(tmp, sizeof(tmp), "toml/game/%s/objects.toml", gameId);
+	gGuiSettings.objectDatabase = TomlLoadObjectDatabase(tmp);
 }
 
 // for testing all the things

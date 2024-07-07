@@ -14,6 +14,9 @@
 // C specific
 #ifdef __cplusplus
 extern "C" {
+#define CPP_FUNC_PREFIX extern "C"
+#else
+#define CPP_FUNC_PREFIX
 #endif
 
 enum RenderGroup
@@ -60,24 +63,23 @@ struct GuiInterop
 
 #ifdef __cplusplus
 }
-#else
+#endif
 
 // C++ functions
-void GuiInit(GLFWwindow *window);
-void GuiCleanup(void);
-void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop);
-int GuiHasFocus(void);
-int GuiHasFocusMouse(void);
-int GuiHasFocusKeyboard(void);
-void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
-void GuiPushModal(const char *message);
-struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id);
-void GuiCreateActorRenderCodeHandles(uint16_t id);
-void GuiApplyActorRenderCodeProperties(struct Instance *inst);
-int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot);
-struct Object *GuiGetObjectDataFromId(int objectId);
-
-#endif
+CPP_FUNC_PREFIX void GuiInit(GLFWwindow *window);
+CPP_FUNC_PREFIX void GuiCleanup(void);
+CPP_FUNC_PREFIX void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInterop *interop);
+CPP_FUNC_PREFIX int GuiHasFocus(void);
+CPP_FUNC_PREFIX int GuiHasFocusMouse(void);
+CPP_FUNC_PREFIX int GuiHasFocusKeyboard(void);
+CPP_FUNC_PREFIX void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
+CPP_FUNC_PREFIX void GuiPushModal(const char *message);
+CPP_FUNC_PREFIX struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id);
+CPP_FUNC_PREFIX void GuiCreateActorRenderCodeHandles(uint16_t id);
+CPP_FUNC_PREFIX void GuiApplyActorRenderCodeProperties(struct Instance *inst);
+CPP_FUNC_PREFIX int GuiGetActorObjectIdFromSlot(uint16_t actorId, int slot);
+CPP_FUNC_PREFIX struct Object *GuiGetObjectDataFromId(int objectId);
+CPP_FUNC_PREFIX void GuiLoadBaseDatabases(const char *gameId);
 
 #endif /* Z64SCENE_GUI_H_INCLUDED */
 
