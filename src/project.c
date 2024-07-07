@@ -52,9 +52,39 @@ static void ProjectParse_z64rom(struct Project *proj, const char *projToml)
 
 static void ProjectParse_zzrtl(struct Project *proj)
 {
+	char *zzrpl = 0;
 	proj->type = PROJECT_TYPE_ZZRTL;
 	
 	sb_array(char *, folders) = proj->foldersAll;
+	
+	// load zzrpl
+	{
+		sb_array(char *, files) = FileListFromDirectory(proj->folder, 1, true, false, false);
+		sb_array(char *, zzrpls) = FileListFilterBy(files, ".zzrpl", 0);
+		
+		if (sb_count(zzrpls) == 1)
+		{
+			struct File *zzrplFile = FileFromFilename(zzrpls[0]);
+			zzrpl = Strdup(zzrplFile->data);
+			FileFree(zzrplFile);
+		}
+		
+		if (zzrpls)
+			FileListFree(zzrpls);
+		FileListFree(files);
+	}
+	
+	// get game id from zzrpl
+	if (strstr(zzrpl, "game"))
+	{
+		STRTOK_LOOP(zzrpl, "\r\n\t\" ")
+		{
+			if (!strcmp(each, "game")
+				&& strlen(next) + 1 < sizeof(proj->game)
+			)
+				strcpy(proj->game, next);
+		}
+	}
 	
 	// determine name of vanilla subdirectory (if applicable)
 	sb_foreach(folders, {
@@ -77,6 +107,9 @@ static void ProjectParse_zzrtl(struct Project *proj)
 	proj->foldersObject = FileListFilterByWithVanilla(folders, "object", proj->vanilla);
 	proj->foldersActor = FileListFilterByWithVanilla(folders, "actor", proj->vanilla);
 	proj->foldersActorSrc = FileListFilterByWithVanilla(folders, "actor", proj->vanilla);
+	
+	if (zzrpl)
+		free(zzrpl);
 }
 
 struct Project *ProjectNewFromFilename(const char *filename)
@@ -89,6 +122,7 @@ struct Project *ProjectNewFromFilename(const char *filename)
 	proj->folder = Strdup(file->filename);
 	proj->folder[strlen(file->filename) - strlen(file->shortname)] = '\0';
 	proj->foldersAll = FileListFromDirectory(proj->folder, 0, false, true, true);
+	strcpy(proj->game, "oot"); // sane default
 	
 	// trim trailing '/' if present
 	if (proj->folder[strlen(proj->folder) - 1] == '/')

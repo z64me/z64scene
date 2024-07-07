@@ -64,6 +64,7 @@ struct GuiSettings
 	ActorDatabase actorDatabase;
 	ObjectDatabase objectDatabase;
 	Project *project;
+	bool projectIsReady;
 	
 	// combo boxes can be volatile as sizes change
 	// when loading different scenes for editing
@@ -1271,8 +1272,11 @@ static void DrawMenuBar(void)
 				{
 					gGuiSettings.project = ProjectNewFromFilename(fn);
 					
-					// assume oot for now
-					GuiLoadBaseDatabases("oot");
+					// game (oot or mm) comes from project
+					LogDebug("project->game = '%s'", gGuiSettings.project->game);
+					gGuiSettings.projectIsReady = false;
+					GuiLoadBaseDatabases(gGuiSettings.project->game);
+					gGuiSettings.projectIsReady = true;
 					
 					TomlInjectDataFromProject(
 						gGuiSettings.project
@@ -1531,6 +1535,10 @@ extern "C" struct Object *GuiGetObjectDataFromId(int objectId)
 extern "C" void GuiLoadBaseDatabases(const char *gameId)
 {
 	char tmp[256];
+	
+	// don't override databases if a project is already loaded
+	if (gGuiSettings.projectIsReady)
+		return;
 	
 	snprintf(tmp, sizeof(tmp), "toml/game/%s/actors.toml", gameId);
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase(tmp);

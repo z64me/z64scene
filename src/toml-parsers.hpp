@@ -33,12 +33,6 @@ extern "C" {
 	SPAN_DIGITS \
 	SPAN_UNDERSCORE
 
-#define STRTOK_LOOP(STRING, DELIM) \
-	for (char *next, *each = strtok(STRING, DELIM) \
-		; each && (next = strtok(0, DELIM)) \
-		; each = next \
-	)
-
 #define STRCATF(DST, FMT, ...) { sprintf(DST, FMT, ##__VA_ARGS__); DST += strlen(DST); }
 
 struct ActorDatabase

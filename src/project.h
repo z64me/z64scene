@@ -9,6 +9,12 @@
 
 #include "stretchy_buffer.h"
 
+#define STRTOK_LOOP(STRING, DELIM) \
+	for (char *next, *each = strtok(STRING, DELIM) \
+		; each && (next = strtok(0, DELIM)) \
+		; each = next \
+	)
+
 enum ProjectType
 {
 	PROJECT_TYPE_ZZROMTOOL,
@@ -23,6 +29,7 @@ struct Project
 	char *folder; // the containing folder
 	char *vanilla;
 	enum ProjectType type;
+	char game[16];
 	
 	sb_array(char *, foldersAll);
 	sb_array(char *, foldersObject);
