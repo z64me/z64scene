@@ -24,6 +24,15 @@ int main(int argc, char *argv[])
 	// test wren
 	TestWren();
 	
+	// test z64convert
+	if (argc > 1 && !strcmp(argv[1], "TestZ64convertScene"))
+	{
+		char *scenePath = 0;
+		Testz64convertScene(&scenePath);
+		if (scenePath)
+			argv[1] = scenePath;
+	}
+	
 	// project loader test
 	if (false)
 	{

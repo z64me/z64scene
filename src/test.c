@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <wren.h>
 #include <stdbool.h>
+#include <z64convert.h>
 
 #include "logging.h"
 #include "misc.h"
@@ -588,4 +589,27 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 			})
 		})
 	})
+}
+
+void Testz64convertScene(char **scenePath)
+{
+	sb_array(char const*, args) = 0;
+	sb_push(args, "z64convert");
+	sb_push(args, "--in");
+	sb_push(args, "z64convert/test/CommonSimpleSingle/complete_room.objex");
+	sb_push(args, "--out");
+	sb_push(args, "z64convert/bin/CommonSimpleSingleWorld");
+	sb_push(args, "--world-header");
+	sb_push(args, "0,0,0");
+	sb_push(args, "--scale");
+	sb_push(args, "10.0");
+	
+	const char *errstr = z64convert(sb_count(args), args, stderr, Die);
+	if (errstr) {
+		if (scenePath)
+			*scenePath = 0;
+		Die(errstr);
+	}
+	else if (scenePath)
+		*scenePath = "z64convert/bin/CommonSimpleSingleWorld_scene.zscene";
 }
