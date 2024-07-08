@@ -22,6 +22,9 @@ struct CutsceneOot;
 #include <stdint.h>
 #include <stdbool.h>
 
+// where tmp files live
+#define WHERE_TMP "tmp/"
+
 #if 1 /* region: macros */
 #define UNFOLD_RGB(v)   (v).r, (v).g, (v).b
 #define UNFOLD_RGBA(v)  (v).r, (v).g, (v).b, (v).a

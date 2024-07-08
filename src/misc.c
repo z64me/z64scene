@@ -19,6 +19,10 @@
 #include <inttypes.h>
 #include <bigendian.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 static int gInstanceHandlerMm = false; // keeping as int b/c can == -1
 
 #define TRY_ALTERNATE_HEADERS(FUNC, PARAM, SEGMENT, FIRST) \
@@ -259,6 +263,14 @@ const char *ExePath(const char *path)
 		
 		*appendTo = '\0';
 		LogDebug("ExePath = '%s'", basePath);
+		
+		// make tmp directory while we're here
+		mkdir(
+			ExePath(WHERE_TMP)
+			#ifndef _WIN32
+			, 0777
+			#endif
+		);
 	}
 	else
 		strcpy(appendTo, path);
@@ -277,8 +289,8 @@ struct Scene *SceneFromFilename(const char *filename)
 
 struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 {
-	struct Scene *scene = SceneFromFilename(filename);
 	char *roomNameBuf = StrdupPad(filename, 100);
+	struct Scene *scene = SceneFromFilename(filename);
 	char *lastSlash = MAX(strrchr(roomNameBuf, '\\'), strrchr(roomNameBuf, '/'));
 	if (!lastSlash)
 		lastSlash = roomNameBuf;
