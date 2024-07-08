@@ -52,6 +52,8 @@ extern "C" {
 DECL_POPUP(AddNewInstanceSearch)
 static enum InstanceTab gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
 
+#define GUI_ERROR_POPUP_ID "Error##GuiMainErrorMessage"
+
 #endif
 
 #if 1 // region: private types
@@ -64,6 +66,7 @@ struct GuiSettings
 	ActorDatabase actorDatabase;
 	ObjectDatabase objectDatabase;
 	Project *project;
+	const char *errorMessagePopupBody;
 	bool projectIsReady;
 	
 	// combo boxes can be volatile as sizes change
@@ -1544,6 +1547,36 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 	if (gGuiSettings.showImGuiDemoWindow)
 		ImGui::ShowDemoWindow(&gGuiSettings.showImGuiDemoWindow);
 	
+	// error popup
+	ON_CHANGE(gGuiSettings.errorMessagePopupBody)
+	{
+		if (gGuiSettings.errorMessagePopupBody)
+			ImGui::OpenPopup(GUI_ERROR_POPUP_ID);
+	}
+	if (gGuiSettings.errorMessagePopupBody)
+	{
+		// center the popup
+		ImGui::SetNextWindowPos(
+			ImVec2(
+				ImGui::GetIO().DisplaySize.x * 0.5f,
+				ImGui::GetIO().DisplaySize.y * 0.5f
+			),
+			ImGuiCond_Always,
+			ImVec2(0.5f,0.5f)
+		);
+		if (ImGui::BeginPopupModal(GUI_ERROR_POPUP_ID, NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::TextWrapped(gGuiSettings.errorMessagePopupBody);
+			ImGui::Separator();
+			
+			ImGui::SetItemDefaultFocus();
+			if (ImGui::Button("OK", ImVec2(120, 0))) {
+				ImGui::CloseCurrentPopup();
+				gGuiSettings.errorMessagePopupBody = 0;
+			}
+		}
+	}
+	
 	// Rendering
 	ImGui::Render();
 	int display_w, display_h;
@@ -1698,6 +1731,13 @@ extern "C" void GuiLoadBaseDatabases(const char *gameId)
 	gGuiSettings.actorDatabase = TomlLoadActorDatabase(tmp);
 	snprintf(tmp, sizeof(tmp), "toml/game/%s/objects.toml", gameId);
 	gGuiSettings.objectDatabase = TomlLoadObjectDatabase(tmp);
+}
+
+// basic popup with 'ok' button
+extern "C" void GuiErrorPopup(const char *message)
+{
+	LogDebug("set error popup = '%s'", message);
+	gGuiSettings.errorMessagePopupBody = message;
 }
 
 // for testing all the things
