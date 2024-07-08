@@ -16,3 +16,6 @@
 [submodule "wren"]
 	path = wren
 	url = https://github.com/z64me/z64wren
+[submodule "z64convert"]
+	path = z64convert
+	url = https://github.com/z64tools/z64convert
