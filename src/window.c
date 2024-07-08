@@ -21,6 +21,7 @@
 #include "object.h"
 #include "skelanime.h"
 #include "rendercode.h"
+#include "z64convert.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -365,6 +366,14 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				&& SHORTCUT_CHECKS
 			)
 				WindowOpenFile();
+			break;
+		
+		case GLFW_KEY_N:
+			// ctrl + n ; Ctrl+N
+			if ((mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			)
+				WindowNewSceneFromObjex(0, 0, true);
 			break;
 	}
 }
@@ -946,6 +955,43 @@ struct Object *WindowLoadObject(const char *fn)
 	}
 	
 	return obj;
+}
+
+const char *WindowNewSceneFromObjex(const char *fn, struct Scene **dst, bool showError)
+{
+	if (!fn)
+	{
+		fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "objex model files\0*.objex\0", NULL, NULL);
+		
+		if (!fn)
+			return 0;
+	}
+	
+	sb_array(char const*, args) = 0;
+	sb_push(args, "z64convert");
+	sb_push(args, "--in");
+	sb_push(args, fn);
+	sb_push(args, "--out");
+	sb_push(args, ExePath(WHERE_TMP"custom"));
+	sb_push(args, "--world-header");
+	sb_push(args, "0,0,0");
+	sb_push(args, "--scale");
+	sb_push(args, "10.0"); // TODO assume scale = 1.0?
+	
+	const char *errstr = z64convert(sb_count(args), args, stderr, Die);
+	if (errstr)
+	{
+		GuiErrorPopup(errstr);
+		return errstr;
+	}
+	
+	const char *resultPath = ExePath(WHERE_TMP"custom_scene.zscene");
+	if (dst)
+		*dst = SceneFromFilenamePredictRooms(resultPath);
+	else
+		WindowLoadScene(resultPath);
+	
+	return 0;
 }
 
 RayLine WindowGetRayLine(Vec2f point)

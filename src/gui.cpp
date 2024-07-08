@@ -1284,8 +1284,13 @@ static void DrawMenuBar(void)
 	{
 		if (ImGui::BeginMenu("File"))
 		{
-			if (ImGui::MenuItem("New"))
+			if (ImGui::BeginMenu("New"))
 			{
+				if (ImGui::MenuItem("Scene from OBJEX", "Ctrl+N"))
+				{
+					WindowNewSceneFromObjex(0, 0, true);
+				}
+				ImGui::EndMenu();
 			}
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
 			{
