@@ -1267,6 +1267,7 @@ static void DrawSidebar(void)
 				.tab = gAddNewInstanceSearchTab,
 				.prev = INSTANCE_PREV_INIT,
 			};
+			newInst.mm.halfDayBits = 0xffff; // default = appear on all days (oot and mm)
 			
 			if (gGui->instanceList)
 				gGui->selectedInstance = &sb_push(*(gGui->instanceList), newInst);
