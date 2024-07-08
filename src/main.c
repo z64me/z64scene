@@ -21,16 +21,30 @@ int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
 	
+	// tests
+#ifndef NDEBUG
 	// test wren
 	TestWren();
 	
 	// test z64convert
-	if (argc > 1 && !strcmp(argv[1], "TestZ64convertScene"))
+	if (argc > 1)
 	{
-		char *scenePath = 0;
-		Testz64convertScene(&scenePath);
-		if (scenePath)
-			argv[1] = scenePath;
+		char *which = argv[1];
+		char *result = 0;
+		
+		if (!strcmp(which, "TestZ64convertScene"))
+		{
+			Testz64convertScene(&result);
+		}
+		else if (!strcmp(which, "TestZ64convertObject"))
+		{
+			char *objectPath = 0;
+			Testz64convertObject(&objectPath);
+			if (objectPath)
+				LogDebug("probably worked, obj at '%s'", objectPath);
+		}
+		
+		argv[1] = result;
 	}
 	
 	// project loader test
@@ -146,6 +160,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 #endif
+#endif // end tests
 	
 	ExePath(argv[0]);
 	

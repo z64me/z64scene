@@ -613,3 +613,26 @@ void Testz64convertScene(char **scenePath)
 	else if (scenePath)
 		*scenePath = "z64convert/bin/CommonSimpleSingleWorld_scene.zscene";
 }
+
+void Testz64convertObject(char **objectPath)
+{
+	sb_array(char const*, args) = 0;
+	sb_push(args, "z64convert");
+	sb_push(args, "--in");
+	sb_push(args, "z64convert/test/TPLink64Deluxe/TPLink64Deluxe.objex");
+	sb_push(args, "--out");
+	sb_push(args, "z64convert/bin/TPLink64Deluxe.zobj");
+	sb_push(args, "--header");
+	sb_push(args, "-");
+	sb_push(args, "--linker");
+	sb_push(args, "-");
+	
+	const char *errstr = z64convert(sb_count(args), args, stderr, Die);
+	if (errstr) {
+		if (objectPath)
+			*objectPath = 0;
+		Die(errstr);
+	}
+	else if (objectPath)
+		*objectPath = "z64convert/bin/TPLink64Deluxe.zobj";
+}
