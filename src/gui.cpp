@@ -735,10 +735,11 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			int backRoom = inst->doorway.backRoom;
 			int backCamera = inst->doorway.backCamera;
 			
-			if (ImGui::InputInt("Front Room##DoorwayData", &frontRoom)) inst->doorway.frontRoom = frontRoom;
-			if (ImGui::InputInt("Front Camera##DoorwayData", &frontCamera)) inst->doorway.frontCamera = frontCamera;
-			if (ImGui::InputInt("Back Room##DoorwayData", &backRoom)) inst->doorway.backRoom = backRoom;
-			if (ImGui::InputInt("Back Camera##DoorwayData", &backCamera)) inst->doorway.backCamera = backCamera;
+			// XXX swapped front/back to compensate for default rotation
+			if (ImGui::InputInt("Front Room##DoorwayData", &backRoom)) inst->doorway.backRoom = backRoom;
+			if (ImGui::InputInt("Front Camera##DoorwayData", &backCamera)) inst->doorway.backCamera = backCamera;
+			if (ImGui::InputInt("Back Room##DoorwayData", &frontRoom)) inst->doorway.frontRoom = frontRoom;
+			if (ImGui::InputInt("Back Camera##DoorwayData", &frontCamera)) inst->doorway.frontCamera = frontCamera;
 		}
 	},
 	new LinkedStringFunc{
