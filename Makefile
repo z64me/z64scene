@@ -103,5 +103,10 @@ bin/o/$(FOLDER)/imgui/%.o: %.cpp
 $(TARGET): bin bin/o/$(FOLDER) bin/o/$(FOLDER)/imgui $(OBJ_C) $(OBJ_CXX) $(IMGUI_OBJ)
 	$(MINGW)$(CXX) -o $@ $(OBJ_C) $(OBJ_CXX) $(IMGUI_OBJ) $(LDFLAGS)
 
+# make clean to clean only z64scene objects
 clean:
+	@find bin/o -mindepth 4 -maxdepth 4 -type f -exec rm -f {} +
+
+# make cleanall to clean all objects (imgui, wren, etc)
+cleanall:
 	rm -rf bin/o
