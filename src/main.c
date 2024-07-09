@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
 			if (objectPath)
 				LogDebug("probably worked, obj at '%s'", objectPath);
 		}
+		else
+			result = which;
 		
 		argv[1] = result;
 	}
