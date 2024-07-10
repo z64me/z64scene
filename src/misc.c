@@ -1470,7 +1470,10 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				
 				for (int i = 0; i < walk[1]; ++i)
 					sb_push(result->objects
-						, u16r(arr + 2 * i)
+						, ((struct ObjectEntry) {
+							.id = u16r(arr + 2 * i),
+							.type = OBJECT_ENTRY_TYPE_EXPLICIT,
+						})
 					);
 				break;
 			}

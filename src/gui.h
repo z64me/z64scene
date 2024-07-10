@@ -52,6 +52,9 @@ struct GuiInterop
 	sb_array(struct Instance, *doorList);
 	sb_array(struct Instance, *spawnList);
 	
+	struct ObjectEntry *selectedObject;
+	sb_array(struct ObjectEntry, *objectList);
+	
 	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
 	bool rightClickedInViewport;
 	enum RenderGroup rightClickedRenderGroup;

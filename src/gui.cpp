@@ -52,6 +52,8 @@ extern "C" {
 DECL_POPUP(AddNewInstanceSearch)
 static enum InstanceTab gAddNewInstanceSearchTab = INSTANCE_TAB_ACTOR;
 
+DECL_POPUP(AddNewObjectSearch)
+
 #define GUI_ERROR_POPUP_ID "Error##GuiMainErrorMessage"
 
 #endif
@@ -469,6 +471,36 @@ static ActorDatabase::Entry &InstanceTypeSearch(void)
 	return empty;
 }
 
+static ObjectDatabase::Entry &ObjectTypeSearch(void)
+{
+	static ImGuiTextFilter filter;
+	filter.Draw();
+	
+	for (auto &entry : gGuiSettings.objectDatabase.entries)
+	{
+		// skip blank/deleted entries
+		if (entry.isEmpty)
+			continue;
+		
+		// don't allow the first few objects
+		if (entry.index <= 3)
+			continue;
+		
+		const char *name = entry.name;
+		
+		if (name
+			&& filter.PassFilter(name)
+			&& ImGui::Selectable(name)
+		)
+			return entry;
+	}
+	
+	static ObjectDatabase::Entry empty;
+	empty.isEmpty = true;
+	
+	return empty;
+}
+
 // multi-purpose instance tab, good for actors/spawnpoints/doors
 // XXX if "String##Instance" etc give issues, try QuickFmt("String##%s", tabType)
 static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const char *tabType, enum InstanceTab tab)
@@ -839,6 +871,74 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		"Objects"
 		, [](){
 			ImGui::TextWrapped("TODO: 'Objects' tab");
+			// the commented code is for buttons along the side of the list box
+			
+			struct ObjectEntry *current = gGui->selectedObject;
+			struct ObjectEntry *list = *gGui->objectList;
+			
+			if (ImGui::BeginListBox("##ObjectList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				if (sb_count(list) > 0)
+					sb_foreach(list, {
+						const bool is_selected = (current == each);
+						
+						if (each->name == 0)
+							each->name = gGuiSettings.objectDatabase.GetObjectName(each->id);
+						
+						if (ImGui::Selectable(each->name, is_selected))
+							current = each;
+
+						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();
+					})
+				ImGui::EndListBox();
+			}
+			//ImGui::SameLine();
+			//ImVec2 nextPos = ImGui::GetCursorPos();
+			//int yadv = ImGui::GetTextLineHeightWithSpacing() + 5; // padding
+			if (ImGui::ArrowButton("Raise##ObjectList", ImGuiDir_Up) && current > list)
+			{
+				struct ObjectEntry tmp = current[-1];
+				current[-1] = current[0];
+				current[0] = tmp;
+				current -= 1;
+			}
+			ImGui::SameLine();
+			if (ImGui::ArrowButton("Lower##ObjectList", ImGuiDir_Down) && current != &sb_last(list))
+			{
+				struct ObjectEntry tmp = current[1];
+				current[1] = current[0];
+				current[0] = tmp;
+				current += 1;
+			}
+			ImGui::SameLine();
+			
+			//nextPos.y += yadv;
+			//ImGui::SetCursorPos(nextPos);
+			if (ImGui::Button("Add Object##ObjectList"))
+			{
+				QUEUE_POPUP(AddNewObjectSearch);
+			}
+			ImGui::SameLine();
+			
+			//nextPos.y += yadv;
+			//ImGui::SetCursorPos(nextPos);
+			if (ImGui::Button("Delete##ObjectList") && current >= list && current <= &sb_last(list))
+			{
+				sb_remove(list, current - list);
+				
+				if (current > &sb_last(list))
+					current -= 1;
+				
+				if (sb_count(list) == 0)
+					current = 0;
+			}
+			
+			if (current)
+				ImGui::TextWrapped(current->name);
+			
+			gGui->selectedObject = current;
 		}
 	},
 	new LinkedStringFunc{
@@ -1278,6 +1378,27 @@ static void DrawSidebar(void)
 		
 		ImGui::EndPopup();
 	}
+	DEQUEUE_POPUP(AddNewObjectSearch);
+	if (ImGui::BeginPopup(STRINGIFY(AddNewObjectSearch)))
+	{
+		auto &type = ObjectTypeSearch();
+		
+		if (!type.isEmpty)
+		{
+			LogDebug("add object of type '%s'", type.name);
+			
+			struct ObjectEntry newObj = {
+				.name = type.name,
+				.id = type.index,
+				.type = OBJECT_ENTRY_TYPE_EXPLICIT,
+			};
+			
+			if (gGui->objectList)
+				gGui->selectedObject = &sb_push(*(gGui->objectList), newObj);
+		}
+		
+		ImGui::EndPopup();
+	}
 }
 
 static void DrawMenuBar(void)
@@ -1543,6 +1664,7 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		gGui->doorList = &(sceneHeader->doorways);
 		gGui->spawnList = &(sceneHeader->spawns);
 		gGui->actorList = &(roomHeader->instances);
+		gGui->objectList = &(roomHeader->objects);
 	}
 	
 	if (gGuiSettings.showSidebar)

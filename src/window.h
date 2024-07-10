@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include "extmath.h"
 
+struct Scene;
+
 struct CameraFly
 {
 	Vec3f eye;

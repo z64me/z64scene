@@ -411,7 +411,7 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		WorkblobPush(4);
 		
 		sb_foreach(header->objects, {
-			WorkblobPut16(*each);
+			WorkblobPut16(each->id);
 		});
 		
 		WorkblobPut32(WorkblobPop());

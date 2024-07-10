@@ -125,6 +125,7 @@ struct Object;
 struct SceneHeader;
 struct Scene;
 struct RoomMeshSimple;
+struct ObjectEntry; // object entry referenced by room header
 
 typedef struct ZeldaRGB {
 	uint8_t r, g, b;
@@ -307,6 +308,24 @@ typedef struct {
 
 #endif // endregion
 
+// types of object entries; 'implied' only exists for as long as there
+// are instances dependent upon it, but can be promoted to 'explicit',
+// which will always be present regardless of which actors are present
+enum ObjectEntryType
+{
+	OBJECT_ENTRY_TYPE_EXPLICIT,
+	OBJECT_ENTRY_TYPE_IMPLIED,
+};
+
+// object entry referenced by room header
+struct ObjectEntry
+{
+	const char *name;
+	uint16_t id;
+	int children; // how many instances depend on this object
+	enum ObjectEntryType type; // explicit or implied
+};
+
 typedef enum ActorCategory {
 	/* 0x00 */ ACTORCAT_SWITCH,
 	/* 0x01 */ ACTORCAT_BG,
@@ -396,7 +415,7 @@ struct RoomHeader
 {
 	struct Room *room;
 	sb_array(struct Instance, instances);
-	sb_array(uint16_t, objects);
+	sb_array(struct ObjectEntry, objects);
 	sb_array(struct RoomMeshSimple, displayLists);
 	sb_array(uint32_t, unhandledCommands);
 	uint32_t addr;
