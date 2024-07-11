@@ -55,6 +55,9 @@ struct GuiInterop
 	struct ObjectEntry *selectedObject;
 	sb_array(struct ObjectEntry, *objectList);
 	
+	sb_array(struct ObjectEntry, missingObjects);
+	sb_array(struct ObjectEntry, unusedObjects);
+	
 	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
 	bool rightClickedInViewport;
 	enum RenderGroup rightClickedRenderGroup;

@@ -35,6 +35,11 @@ extern "C" {
 	}
 #define IMGUI_COMBO_HOVER(CURRENT, HOWMANY) IMGUI_COMBO_HOVER_ONCHANGE(CURRENT, HOWMANY, {})
 
+#define HELP_SEPARATOR(TITLE, HELPTEXT) \
+	ImGui::SeparatorText(TITLE "   "); \
+	ImGui::SameLine(ImGui::CalcTextSize(TITLE).x + 32); \
+	HelpMarker(HELPTEXT);
+
 #endif
 
 #if 1 // region: misc decls
@@ -246,6 +251,8 @@ std::map<std::string, uint32_t> GetObjectSymbolAddresses(uint16_t objId)
 	return gGuiSettings.objectDatabase.GetEntry(objId).symbolAddresses;
 }
 
+sb_find_impl(ObjectListContains, ObjectEntry, uint16_t, each->id == needle)
+
 static void TestAllActorRenderCodeGen(void)
 {
 	for (auto &entry : gGuiSettings.actorDatabase.entries)
@@ -418,6 +425,65 @@ static void PickHexValueU16(const char *uniqueName, uint16_t *v, uint16_t min = 
 	PickIntValue(uniqueName, &tmp, min, max);
 	
 	*v = tmp;
+}
+
+// determine which objects are missing, and which are potentially unused
+static void RefreshObjectStats(void)
+{
+	sb_array(ObjectEntry, haveObjects) = *(gGui->objectList);
+	sb_array(ObjectEntry, missingObjects) = gGui->missingObjects;
+	sb_array(ObjectEntry, unusedObjects) = gGui->unusedObjects;
+	
+	sb_clear(missingObjects);
+	sb_clear(unusedObjects);
+	
+	LogDebug("RefreshObjectStats()");
+	
+	sb_foreach(haveObjects, {
+		each->children = 0;
+	})
+	
+	for (int i = 0; i < 2; ++i)
+	{
+		sb_array(Instance, list);
+		
+		switch (i) {
+			case 0: list = *(gGui->actorList); break;
+			case 1: list = *(gGui->doorList); break;
+		}
+		
+		sb_foreach_named(list, actor, {
+			auto &type = gGuiSettings.actorDatabase.GetEntry(actor->id);
+			
+			if (type.isEmpty)
+				continue;
+			
+			for (auto needObject : type.objects) {
+				if (needObject <= 0x0001) // filter global obj dep
+					continue;
+				ObjectEntry *used = ObjectListContains(haveObjects, needObject);
+				if (used) {
+					used->children += 1;
+					continue;
+				}
+				ObjectEntry *missing = ObjectListContains(missingObjects, needObject);
+				if (!missing)
+					missing = &sb_push(missingObjects, ((ObjectEntry){
+						.id = needObject,
+						.type = OBJECT_ENTRY_TYPE_IMPLIED,
+					}));
+				missing->children += 1;
+			}
+		})
+	}
+	
+	sb_foreach(haveObjects, {
+		if (each->children == 0)
+			sb_push(unusedObjects, *each);
+	})
+	
+	gGui->unusedObjects = unusedObjects;
+	gGui->missingObjects = missingObjects;
 }
 
 static ActorDatabase::Entry &InstanceTypeSearch(void)
@@ -737,6 +803,31 @@ static Instance *InstanceTab(sb_array(struct Instance, *instanceList), const cha
 	return inst;
 }
 
+static void ObjectTabList(const char *tag, sb_array(ObjectEntry, list), ObjectEntry **current_)
+{
+	if (!current_) return;
+	struct ObjectEntry *current = *current_;
+	if (ImGui::BeginListBox(tag, ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+	{
+		if (sb_count(list) > 0)
+			sb_foreach(list, {
+				const bool is_selected = (current == each);
+				
+				if (each->name == 0)
+					each->name = gGuiSettings.objectDatabase.GetObjectName(each->id);
+				
+				if (ImGui::Selectable(each->name, is_selected))
+					current = each;
+				
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();
+			})
+		ImGui::EndListBox();
+	}
+	*current_ = current;
+}
+
 static const LinkedStringFunc *gSidebarTabs[] = {
 	new LinkedStringFunc{
 		"General"
@@ -876,24 +967,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			struct ObjectEntry *current = gGui->selectedObject;
 			struct ObjectEntry *list = *gGui->objectList;
 			
-			if (ImGui::BeginListBox("##ObjectList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
-			{
-				if (sb_count(list) > 0)
-					sb_foreach(list, {
-						const bool is_selected = (current == each);
-						
-						if (each->name == 0)
-							each->name = gGuiSettings.objectDatabase.GetObjectName(each->id);
-						
-						if (ImGui::Selectable(each->name, is_selected))
-							current = each;
-
-						// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();
-					})
-				ImGui::EndListBox();
-			}
+			ObjectTabList("##ObjectListMain", list, &current);
 			//ImGui::SameLine();
 			//ImVec2 nextPos = ImGui::GetCursorPos();
 			//int yadv = ImGui::GetTextLineHeightWithSpacing() + 5; // padding
@@ -936,9 +1010,88 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			}
 			
 			if (current)
+			{
 				ImGui::TextWrapped(current->name);
+				ImGui::TextWrapped("Needed by %d actors", current->children);
+			}
 			
 			gGui->selectedObject = current;
+			
+			// missing objects
+			if (sb_count(gGui->missingObjects))
+			{
+				static ObjectEntry *current = 0;
+				
+				// on any reallocations etc
+				ON_CHANGE(gGui->missingObjects) current = 0;
+				
+				HELP_SEPARATOR("Missing Objects",
+					"These objects may be needed by\n"
+					"certain actors you have placed,\n"
+					"but are not present."
+				);
+				
+				ObjectTabList("##ObjectListMissing", gGui->missingObjects, &current);
+				
+				if (current)
+				{
+					ImGui::TextWrapped("Needed by %d actors", current->children);
+					
+					if (current->id <= 3)
+					{
+						if (ImGui::Button("Toggle Field/Dungeon Object"))
+						{
+							LogDebug("TODO: toggle field/dungeon object");
+						}
+					}
+					else if (ImGui::Button("Add to Object List"))
+					{
+						ObjectEntry *missingObjects = gGui->missingObjects;
+						gGui->selectedObject = &sb_push(*gGui->objectList, *current);
+						sb_remove(missingObjects, current - missingObjects);
+						if (current > &sb_last(missingObjects))
+							current -= 1;
+						if (sb_count(missingObjects) == 0)
+							current = 0;
+					}
+				}
+			}
+			
+			// potentially unused objects
+			if (sb_count(gGui->unusedObjects))
+			{
+				static ObjectEntry *current = 0;
+				
+				// on any reallocations etc
+				ON_CHANGE(gGui->unusedObjects) current = 0;
+				
+				HELP_SEPARATOR("Unused Objects",
+					"These objects are potentially unused.\n"
+					"They are not directly referenced by any\n"
+					"of the actors present in the actor list."
+				);
+				
+				ObjectTabList("##ObjectListUnused", gGui->unusedObjects, &current);
+				
+				if (current)
+				{
+					if (ImGui::Button("Delete from Object List"))
+					{
+						ObjectEntry *unusedObjects = gGui->missingObjects;
+						ObjectEntry *objectList = *gGui->objectList;
+						ObjectEntry *match = ObjectListContains(objectList, current->id);
+						if (match) {
+							sb_remove(objectList, match - objectList);
+							gGui->selectedObject = 0;
+						}
+						sb_remove(unusedObjects, current - unusedObjects);
+						if (current > &sb_last(unusedObjects))
+							current -= 1;
+						if (sb_count(unusedObjects) == 0)
+							current = 0;
+					}
+				}
+			}
 		}
 	},
 	new LinkedStringFunc{
@@ -1665,6 +1818,14 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		gGui->spawnList = &(sceneHeader->spawns);
 		gGui->actorList = &(roomHeader->instances);
 		gGui->objectList = &(roomHeader->objects);
+		
+		// now that door/spawn/actor/object lists are non-zero, watch for changes
+		bool refreshObjects = false;
+		ON_CHANGE(sb_count(*gGui->doorList)) refreshObjects = true;
+		ON_CHANGE(sb_count(*gGui->actorList)) refreshObjects = true;
+		ON_CHANGE(sb_count(*gGui->objectList)) refreshObjects = true;
+		if (refreshObjects)
+			RefreshObjectStats();
 	}
 	
 	if (gGuiSettings.showSidebar)

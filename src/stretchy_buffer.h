@@ -174,17 +174,18 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifndef STB_STRETCHY_BUFFER_H_INCLUDED
 #define STB_STRETCHY_BUFFER_H_INCLUDED
 
 #define sb_array(TYPE, NAME) TYPE *NAME
 
-#define sb_foreach(V, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof(V[0]) *each = &V[eachIndex]; CODE }
+#define sb_foreach(V, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof((V)[0]) *each = &(V)[eachIndex]; CODE }
 
-#define sb_foreach_backwards(V, CODE) for (int eachIndex = sb_count(V); eachIndex > 0; --eachIndex) { typeof(V[0]) *each = &V[eachIndex - 1]; CODE }
+#define sb_foreach_backwards(V, CODE) for (int eachIndex = sb_count(V); eachIndex > 0; --eachIndex) { typeof((V)[0]) *each = &(V)[eachIndex - 1]; CODE }
 
-#define sb_foreach_named(V, NAME, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof(V[0]) *NAME = &V[eachIndex]; CODE }
+#define sb_foreach_named(V, NAME, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof((V)[0]) *NAME = &(V)[eachIndex]; CODE }
 
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
@@ -198,6 +199,9 @@
 #define sb_clear  stb_sb_clear
 #define sb_contains stb_sb_contains
 #define sb_contains_ref stb_sb_contains_ref
+#define sb_contains_copy stb_sb_contains_copy
+#define sb_find_decl stb_sb_find_decl
+#define sb_find_impl stb_sb_find_impl
 #endif
 
 #define stb_sb_free(a)         ((a) ? free(stb__sbraw(a)),0 : 0)
@@ -207,9 +211,22 @@
 #define stb_sb_count(a)        ((a) ? stb__sbn(a) : 0)
 #define stb_sb_add(a,n)        (stb__sbmaybegrow(a,n), stb__sbn(a)+=(n), &(a)[stb__sbn(a)-(n)])
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
-#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
+//#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
+#define stb_sb_clear(a)        { if (a) stb__sbn(a) = 0; } // c++
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
+#define stb_sb_contains_copy(HAYSTACK, NEEDLE) (sb_find_copy(HAYSTACK, NEEDLE) >= 0)
+
+#define stb_sb_find_decl(FUNCNAME, HAYSTACK_TYPE, NEEDLE_TYPE) \
+	HAYSTACK_TYPE *FUNCNAME(sb_array(HAYSTACK_TYPE, haystack), NEEDLE_TYPE needle)
+#define stb_sb_find_impl(FUNCNAME, HAYSTACK_TYPE, NEEDLE_TYPE, CRITERIA) \
+	stb_sb_find_decl(FUNCNAME, HAYSTACK_TYPE, NEEDLE_TYPE) { \
+		sb_foreach(haystack, { \
+			if (CRITERIA) \
+				return each; \
+		}) \
+		return 0; \
+	}
 
 #define stb_sb_insert(a, v, index) { \
 	stb__sbmaybegrow(a,1); \
@@ -261,6 +278,20 @@ static int (sb_find_ref)(const void *haystack, const void *needle, const int siz
 	
 	for (int i = 0; i < len; ++i, addr += sizeofEach)
 		if (*(const uintptr_t*)addr == (uintptr_t)needle)
+			return i;
+	
+	return -1;
+}
+
+// expects haystack[0..n] to be reference to needle
+#define sb_find_copy(HAYSTACK, NEEDLE) sb_find_copy(HAYSTACK, (const void*)&(NEEDLE), sizeof(NEEDLE))
+static int (sb_find_copy)(const void *haystack, const void *needle, const int sizeofEach)
+{
+	int len = sb_count(haystack);
+	const uint8_t *addr = (const uint8_t*)haystack;
+	
+	for (int i = 0; i < len; ++i, addr += sizeofEach)
+		if (!memcmp(addr, needle, sizeofEach))
 			return i;
 	
 	return -1;
