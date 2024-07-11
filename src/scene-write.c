@@ -278,7 +278,7 @@ static void WorkAppendRoomShapeImage(RoomShapeImage image)
 	WorkblobPut16(image.tlutCount);
 }
 
-static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders)
+static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
 {
 	if (header->isBlank)
 		return 0;
@@ -291,7 +291,8 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	// alternate headers command
 	if (alternateHeaders)
 	{
-		WorkblobPut32(0x18000000);
+		alternateHeadersNum = MAX(alternateHeadersNum, MIN_ALTERNATE_HEADERS);
+		WorkblobPut32(0x18000000 | (alternateHeadersNum << 16));
 		WorkblobPut32(alternateHeaders);
 	}
 	
@@ -446,7 +447,7 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	return WorkblobPop();
 }
 
-static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders)
+static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
 {
 	// this is a bandaid solution for z64rom, which assumes
 	// the alternate header block ends where the next block
@@ -466,7 +467,8 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	// alternate headers command
 	if (alternateHeaders)
 	{
-		WorkblobPut32(0x18000000);
+		alternateHeadersNum = MAX(alternateHeadersNum, MIN_ALTERNATE_HEADERS);
+		WorkblobPut32(0x18000000 | (alternateHeadersNum << 16));
 		WorkblobPut32(alternateHeaders);
 		z64romHack = true;
 	}
@@ -579,7 +581,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	if (header->spawns)
 	{
 		// NOTE: 0x06 command must precede 0x00 command
-		WorkblobPut32(0x06000000);
+		WorkblobPut32(0x06000000 | (sb_count(header->spawns) << 16));
 		WorkblobPush(4);
 		sb_foreach(header->spawns, {
 			WorkblobPut8(eachIndex);
@@ -618,7 +620,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	// exits
 	if (header->exits)
 	{
-		WorkblobPut32(0x13000000);
+		WorkblobPut32(0x13000000 | (sb_count(header->exits) << 16));
 		
 		WorkblobPush(4);
 		sb_foreach(header->exits, { WorkblobPut16(*each); });
@@ -779,7 +781,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 		sb_array(uint32_t, alternateHeaders) = 0;
 		sb_foreach(room->headers, {
 			if (eachIndex)
-				sb_push(alternateHeaders, WorkAppendRoomHeader(each, 0));
+				sb_push(alternateHeaders, WorkAppendRoomHeader(each, 0, 0));
 		});
 		if (sb_count(alternateHeaders))
 		{
@@ -790,7 +792,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 		}
 		
 		// main header
-		WorkAppendRoomHeader(&room->headers[0], alternateHeadersAddr);
+		WorkAppendRoomHeader(&room->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
 		WorkFirstHeader();
 		sb_free(alternateHeaders);
 	}
@@ -865,7 +867,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		sb_array(uint32_t, alternateHeaders) = 0;
 		sb_foreach(scene->headers, {
 			if (eachIndex)
-				sb_push(alternateHeaders, WorkAppendSceneHeader(scene, each, 0));
+				sb_push(alternateHeaders, WorkAppendSceneHeader(scene, each, 0, 0));
 		});
 		if (sb_count(alternateHeaders))
 		{
@@ -876,7 +878,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 		}
 		
 		// main header
-		WorkAppendSceneHeader(scene, &scene->headers[0], alternateHeadersAddr);
+		WorkAppendSceneHeader(scene, &scene->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
 		WorkFirstHeader();
 		sb_free(alternateHeaders);
 	}

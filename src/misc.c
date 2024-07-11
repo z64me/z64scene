@@ -29,6 +29,13 @@ static int gInstanceHandlerMm = false; // keeping as int b/c can == -1
 if (altHeadersArray) { \
 	const uint8_t *headers = altHeadersArray; \
 	const uint8_t *dataEnd = file->dataEnd; \
+	if (altHeadersCount) { \
+		dataEnd = headers + altHeadersCount * 4; \
+		while (headers < dataEnd) { \
+			FUNC(PARAM, u32r(headers)); \
+			headers += 4; \
+		} \
+	} \
 	dataEnd -= 4; \
 	while (headers < dataEnd) { \
 		uint32_t w = u32r(headers); \
@@ -1130,9 +1137,12 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		uint8_t *positions;
 		uint8_t *entrances;
 		int count;
+		int countEntrances; // unused for now, but 'entrances' is a LUT into 'positions', so counts can vary
 	} spawnPoints = {0};
 	uint8_t *altHeadersArray = 0;
 	result->mm.sceneSetupType = -1;
+	int exitsCount = 0;
+	int altHeadersCount = 0;
 	
 	// unlikely a scene header
 	if (private_IsLikelyHeader(addr, 0x02, file->size) == false)
@@ -1168,6 +1178,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x06: // spawn point entrances
 				spawnPoints.entrances = data8 + (u32r(walk + 4) & 0x00ffffff);
+				spawnPoints.countEntrances = walk[1];
 				break;
 			
 			case 0x07: // field/dungeon objects
@@ -1196,6 +1207,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x18: { // alternate headers
 				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
+				altHeadersCount = walk[1];
 				break;
 			}
 			
@@ -1296,6 +1308,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x13: { // exit list
 				result->exitsSegAddr = u32r(walk + 4);
+				exitsCount = walk[1];
 				break;
 			}
 			
@@ -1378,13 +1391,19 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	
 	// parse exit list after header loop, b/c count is derived from collision data
 	if (result->exitsSegAddr
-		&& scene->collisions
-		&& scene->collisions->numExits
+		&& (exitsCount
+			|| (scene->collisions
+				&& scene->collisions->numExits
+			)
+		)
 	)
 	{
 		const uint8_t *exitData = n64_segment_get(result->exitsSegAddr);
 		
-		for (int i = 0; i < scene->collisions->numExits; ++i)
+		if (!exitsCount)
+			exitsCount = scene->collisions->numExits;
+		
+		for (int i = 0; i < exitsCount; ++i)
 			sb_push(result->exits, u16r(exitData + i * 2));
 		
 		LogDebug("exits:");
@@ -1438,6 +1457,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	uint8_t *data8 = file->data;
 	uint8_t *walk = file->data;
 	uint8_t *altHeadersArray = 0;
+	int altHeadersCount = 0;
 	
 	// unlikely a room header
 	if (private_IsLikelyHeader(addr, 0x03, file->size) == false)
@@ -1596,6 +1616,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 			
 			case 0x18: { // alternate headers
 				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
+				altHeadersCount = walk[1];
 				break;
 			}
 			
