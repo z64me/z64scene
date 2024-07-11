@@ -1170,6 +1170,17 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				spawnPoints.entrances = data8 + (u32r(walk + 4) & 0x00ffffff);
 				break;
 			
+			case 0x07: // field/dungeon objects
+				if (result->specialFiles)
+					Die("scene header command 07 used multiple times at %08x"
+						, (uint32_t)(walk - data8)
+					);
+				
+				result->specialFiles = calloc(1, sizeof(result->specialFiles));
+				result->specialFiles->fairyHintsId = walk[1];
+				result->specialFiles->subkeepObjectId = u16r(walk + 6);
+				break;
+			
 			case 0x04: // room list
 				result->numRooms = walk[1];
 				break;

@@ -45,6 +45,8 @@ struct GuiInterop
 		uint16_t envPreviewTime;
 	} env;
 	
+	struct SceneHeader *sceneHeader;
+	
 	struct Instance *selectedInstance;
 	sb_array(struct Instance, *instanceList); // used for duplicating etc
 	
@@ -69,6 +71,8 @@ struct GuiInterop
 	
 	bool clipboardHasInstance;
 	struct Instance clipboardInstance;
+	
+	int subkeepChildren; // how many children the current subkeep object has
 };
 
 #ifdef __cplusplus

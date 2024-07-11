@@ -474,6 +474,13 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	// unhandled commands
 	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
+	// special files
+	if (header->specialFiles)
+	{
+		WorkblobPut32(0x07000000 | (header->specialFiles->fairyHintsId << 16));
+		WorkblobPut32(header->specialFiles->subkeepObjectId);
+	}
+	
 	// room list command
 	if (header->numRooms)
 	{

@@ -442,6 +442,7 @@ static void RefreshObjectStats(void)
 	sb_foreach(haveObjects, {
 		each->children = 0;
 	})
+	gGui->subkeepChildren = 0;
 	
 	for (int i = 0; i < 2; ++i)
 	{
@@ -461,6 +462,12 @@ static void RefreshObjectStats(void)
 			for (auto needObject : type.objects) {
 				if (needObject <= 0x0001) // filter global obj dep
 					continue;
+				if (gGui->sceneHeader->specialFiles // filter subkeep obj deps
+					&& needObject == gGui->sceneHeader->specialFiles->subkeepObjectId
+				) {
+					gGui->subkeepChildren += 1;
+					continue;
+				}
 				ObjectEntry *used = ObjectListContains(haveObjects, needObject);
 				if (used) {
 					used->children += 1;
@@ -964,6 +971,38 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			ImGui::TextWrapped("TODO: 'Objects' tab");
 			// the commented code is for buttons along the side of the list box
 			
+			if (gGui->sceneHeader->specialFiles)
+			{
+				const char *preview = "Unknown";
+				static struct {
+					const char *name;
+					uint16_t objId;
+				} ok[] = {
+					{ "None", 0x0000 },
+					{ "Field", 0x0002 },
+					{ "Dungeon", 0x0003 },
+				};
+				int subkeep = gGui->sceneHeader->specialFiles->subkeepObjectId;
+				int newSubkeep = subkeep;
+				
+				for (int i = 0; i < sizeof(ok) / sizeof(*ok); ++i)
+					if (subkeep == ok[i].objId)
+						preview = ok[i].name;
+				
+				ImGui::Text("Subkeep Object:"); ImGui::SameLine(); ImGui::SetNextItemWidth(-FLT_MIN);
+				if (ImGui::BeginCombo("##Subkeep Object", preview))
+				{
+					for (int i = 0; i < sizeof(ok) / sizeof(*ok); ++i)
+						if (ImGui::Selectable(ok[i].name, subkeep == ok[i].objId))
+							newSubkeep = ok[i].objId;
+					ImGui::EndCombo();
+				}
+				if (subkeep)
+					ImGui::TextWrapped("'%s' is needed by %d actors", preview, gGui->subkeepChildren);
+				
+				gGui->sceneHeader->specialFiles->subkeepObjectId = newSubkeep;
+			}
+			
 			struct ObjectEntry *current = gGui->selectedObject;
 			struct ObjectEntry *list = *gGui->objectList;
 			
@@ -1039,9 +1078,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					
 					if (current->id <= 3)
 					{
-						if (ImGui::Button("Toggle Field/Dungeon Object"))
+						if (ImGui::Button("Set Subkeep Object"))
 						{
-							LogDebug("TODO: toggle field/dungeon object");
+							if (gGui->sceneHeader->specialFiles)
+								gGui->sceneHeader->specialFiles->subkeepObjectId = current->id;
 						}
 					}
 					else if (ImGui::Button("Add to Object List"))
@@ -1814,6 +1854,7 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		RoomHeader *roomHeader = &gScene->rooms[gGui->selectedRoomIndex].headers[gGui->selectedHeaderIndex];
 		SceneHeader *sceneHeader = &gScene->headers[gGui->selectedHeaderIndex];
 		
+		gGui->sceneHeader = sceneHeader;
 		gGui->doorList = &(sceneHeader->doorways);
 		gGui->spawnList = &(sceneHeader->spawns);
 		gGui->actorList = &(roomHeader->instances);
@@ -1824,6 +1865,8 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		ON_CHANGE(sb_count(*gGui->doorList)) refreshObjects = true;
 		ON_CHANGE(sb_count(*gGui->actorList)) refreshObjects = true;
 		ON_CHANGE(sb_count(*gGui->objectList)) refreshObjects = true;
+		ON_CHANGE(gGui->sceneHeader->specialFiles) refreshObjects = true;
+		if(gGui->sceneHeader->specialFiles) { ON_CHANGE(gGui->sceneHeader->specialFiles->subkeepObjectId) refreshObjects = true; }
 		if (refreshObjects)
 			RefreshObjectStats();
 	}
