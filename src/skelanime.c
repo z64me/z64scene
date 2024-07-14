@@ -2,6 +2,7 @@
 #include "misc.h"
 #include "skelanime.h"
 #include "object.h"
+#include "logging.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -83,7 +84,7 @@ static void SkelAnime_InterpFrameTable(int limbCount, Vec3s* dst, Vec3s* start, 
 void SkelAnime_Update(SkelAnime* this, double deltaTimeFrames)
 {
 	const struct ObjectAnimation *anim = this->animation;
-	const struct Object *obj = this->object;
+	const struct Object *obj = anim->object;
 	
 	n64_segment_set(obj->segment, obj->file->data);
 	

@@ -399,6 +399,8 @@ static void drop_callback(GLFWwindow* window, int count, const char *files[])
 		WindowLoadScene(filename);
 	else if (!strcmp(extensionLower, "zobj"))
 		WindowLoadObject(filename);
+	else if (!strcmp(extensionLower, "zanim"))
+		WindowLoadAnimation(filename);
 	
 	free(extensionLower);
 }
@@ -940,10 +942,14 @@ struct Object *WindowLoadObject(const char *fn)
 {
 	struct Object *obj = ObjectFromFilename(fn);
 	
-	if (sb_count(obj->skeletons) && sb_count(obj->animations))
+	if (sb_count(obj->skeletons))
 	{
-		SkelAnime_Init(&gSkelAnimeTest, obj, &obj->skeletons[0], &obj->animations[0]);
-		SkelAnime_Update(&gSkelAnimeTest, 0);
+		struct ObjectAnimation *anim = 0;
+		
+		if (sb_count(obj->animations)) anim = &obj->animations[0];
+		
+		SkelAnime_Init(&gSkelAnimeTest, obj, &obj->skeletons[0], anim);
+		if (anim) SkelAnime_Update(&gSkelAnimeTest, 0);
 		//SkelAnime_Free(&gSkelAnimeTest);
 		
 		// get texture blobs
@@ -952,6 +958,28 @@ struct Object *WindowLoadObject(const char *fn)
 		sb_array(struct TextureBlob, texBlobs) = 0;
 		TextureBlobSbArrayFromDataBlobs(obj->file, blobs, &texBlobs);
 		(*gSceneP)->textureBlobs = texBlobs;
+	}
+	
+	return obj;
+}
+
+struct Object *WindowLoadAnimation(const char *fn)
+{
+	LogDebug("WindowLoadAnimation() %s", fn);
+	
+	if (!gSkelAnimeTest.object
+		|| !sb_count(gSkelAnimeTest.object->skeletons)
+	)
+		return 0;
+	
+	struct Object *obj = ObjectFromFilename(fn);
+	
+	LogDebug(" -> found %d anims", sb_count(obj->animations));
+	
+	if (sb_count(obj->animations))
+	{
+		SkelAnime_Init(&gSkelAnimeTest, gSkelAnimeTest.object, gSkelAnimeTest.skeleton, &obj->animations[0]);
+		SkelAnime_Update(&gSkelAnimeTest, 0);
 	}
 	
 	return obj;
@@ -2453,7 +2481,7 @@ void WindowMainLoop(const char *sceneFn)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06016480);
 		}
 		
-		if (gSkelAnimeTest.skeleton)
+		if (gSkelAnimeTest.skeleton && gSkelAnimeTest.animation)
 		{
 			float scale = 0.02;
 			Matrix_Translate(-100, 0, 0, MTXMODE_NEW);

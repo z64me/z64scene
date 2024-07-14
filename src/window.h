@@ -83,6 +83,7 @@ bool WindowTryInstanceCopy(bool showModal);
 const char *WindowNewSceneFromObjex(const char *fn, struct Scene **dst, bool showError);
 
 struct Object *WindowLoadObject(const char *fn);
+struct Object *WindowLoadAnimation(const char *fn);
 
 #endif /* Z64SCENE_WINDOW_H_INCLUDED */
 

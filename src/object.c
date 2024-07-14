@@ -152,6 +152,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	for (const uint8_t *walk = start; walk <= end - 16; walk += 4)
 	{
 		struct ObjectAnimation anim = {
+			.object = obj,
 			.numFrames = u16r(walk + 0),
 			.pad0 = u16r(walk + 2),
 			.rotValSegAddr = u32r(walk + 4),

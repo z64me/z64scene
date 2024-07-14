@@ -7,8 +7,11 @@
 #include "file.h"
 #include "stretchy_buffer.h"
 
+struct Object;
+
 struct ObjectAnimation
 {
+	const struct Object *object;
 	/* 0x0000 */ uint16_t numFrames;
 	/* 0x0002 */ uint16_t pad0;
 	/* 0x0004 */ uint32_t rotValSegAddr;
