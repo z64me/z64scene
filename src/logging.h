@@ -17,7 +17,7 @@ enum LogLevel
 };
 
 void LogLevelSet(const enum LogLevel level);
-void LogMessage(const char *unit, const int line, enum LogLevel level, const char *fmt, ...);
+void LogMessage(const char *unit, const int line, enum LogLevel level, const char *fmt, ...)  __attribute__ ((format (printf, 4, 5)));
 
 #define LogDebug(fmt, ...) LogMessage(__FILE__, __LINE__, LOG_LEVEL_DEBUG, fmt, ##__VA_ARGS__)
 #define LogInfo(fmt, ...)  LogMessage(__FILE__, __LINE__, LOG_LEVEL_INFO, fmt, ##__VA_ARGS__)
