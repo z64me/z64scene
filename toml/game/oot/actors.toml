@@ -450,6 +450,25 @@
 	Index = 27
 	Category = "5"
 	Objects = [22]
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			// is blue
+			if (Props.Presets == 65534)
+				Udata.textures = [ 0x1300, 0x1700, 0x1900 ]
+			// is red
+			else
+				Udata.textures = [ 0x1B00, 0x1F00, 0x2100 ]
+			
+			System.print(Udata.textures)
+		}
+		var textures = Udata.textures
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, textures[0])
+		Draw.PopulateSegment(0x09, textures[1])
+		Draw.PopulateSegment(0x0A, textures[2])
+		Draw.Skeleton(0)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
