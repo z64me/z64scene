@@ -1,6 +1,6 @@
 [submodule "z64viewer"]
 	path = z64viewer
-	url = https://github.com/z64tools/z64viewer
+	url = https://github.com/z64utils/z64viewer
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui
@@ -18,4 +18,4 @@
 	url = https://github.com/z64me/z64wren
 [submodule "z64convert"]
 	path = z64convert
-	url = https://github.com/z64tools/z64convert
+	url = https://github.com/z64utils/z64convert
