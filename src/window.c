@@ -1896,7 +1896,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		);
 	}
 	
-	void DrawSkeleton(WrenVM* vm) {
+	void DrawSkeleton(WrenVM* vm, int argc) {
 		struct Instance *inst = WREN_UDATA;
 		ReadyMatrix(inst, false, true);
 		if (sObject) {
@@ -1905,13 +1905,17 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 				&& sb_count(sObject->animations)
 			) {
 				uint32_t address = wrenGetSlotDouble(vm, 1);
+				uint32_t anim = 0;
+				if (argc > 1)
+					anim = wrenGetSlotDouble(vm, 2);
+				if (anim >= 0x01000000) anim = 0; // TODO address resolution
 				// is index, rather than segment address
 				if (address < 0x01000000) {
 					SkelAnime_Init(
 						&inst->skelanime
 						, sObject
 						, &sObject->skeletons[address]
-						, &sObject->animations[0]
+						, &sObject->animations[anim]
 					);
 					SkelAnime_Update(&inst->skelanime, 0);
 				}
@@ -1924,6 +1928,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			}
 		}
 		Matrix_Pop();
+	}
+	void DrawSkeleton1(WrenVM* vm) {
+		DrawSkeleton(vm, 1);
+	}
+	void DrawSkeleton2(WrenVM* vm) {
+		DrawSkeleton(vm, 2);
 	}
 	
 	if (streq(module, "main")) {
@@ -1953,7 +1963,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
-			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton;
+			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton1;
+			else if (streq(signature, "Skeleton(_,_)")) return DrawSkeleton2;
 			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
 			else if (streq(signature, "SetGlobalPosition(_,_,_)")) return DrawSetGlobalPosition;
 			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;

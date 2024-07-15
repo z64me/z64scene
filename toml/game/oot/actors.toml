@@ -467,7 +467,7 @@
 		Draw.PopulateSegment(0x08, textures[0])
 		Draw.PopulateSegment(0x09, textures[1])
 		Draw.PopulateSegment(0x0A, textures[2])
-		Draw.Skeleton(0)
+		Draw.Skeleton(0, 7) // idle animation
 	"""
 	[[Actor.Property]]
 		Mask = 65535
