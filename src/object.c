@@ -13,8 +13,8 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	const uint8_t *end = obj->file->dataEnd;
 	const uint32_t u24 = 0x00ffffff; // for masking lower 24 bits
 	
-	// find skeletons, starting 2 u32's from the end, backwards
-	for (const uint8_t *walk = end - 8; walk > start; walk -= 4)
+	// find skeletons
+	for (const uint8_t *walk = start; walk < end - 8; walk += 4)
 	{
 		uint32_t skeletonHeaderAddr = (walk - start) | (obj->segment << 24);
 		int numLimbs = walk[4];
