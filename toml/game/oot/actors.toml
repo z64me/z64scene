@@ -875,14 +875,58 @@
 	Name = "Gameplay_keep Objects"
 	Index = 57
 	Category = "8"
+	Objects = [ 0x0001 ]
 	Notes = "+0xFF00 = Message ID (+0300)"
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			var type = Props.Type.clamp(0, 11)
+			
+			// segment addresses may vary with game version
+			var sDLists = [
+				0x04039c00, // gFlatBlockDL
+				0x04039c00, // gFlatBlockDL
+				0x04039c00, // gFlatBlockDL
+				0x0403a2d0, // gFlatRotBlockDL
+				0x0403a2d0, // gFlatRotBlockDL
+				0x0403a630, // gSmallCubeDL
+				Null, //0x06000210, // gHookshotPostDL unused in-game, wrong segment
+				0x0403ab80, // gGrassBladesDL
+				0x0403a9b0, // gTreeStumpDL
+				0x0403c050, // gSignRectangularDL
+				0x0403c5b0, // gSignDirectionalDL
+				0x0400d340, // gBoulderFragmentsDL
+			]
+			var sScales = [
+				0.025,
+				0.05,
+				0.1,
+				0.005,
+				0.01,
+				0.1,
+				0.1,
+				0.01,
+				0.01,
+				0.01,
+				0.01,
+				0.01,
+			]
+			
+			Udata.Scale = sScales[type]
+			Udata.Mesh = sDLists[type]
+		}
+		if (Udata.Mesh == Null)
+			return
+		Draw.SetScale(Udata.Scale)
+		Draw.Mesh(Udata.Mesh)
+	"""
 	[[Actor.Property]]
-		Mask = 65280
+		Mask = 0xff00
 		Name = "Message ID"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 255
-		Name = "Presets"
+		Mask = 0x00ff
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Small grey stone block"],
