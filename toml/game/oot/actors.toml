@@ -4212,7 +4212,11 @@
 	Index = 321
 	Category = "6"
 	Notes = "Message ID //Value + 0x0300"
-	Objects = [303]
+	Objects = [0x0001, 303]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Mesh(0x0403c050) // subject to change on game versions
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
