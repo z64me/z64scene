@@ -194,6 +194,7 @@ struct ActorDatabase
 					foreign static Mesh(address)
 					foreign static Skeleton(addressOrIndex)
 					foreign static Skeleton(addressOrIndex, animationAddressOrIndex)
+					foreign static Skeleton(addressOrIndex, animationAddressOrIndex, animationSpeed)
 					foreign static SetLocalPosition(xpos, ypos, zpos)
 					foreign static SetGlobalPosition(xpos, ypos, zpos)
 					foreign static SetGlobalRotation(xrot, yrot, zrot)

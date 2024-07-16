@@ -1921,6 +1921,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 				}
 				// TODO address based skelanime
 			}
+			if (argc > 2)
+				inst->skelanime.playSpeed = wrenGetSlotDouble(vm, 3);
 			if (inst->skelanime.limbCount) {
 				SkelAnime_Update(&inst->skelanime, gInput.delta_time_sec * (20.0));
 				SkelAnime_Draw(&inst->skelanime, SKELANIME_TYPE_FLEX);
@@ -1934,6 +1936,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	}
 	void DrawSkeleton2(WrenVM* vm) {
 		DrawSkeleton(vm, 2);
+	}
+	void DrawSkeleton3(WrenVM* vm) {
+		DrawSkeleton(vm, 3);
 	}
 	
 	if (streq(module, "main")) {
@@ -1965,6 +1970,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton1;
 			else if (streq(signature, "Skeleton(_,_)")) return DrawSkeleton2;
+			else if (streq(signature, "Skeleton(_,_,_)")) return DrawSkeleton3;
 			else if (streq(signature, "SetLocalPosition(_,_,_)")) return DrawSetLocalPosition;
 			else if (streq(signature, "SetGlobalPosition(_,_,_)")) return DrawSetGlobalPosition;
 			else if (streq(signature, "SetGlobalRotation(_,_,_)")) return DrawSetGlobalRotation;
