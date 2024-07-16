@@ -186,6 +186,9 @@ struct ActorDatabase
 					foreign static SetFaceSnapVector(x, y, z)
 					foreign static SetFaceSnapVector()
 					foreign static ClearFaceSnapVector()
+					
+					foreign static ClearLimbOverrides()
+					foreign static PushLimbOverride(limbIndex, meshAddress)
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)

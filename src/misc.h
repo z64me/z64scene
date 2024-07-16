@@ -386,6 +386,7 @@ struct Instance
 	} mm;
 	
 	SkelAnime skelanime;
+	sb_array(struct ObjectLimbOverride, limbOverrides);
 	
 	// for tracking changes
 	struct {

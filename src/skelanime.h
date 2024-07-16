@@ -48,7 +48,7 @@ typedef enum
 
 void SkelAnime_Init(SkelAnime*, const struct Object *object, const struct ObjectSkeleton *skeleton, const struct ObjectAnimation *animation);
 void SkelAnime_Update(SkelAnime*, double deltaTimeFrames);
-void SkelAnime_Draw(SkelAnime*, SkelanimeType type);
+void SkelAnime_Draw(SkelAnime*, SkelanimeType type, const struct ObjectLimbOverride *limbOverrides);
 void SkelAnime_Free(SkelAnime*);
 
 #endif // SKELANIME_H_INCLUDED

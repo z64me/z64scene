@@ -8,6 +8,7 @@
 #include "stretchy_buffer.h"
 
 struct Object;
+struct ObjectLimbOverride;
 
 struct ObjectAnimation
 {
@@ -38,6 +39,12 @@ struct Object
 	
 	sb_array(struct ObjectSkeleton, skeletons);
 	sb_array(struct ObjectAnimation, animations);
+};
+
+struct ObjectLimbOverride
+{
+	uint32_t segAddr;
+	uint8_t limbIndex;
 };
 
 struct Object *ObjectFromFilename(const char *filename, int segment);

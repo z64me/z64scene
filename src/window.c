@@ -1668,6 +1668,17 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void InstClearFaceSnapVector(WrenVM *vm) {
 		InstSetFaceSnapVector(WREN_UDATA, ((Vec3f){0, 0, 0}));
 	}
+	void InstClearLimbOverrides(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		sb_clear(inst->limbOverrides);
+	}
+	void InstPushLimbOverride(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		sb_push(inst->limbOverrides, ((struct ObjectLimbOverride) {
+			.limbIndex = wrenGetSlotDouble(vm, 1),
+			.segAddr = wrenGetSlotDouble(vm, 2)
+		}));
+	}
 	
 	void DrawSetScale3(WrenVM* vm) {
 		sXscale = wrenGetSlotDouble(vm, 1);
@@ -1925,7 +1936,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 				inst->skelanime.playSpeed = wrenGetSlotDouble(vm, 3);
 			if (inst->skelanime.limbCount) {
 				SkelAnime_Update(&inst->skelanime, gInput.delta_time_sec * (20.0));
-				SkelAnime_Draw(&inst->skelanime, SKELANIME_TYPE_FLEX);
+				SkelAnime_Draw(&inst->skelanime, SKELANIME_TYPE_FLEX, inst->limbOverrides);
 				gRenderCodeDrewSomething = true;
 			}
 		}
@@ -1961,6 +1972,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetFaceSnapVector()")) return InstSetFaceSnapVector0;
 			else if (streq(signature, "SetFaceSnapVector(_,_,_)")) return InstSetFaceSnapVector3;
 			else if (streq(signature, "ClearFaceSnapVector()")) return InstClearFaceSnapVector;
+			else if (streq(signature, "ClearLimbOverrides()")) return InstClearLimbOverrides;
+			else if (streq(signature, "PushLimbOverride(_,_)")) return InstPushLimbOverride;
 			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {
@@ -2508,7 +2521,7 @@ void WindowMainLoop(const char *sceneFn)
 			Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
 			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
 			SkelAnime_Update(&gSkelAnimeTest, gInput.delta_time_sec * (20.0));
-			SkelAnime_Draw(&gSkelAnimeTest, SKELANIME_TYPE_FLEX);
+			SkelAnime_Draw(&gSkelAnimeTest, SKELANIME_TYPE_FLEX, 0);
 		}
 		
 		// if mouse has moved or ctrl key state has changed,
