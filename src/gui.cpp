@@ -427,6 +427,27 @@ static void PickHexValueU16(const char *uniqueName, uint16_t *v, uint16_t min = 
 	*v = tmp;
 }
 
+static bool PickColor3U8(const char* label, uint8_t *rgb, ImGuiColorEditFlags flags = 0)
+{
+	float col[3] = { UNFOLD_ARRAY_3_EXT(uint8_t, rgb, / 255.0f) };
+	bool result = ImGui::ColorEdit3(label, col, flags);
+	
+	for (int i = 0; i < 3; ++i)
+		rgb[i] = col[i] * 255;
+	
+	return result;
+}
+
+static bool PickColor3U8(const char* label, ZeldaRGB *rgb, ImGuiColorEditFlags flags = 0)
+{
+	return PickColor3U8(label, (uint8_t*)rgb, flags);
+}
+
+static bool PickColor3U8(const char* label, ZeldaVecS8 *rgb, ImGuiColorEditFlags flags = 0)
+{
+	return PickColor3U8(label, (uint8_t*)rgb, flags);
+}
+
 // determine which objects are missing, and which are potentially unused
 static void RefreshObjectStats(void)
 {
@@ -879,7 +900,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			
 			// test sb macro
 			char test[16];
-			sprintf(test, "%d light settings", sb_count(gScene->headers[0].lights));
+			int numLights = sb_count(gGui->sceneHeader->lights);
+			sprintf(test, "%d light settings", numLights);
 			ImGui::TextWrapped(test);
 			sprintf(test, "%p", &gScene->test);
 			ImGui::TextWrapped(test);
@@ -907,13 +929,25 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						, &gGui->env.envPreviewEach
 						, [](void* data, int n) {
 							static char test[64];
-							sprintf(test, "%d", n);
+							sprintf(test, "Env %d", n);
 							return (const char*)test;
 						}
-						, gScene->headers[0].lights
-						, sb_count(gScene->headers[0].lights)
+						, gGui->sceneHeader->lights
+						, numLights
 					);
-					IMGUI_COMBO_HOVER(gGui->env.envPreviewEach, sb_count(gScene->headers[0].lights));
+					IMGUI_COMBO_HOVER(gGui->env.envPreviewEach, numLights);
+					{
+						ZeldaLight *light = &gGui->sceneHeader->lights[gGui->env.envPreviewEach];
+						
+						// TODO using color to represent direction vector for now
+						ImGuiColorEditFlags flags = ImGuiColorEditFlags_NoInputs;
+						PickColor3U8("Ambient Light##EnvEditor", &light->ambient, flags);
+						PickColor3U8("Diffuse A##EnvEditor", &light->diffuse_a, flags);
+							ImGui::SameLine(); PickColor3U8("Direction##DiffA##EnvEditor", &light->diffuse_a_dir, flags);
+						PickColor3U8("Diffuse B##EnvEditor", &light->diffuse_b, flags);
+							ImGui::SameLine(); PickColor3U8("Direction##DiffB##EnvEditor", &light->diffuse_b_dir, flags);
+						PickColor3U8("Fog##EnvEditor", &light->fog, flags);
+					}
 					break;
 				}
 				
