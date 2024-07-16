@@ -195,6 +195,7 @@ struct ActorDatabase
 					foreign static SetScale(xscale, yscale, zscale)
 					foreign static SetScale(scale)
 					foreign static UseObjectSlot(slot)
+					foreign static UseAnimationsFromObjectSlot(slot)
 					foreign static Mesh(address)
 					foreign static Skeleton(addressOrIndex)
 					foreign static Skeleton(addressOrIndex, animationAddressOrIndex)

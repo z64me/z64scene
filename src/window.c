@@ -1561,6 +1561,7 @@ static void RenderCodeErrorFn(WrenVM* vm, WrenErrorType errorType,
 }
 
 static bool gRenderCodeDrewSomething;
+static struct Object *sObjectAnims = 0;
 static double sXrotGlobal = 0;
 static double sYrotGlobal = 0;
 static double sZrotGlobal = 0;
@@ -1721,6 +1722,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			gSPSegment(POLY_OPA_DISP++, segment, data);
 			gSPSegment(POLY_XLU_DISP++, segment, data);
 		}
+	}
+	void DrawUseAnimationsFromObjectSlot(WrenVM *vm) {
+		int slot = wrenGetSlotDouble(vm, 1);
+		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
+		sObjectAnims = GuiGetObjectDataFromId(objectId);
 	}
 	void DrawSetLocalPosition(WrenVM* vm) {
 		sXposLocal = wrenGetSlotDouble(vm, 1);
@@ -1922,9 +1928,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		struct Instance *inst = WREN_UDATA;
 		ReadyMatrix(inst, false, true);
 		if (sObject) {
+			const struct ObjectAnimation *animations = sObject->animations;
+			if (sObjectAnims) animations = sObjectAnims->animations;
 			if (inst->skelanime.limbCount == 0
 				&& sb_count(sObject->skeletons)
-				&& sb_count(sObject->animations)
+				&& sb_count(animations)
 			) {
 				uint32_t address = wrenGetSlotDouble(vm, 1);
 				uint32_t anim = 0;
@@ -1937,7 +1945,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 						&inst->skelanime
 						, sObject
 						, &sObject->skeletons[address]
-						, &sObject->animations[anim]
+						, &animations[anim]
 					);
 					SkelAnime_Update(&inst->skelanime, 0);
 				}
@@ -1992,6 +2000,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
 			else if (streq(signature, "SetScale(_)")) return DrawSetScale1;
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
+			else if (streq(signature, "UseAnimationsFromObjectSlot(_)")) return DrawUseAnimationsFromObjectSlot;
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton1;
 			else if (streq(signature, "Skeleton(_,_)")) return DrawSkeleton2;
@@ -2058,6 +2067,7 @@ bool RenderCodeGo(struct Instance *inst)
 		sYrotGlobal = inst->yrot;
 		sZrotGlobal = inst->zrot;
 		sPosGlobal = inst->pos;
+		sObjectAnims = 0;
 		// billboard matrices live in segment 0x01
 		gSPSegment(POLY_OPA_DISP++, 0x1, gRenderCodeBillboards);
 		gSPSegment(POLY_XLU_DISP++, 0x1, gRenderCodeBillboards);
