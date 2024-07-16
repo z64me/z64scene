@@ -146,6 +146,62 @@
 	Index = 9
 	Category = "10"
 	Notes = "+003F = Switch Flag //Used by locked doors only \nDepending on the scene ID, they need certain objects loaded as the first one in the object list. Scene IDs:\n04: needs object 002C\n05: needs object 0059\n07-08: needs object 0187"
+	RenderCode = """
+		var skel = 1 // 0400ff78
+		var anim = 4 // 0400e758
+		var animSpeed = 0
+		
+		if (Inst.PropertyChanged)
+		{
+			// subject to change based on game version
+			var gDoorLeftDL = 0x0400ecb8
+			var gFieldDoorLeftDL = 0x050047a0
+			
+			// less likely to change based on game version
+			var gFireTempleDoorLeftDL = 0x0600f998
+			var gWaterTempleDoorLeftDL = 0x06004958
+			var gShadowDoorLeftDL = 0x060013b8
+			
+			// sceneId, objectId, dlistAddr
+			var sDoorInfo = [
+				[ Null, 0x0001, gDoorLeftDL ],            // default
+				[ Null, 0x0002, gFieldDoorLeftDL ],       // field
+				[ 0x04, 0x002C, gFireTempleDoorLeftDL ],  // hidan
+				[ 0x05, 0x0059, gWaterTempleDoorLeftDL ], // mizusin
+				[ 0x07, 0x0187, gShadowDoorLeftDL ],      // hakadan
+				[ 0x07, 0x0187, gShadowDoorLeftDL ],      // hakadanch
+			]
+			
+			// TODO Global.SceneId and Global.SubkeepId
+			var sceneId = -1//0x07
+			var match = Null
+			for (try in sDoorInfo)
+				if (try[0] == sceneId)
+					match = try
+			if (match == Null) {
+				if (true)//if (Global.SubkeepId == 0x0002)
+					match = sDoorInfo[1]
+				else
+					match = sDoorInfo[0]
+			}
+			System.print("door match = %(match)")
+			Udata.DoorInfo = match
+		}
+		
+		Draw.PopulateSegment(0x05, 0, 0x0002) // field
+		Draw.PopulateSegment(0x06, 0, Udata.DoorInfo[1])
+		
+		// override door mesh
+		Inst.ClearLimbOverrides()
+		Inst.PushLimbOverride(4, Udata.DoorInfo[2])
+		
+		Draw.SetScale(0.01)
+		Draw.Skeleton(skel, anim, animSpeed)
+		
+		// door has only one side, so draw it again, rotated 180 degrees
+		Draw.SetGlobalRotation(Inst.Xrot, Inst.Yrot + 0x8000, Inst.Zrot)
+		Draw.Skeleton(skel, anim, animSpeed)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
