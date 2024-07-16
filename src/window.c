@@ -1866,8 +1866,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		DrawPopulateSegment(sObject, segment, address);
 	}
 	void DrawPopulateSegment3(WrenVM *vm) {
-		int slot = wrenGetSlotDouble(vm, 1);
-		int objectId = GuiGetActorObjectIdFromSlot(WREN_UDATA->id, slot);
+		int objectId = wrenGetSlotDouble(vm, 1);
 		struct Object *obj = GuiGetObjectDataFromId(objectId);
 		int segment = wrenGetSlotDouble(vm, 2);
 		uint32_t address = wrenGetSlotDouble(vm, 3);
