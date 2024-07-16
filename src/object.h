@@ -45,6 +45,7 @@ struct ObjectLimbOverride
 {
 	uint32_t segAddr;
 	uint8_t limbIndex;
+	const void *objectData; // optional, 0 for current object
 };
 
 struct Object *ObjectFromFilename(const char *filename, int segment);

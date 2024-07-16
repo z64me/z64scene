@@ -1672,12 +1672,24 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		struct Instance *inst = WREN_UDATA;
 		sb_clear(inst->limbOverrides);
 	}
-	void InstPushLimbOverride(WrenVM *vm) {
+	void InstPushLimbOverride(WrenVM *vm, int argc) {
 		struct Instance *inst = WREN_UDATA;
+		const void *objectData = 0;
+		if (argc == 3) {
+			struct Object *obj = GuiGetObjectDataFromId(wrenGetSlotDouble(vm, 3));
+			if (obj) objectData = obj->file->data;
+		}
 		sb_push(inst->limbOverrides, ((struct ObjectLimbOverride) {
 			.limbIndex = wrenGetSlotDouble(vm, 1),
-			.segAddr = wrenGetSlotDouble(vm, 2)
+			.segAddr = wrenGetSlotDouble(vm, 2),
+			.objectData = objectData,
 		}));
+	}
+	void InstPushLimbOverride2(WrenVM *vm) {
+		InstPushLimbOverride(vm, 2);
+	}
+	void InstPushLimbOverride3(WrenVM *vm) {
+		InstPushLimbOverride(vm, 3);
 	}
 	
 	void DrawSetScale3(WrenVM* vm) {
@@ -1972,7 +1984,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "SetFaceSnapVector(_,_,_)")) return InstSetFaceSnapVector3;
 			else if (streq(signature, "ClearFaceSnapVector()")) return InstClearFaceSnapVector;
 			else if (streq(signature, "ClearLimbOverrides()")) return InstClearLimbOverrides;
-			else if (streq(signature, "PushLimbOverride(_,_)")) return InstPushLimbOverride;
+			else if (streq(signature, "PushLimbOverride(_,_)")) return InstPushLimbOverride2;
+			else if (streq(signature, "PushLimbOverride(_,_,_)")) return InstPushLimbOverride3;
 			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
 		}
 		else if (streq(className, "Draw")) {

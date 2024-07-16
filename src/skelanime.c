@@ -110,7 +110,7 @@ void SkelAnime_Update(SkelAnime* this, double deltaTimeFrames)
 	this->prevFrame = this->curFrame;
 }
 
-static void SkelAnime_Limb(const uint32_t skelSeg, u8 limbId, MtxN64** mtx, Vec3s* jointTable, const struct ObjectLimbOverride *limbOverrides)
+static void SkelAnime_Limb(const struct Object *obj, const uint32_t skelSeg, u8 limbId, MtxN64** mtx, Vec3s* jointTable, const struct ObjectLimbOverride *limbOverrides)
 {
 	const StandardLimb* limb;
 	const uint32_t* limbList;
@@ -151,22 +151,34 @@ static void SkelAnime_Limb(const uint32_t skelSeg, u8 limbId, MtxN64** mtx, Vec3
 				(*mtx)++;
 			}
 			
+			bool restoreObject = false;
 			uint32_t dlist = u32r(&limb->dList);
 			const struct ObjectLimbOverride *override = FindLimbOverride(limbOverrides, limbId);
 			//if (limbOverrides) LogDebug("limbOverrides = %p, %d = %08x vs %d vs %p", limbOverrides, limbOverrides[0].limbIndex, limbOverrides[0].segAddr, limbId, override);
 			if (override)
+			{
 				dlist = override->segAddr;//, LogDebug("override %d with %08x", limbId, override->segAddr);
+				
+				if (override->objectData)
+				{
+					gSPSegment(POLY_OPA_DISP++, dlist >> 24, override->objectData);
+					restoreObject = true;
+				}
+			}
 			
 			gSPDisplayList(POLY_OPA_DISP++, dlist);
+			
+			if (restoreObject)
+				gSPSegment(POLY_OPA_DISP++, obj->segment, obj->file->data);
 		}
 		
 		if (limb->child != 0xFF)
-			SkelAnime_Limb(skelSeg, limb->child, mtx, jointTable, limbOverrides);
+			SkelAnime_Limb(obj, skelSeg, limb->child, mtx, jointTable, limbOverrides);
 	}
 	Matrix_Pop();
 	
 	if (limb->sibling != 0xFF)
-		SkelAnime_Limb(skelSeg, limb->sibling, mtx, jointTable, limbOverrides);
+		SkelAnime_Limb(obj, skelSeg, limb->sibling, mtx, jointTable, limbOverrides);
 }
 
 void SkelAnime_Draw(SkelAnime* this, SkelanimeType type, const struct ObjectLimbOverride *limbOverrides)
@@ -187,7 +199,7 @@ void SkelAnime_Draw(SkelAnime* this, SkelanimeType type, const struct ObjectLimb
 			gSPSegment(POLY_OPA_DISP++, 0x0D, mtx);
 		}
 		
-		SkelAnime_Limb(skel->limbAddrsSegAddr, 0, &mtx, this->jointTable, limbOverrides);
+		SkelAnime_Limb(obj, skel->limbAddrsSegAddr, 0, &mtx, this->jointTable, limbOverrides);
 	}
 	Matrix_Pop();
 }
