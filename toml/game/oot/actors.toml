@@ -4765,10 +4765,89 @@
 	Name = "Kokiri"
 	Index = 355
 	Category = "4"
-	Objects = [197]
+	Objects = [ 0x00FC, 0x00FD, 0x00C5 ] # km1, kw1, os_anime
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			var shapeM = [
+				0, // object slot
+				[   0, 130, 70 ], // tunic color
+				[ 110, 170, 20 ], // boots color
+				Null, // no eye animations
+				Null, // no head override
+			]
+			var shapeF = [
+				1, // object slot
+				[  70, 190, 60 ], // tunic color
+				[ 100,  30,  0 ], // boots color
+				[ 0x06000f4c, 0x06001a0c, 0x06001e0c ], // eye textures
+				Null, // no head override
+			]
+			var overrideHeadFado = [
+				[ 0x06000240, 0x06000d40, 0x06001140 ], // eye textures
+				[ 0x013D, 0x06002940 ] // object, dl
+			]
+			
+			var sModelInfo = [
+				/* ENKO_TYPE_CHILD_0    */ shapeM,
+				/* ENKO_TYPE_CHILD_1    */ shapeF,
+				/* ENKO_TYPE_CHILD_2    */ shapeM,
+				/* ENKO_TYPE_CHILD_3    */ shapeM,
+				/* ENKO_TYPE_CHILD_4    */ shapeM,
+				/* ENKO_TYPE_CHILD_5    */ shapeF,
+				/* ENKO_TYPE_CHILD_6    */ shapeF,
+				/* ENKO_TYPE_CHILD_7    */ shapeM,
+				/* ENKO_TYPE_CHILD_8    */ shapeM,
+				/* ENKO_TYPE_CHILD_9    */ shapeF,
+				/* ENKO_TYPE_CHILD_10   */ shapeF,
+				/* ENKO_TYPE_CHILD_11   */ shapeM,
+				/* ENKO_TYPE_CHILD_FADO */ shapeF[0..-3] + overrideHeadFado,
+			]
+
+			var which = sModelInfo[Props.Type]
+			Udata.ObjectSlot = which[0]
+			Udata.TunicColor = which[1]
+			Udata.BootsColor = which[2]
+			Udata.EyeTextures = which[3]
+			Udata.HeadOverride = which[4]
+			// XXX there isn't a good solution for animations since
+			//     they can vary based on the game's quest states,
+			//     but could still probably approximate some of them
+			//Udata.AnimIndex = Props.Animation // testing
+			Udata.AnimIndex = Props.Type == 5 ? 42 : Props.Type == 12 ? 36 : 43
+		}
+		Draw.SetScale(0.01)
+		Draw.UseAnimationsFromObjectSlot(2)
+		Draw.UseObjectSlot(Udata.ObjectSlot)
+		
+		// TODO eye animations
+		if (Udata.EyeTextures != Null)
+		{
+			if (Udata.HeadOverride != Null)
+				Draw.PopulateSegment(0x0A, Udata.EyeTextures[0], Udata.HeadOverride[0])
+			else
+				Draw.PopulateSegment(0x0A, Udata.EyeTextures[0])
+		}
+		
+		Draw.BeginSegment(0x08)
+			var tunicColor = Udata.TunicColor
+			Draw.SetEnvColor(tunicColor[0], tunicColor[1], tunicColor[2])
+		Draw.EndSegment()
+		
+		Draw.BeginSegment(0x09)
+			var bootsColor = Udata.BootsColor
+			Draw.SetEnvColor(bootsColor[0], bootsColor[1], bootsColor[2])
+		Draw.EndSegment()
+		
+		Inst.ClearLimbOverrides()
+		if (Udata.HeadOverride != Null)
+			Inst.PushLimbOverride(15, Udata.HeadOverride[1], Udata.HeadOverride[0])
+		
+		Draw.Skeleton(0, Udata.AnimIndex)
+	"""
 	[[Actor.Property]]
-		Mask = 65535
-		Name = "Presets"
+		Mask = 0xff
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Standing boy //requires object 00FC, text ID as Adult: 1072"],
