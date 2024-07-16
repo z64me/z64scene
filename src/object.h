@@ -40,7 +40,7 @@ struct Object
 	sb_array(struct ObjectAnimation, animations);
 };
 
-struct Object *ObjectFromFilename(const char *filename);
+struct Object *ObjectFromFilename(const char *filename, int segment);
 void ObjectFree(struct Object *object);
 
 #endif // OBJECT_H_INCLUDED

@@ -440,7 +440,14 @@ struct ObjectDatabase
 				return;
 			
 			if (FileExists(zobjPath))
-				zobjData = ObjectFromFilename(zobjPath);
+			{
+				int segment = 0x06;
+				
+				if (index == 0x0001) segment = 0x04;
+				else if (index <= 0x0003) segment = 0x05;
+				
+				zobjData = ObjectFromFilename(zobjPath, segment);
+			}
 			
 			// consider this consumed
 			free(zobjPath);

@@ -210,13 +210,16 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	}
 }
 
-struct Object *ObjectFromFilename(const char *filename)
+struct Object *ObjectFromFilename(const char *filename, int segment)
 {
 	struct Object *result = Calloc(1, sizeof(*result));
 	
 	result->file = FileFromFilename(filename);
 	
-	result->segment = 0x06; // is fine hard-coded for now
+	// default
+	if (segment <= 0) segment = 0x06;
+	
+	result->segment = segment;
 	
 	ObjectParseAfterLoad(result);
 	

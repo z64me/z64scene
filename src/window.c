@@ -940,7 +940,7 @@ struct Scene *WindowLoadScene(const char *fn)
 
 struct Object *WindowLoadObject(const char *fn)
 {
-	struct Object *obj = ObjectFromFilename(fn);
+	struct Object *obj = ObjectFromFilename(fn, 0);
 	
 	if (sb_count(obj->skeletons))
 	{
@@ -972,7 +972,7 @@ struct Object *WindowLoadAnimation(const char *fn)
 	)
 		return 0;
 	
-	struct Object *obj = ObjectFromFilename(fn);
+	struct Object *obj = ObjectFromFilename(fn, 0);
 	
 	LogDebug(" -> found %d anims", sb_count(obj->animations));
 	
