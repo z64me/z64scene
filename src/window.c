@@ -1866,10 +1866,10 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		DrawPopulateSegment(sObject, segment, address);
 	}
 	void DrawPopulateSegment3(WrenVM *vm) {
-		int objectId = wrenGetSlotDouble(vm, 1);
+		int segment = wrenGetSlotDouble(vm, 1);
+		uint32_t address = wrenGetSlotDouble(vm, 2);
+		int objectId = wrenGetSlotDouble(vm, 3);
 		struct Object *obj = GuiGetObjectDataFromId(objectId);
-		int segment = wrenGetSlotDouble(vm, 2);
-		uint32_t address = wrenGetSlotDouble(vm, 3);
 		DrawPopulateSegment(obj, segment, address);
 	}
 	void MathSinS(WrenVM* vm) {
