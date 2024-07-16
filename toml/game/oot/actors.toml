@@ -568,6 +568,12 @@
 	Name = "Bug"
 	Index = 32
 	Category = "7"
+	RenderCode = """
+		Draw.SetScale(0.01)
+		// gBugSkel, gBugCrawlAnim
+		// 04035590, 040341fc in debug
+		Draw.Skeleton(4, 9)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
