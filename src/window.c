@@ -1930,8 +1930,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		if (sObject) {
 			const struct ObjectAnimation *animations = sObject->animations;
 			if (sObjectAnims) animations = sObjectAnims->animations;
-			if (inst->skelanime.limbCount == 0
-				&& sb_count(sObject->skeletons)
+			if (sb_count(sObject->skeletons)
 				&& sb_count(animations)
 			) {
 				uint32_t address = wrenGetSlotDouble(vm, 1);

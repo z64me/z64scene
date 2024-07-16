@@ -15,6 +15,13 @@ static inline stb_sb_find_impl(FindLimbOverride, const struct ObjectLimbOverride
 
 void SkelAnime_Init(SkelAnime *this, const struct Object *object, const struct ObjectSkeleton *skeleton, const struct ObjectAnimation *animation)
 {
+	// don't reinitialize if nothing changed
+	if (this->object == object
+		&& this->skeleton == skeleton
+		&& this->animation == animation
+	)
+		return;
+	
 	memset(this, 0, sizeof(*this));
 	
 	this->object = object;
