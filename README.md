@@ -17,7 +17,7 @@ inside linux (tested on arch, and on debian running in wsl2).
 
 when you go to set up mxe, don't build all the packages; you only need this:
 ```
-make gcc g++ glfw3
+make gcc glfw3
 ```
 
 ### and then clone and build z64scene
