@@ -6229,6 +6229,11 @@
 	Category = "6"
 	Notes = "+0xFF00 Collectible Flag (fairy)"
 	Objects = [392]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000950) // gGossipStoneMaterialDL
+		Draw.Mesh(0x060009d0) // gGossipStoneDL
+	"""
 	[[Actor.Property]]
 		Mask = 65280
 		Name = "Collectible Flag (Fairy)"
