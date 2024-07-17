@@ -190,6 +190,12 @@ struct ActorDatabase
 					foreign static ClearLimbOverrides()
 					foreign static PushLimbOverride(limbIndex, meshAddress)
 					foreign static PushLimbOverride(limbIndex, meshAddress, objectId)
+					
+					foreign static ClearChildren()
+					foreign static AddChild(type)
+					foreign static AddChild(type, params)
+					foreign static AddChild(type, params, x, y, z)
+					foreign static AddChild(type, params, x, y, z, xrot, yrot, zrot)
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)

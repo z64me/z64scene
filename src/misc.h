@@ -51,15 +51,16 @@ struct CutsceneOot;
 
 #define INSTANCE_PREV_DEFAULT 0x10000
 #define INSTANCE_POS_PREV_INIT (Vec3f){ FLT_MAX, FLT_MAX, FLT_MAX }
-#define INSTANCE_PREV_INIT { \
+#define INSTANCE_PREV_INIT_UUID(UUID) { \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
-	InstanceNewUuid(), \
+	UUID, \
 	INSTANCE_POS_PREV_INIT \
 }
+#define INSTANCE_PREV_INIT INSTANCE_PREV_INIT_UUID(InstanceNewUuid())
 
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
@@ -387,6 +388,7 @@ struct Instance
 	
 	SkelAnime skelanime;
 	sb_array(struct ObjectLimbOverride, limbOverrides);
+	sb_array(struct Instance, rendercodeChildren);
 	
 	// for tracking changes
 	struct {

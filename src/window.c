@@ -1569,6 +1569,7 @@ static Vec3f sPosGlobal = {0};
 static GbiGfx **sRenderCodeSegment = 0;
 static void *gRenderCodeBillboards = 0;
 static Matrix gBillboardMatrix[2];
+#define NEW_RENDERCODE_HOOK_ARGC(FUNC, ARGC) void FUNC##ARGC(WrenVM *vm) { FUNC(vm, ARGC); }
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	WrenVM* vm
 	, const char* module
@@ -1692,6 +1693,45 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void InstPushLimbOverride3(WrenVM *vm) {
 		InstPushLimbOverride(vm, 3);
 	}
+	void InstClearChildren(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		sb_clear(inst->rendercodeChildren);
+	}
+	void InstAddChild(WrenVM *vm, int argc) {
+		struct Instance *inst = WREN_UDATA;
+		int type = wrenGetSlotDouble(vm, 1);
+		uint16_t params = argc >= 2 ? wrenGetSlotDouble(vm, 2) : 0;
+		float xpos = inst->pos.x;
+		float ypos = inst->pos.y;
+		float zpos = inst->pos.z;
+		uint16_t xrot = inst->xrot;
+		uint16_t yrot = inst->yrot;
+		uint16_t zrot = inst->zrot;
+		if (argc >= 3) {
+			xpos = wrenGetSlotDouble(vm, 3);
+			ypos = wrenGetSlotDouble(vm, 4);
+			zpos = wrenGetSlotDouble(vm, 5);
+		}
+		if (argc >= 6) {
+			xrot = wrenGetSlotDouble(vm, 6);
+			yrot = wrenGetSlotDouble(vm, 7);
+			zrot = wrenGetSlotDouble(vm, 8);
+		}
+		struct Instance child = {
+			.id = type,
+			.params = params,
+			.pos = { xpos, ypos, zpos },
+			.xrot = xrot,
+			.yrot = yrot,
+			.zrot = zrot,
+			.prev = INSTANCE_PREV_INIT_UUID(inst->prev.uuid)
+		};
+		sb_push(inst->rendercodeChildren, child);
+	}
+	NEW_RENDERCODE_HOOK_ARGC(InstAddChild, 1)
+	NEW_RENDERCODE_HOOK_ARGC(InstAddChild, 2)
+	NEW_RENDERCODE_HOOK_ARGC(InstAddChild, 5)
+	NEW_RENDERCODE_HOOK_ARGC(InstAddChild, 8)
 	
 	void DrawSetScale3(WrenVM* vm) {
 		sXscale = wrenGetSlotDouble(vm, 1);
@@ -1994,6 +2034,11 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "PushLimbOverride(_,_)")) return InstPushLimbOverride2;
 			else if (streq(signature, "PushLimbOverride(_,_,_)")) return InstPushLimbOverride3;
 			//else if (streq(signature, "Xpos=(_)")) return InstSetXpos; // no setter, is read-only
+			else if (streq(signature, "ClearChildren()")) return InstClearChildren;
+			else if (streq(signature, "AddChild(_)")) return InstAddChild1;
+			else if (streq(signature, "AddChild(_,_)")) return InstAddChild2;
+			else if (streq(signature, "AddChild(_,_,_,_,_)")) return InstAddChild5;
+			else if (streq(signature, "AddChild(_,_,_,_,_,_,_,_)")) return InstAddChild8;
 		}
 		else if (streq(className, "Draw")) {
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
@@ -2075,6 +2120,13 @@ bool RenderCodeGo(struct Instance *inst)
 			LogDebug("failed to invoke function");
 		n64_buffer_flush(false);
 		n64_draw_dlist(gfxEnableXray);
+		
+		// draw children, if applicable
+		bool rcChildrenDrew = false;
+		sb_foreach(inst->rendercodeChildren, {
+			rcChildrenDrew |= RenderCodeGo(each);
+		})
+		gRenderCodeDrewSomething |= rcChildrenDrew;
 	}
 	// compile source into vm
 	else if (rc->type == ACTOR_RENDER_CODE_TYPE_SOURCE)
