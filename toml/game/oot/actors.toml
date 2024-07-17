@@ -3677,17 +3677,107 @@
 	Index = 274
 	Category = "6"
 	Notes = "+0x07C0 = Collectible Spawned\nSee actor 0015 for spawn values\n- 0000 0C\n- 0040 06\n- 0080 Magic Jar (Large) //0E\n- 00C0 //0F\n- 0100 Bomb //03\n- 0140 //08\n- 0180 //09\n- 01C0 Arrows (30) //0A\n- 0200 Green Rupee\n- 0240 Blue Rupee\n- 0280 Red Rupee\n- 02C0 //12\n+0x3F = Switch Flag\nZ ROTATION +0xFFFF = Number of collectibles spawned //Type 02 only\nZ ROTATION +0xFF = Spawn Item Trigger //Type 03 only\n- 0000 Sword Swing\n- 0001 Shot with Arrow only\n- 0002 Megaton Hammer\n- 0003 Explosions\n- 0004 Shot with Slingshot Seed only\n- 0006 Hookshot"
+	Objects = [ 0x0001 ]
+	RenderCode = """
+		if (Inst.PropertyChanged || Inst.PositionChanged)
+		{
+			var item00 = 0x0015
+			var wonderMode = Props.Type
+			
+			//#!enum EnWonderItemMode {
+				var MULTITAG_FREE = 0
+				var TAG_POINT_FREE = 1
+				var PROXIMITY_DROP = 2
+				var INTERACT_SWITCH = 3
+				var UNUSED = 4
+				var MULTITAG_ORDERED = 5
+				var TAG_POINT_ORDERED = 6
+				var PROXIMITY_SWITCH = 7
+				var BOMB_SOLDIER = 8
+				var ROLL_DROP = 9
+			//#!end }
+			
+			if (wonderMode == PROXIMITY_DROP
+				|| wonderMode == ROLL_DROP
+			) {
+				//#!enum Item00Type {
+					var RUPEE_GREEN = 0x00
+					var RUPEE_BLUE = 0x01
+					var RUPEE_RED = 0x02
+					var RECOVERY_HEART = 0x03
+					var BOMBS_A = 0x04
+					var ARROWS_SINGLE = 0x05
+					var HEART_PIECE = 0x06
+					var HEART_CONTAINER = 0x07
+					var ARROWS_SMALL = 0x08
+					var ARROWS_MEDIUM = 0x09
+					var ARROWS_LARGE = 0x0A
+					var BOMBS_B = 0x0B
+					var NUTS = 0x0C
+					var STICK = 0x0D
+					var MAGIC_LARGE = 0x0E
+					var MAGIC_SMALL = 0x0F
+					var SEEDS = 0x10
+					var SMALL_KEY = 0x11
+					var FLEXIBLE = 0x12
+					var RUPEE_ORANGE = 0x13
+					var RUPEE_PURPLE = 0x14
+					var SHIELD_DEKU = 0x15
+					var SHIELD_HYLIAN = 0x16
+					var TUNIC_ZORA = 0x17
+					var TUNIC_GORON = 0x18
+					var BOMBS_SPECIAL = 0x19
+					var MAX = 0x1A
+					var NONE = 0xFF
+				//#!end }
+				var dropTable = [
+					NUTS,           HEART_PIECE,  MAGIC_LARGE,   MAGIC_SMALL,
+					RECOVERY_HEART, ARROWS_SMALL, ARROWS_MEDIUM, ARROWS_LARGE,
+					RUPEE_GREEN,    RUPEE_BLUE,   RUPEE_RED,     FLEXIBLE,
+				]
+				var itemDrop = Props.CollectibleToSpawn
+				
+				Inst.ClearChildren()
+				if (itemDrop < dropTable.count)
+					Inst.AddChild(item00, dropTable[itemDrop])
+			}
+			// TODO handle the other cases
+			else
+			{
+				// large green rupee is a good placeholder model
+				Inst.ClearChildren()
+				var child = Inst.AddChild(item00)
+				Inst.SetChildScale(child, 3)
+			}
+		}
+	"""
+	[[Actor.Property]]
+		Mask = 0xF800
+		Name = "Type"
+		Target = "Var"
+		Dropdown = [
+			[0, "Multitag"],
+			[1, "Tag Point"],
+			[2, "Invisible Item"],
+			[3, "Invisible Switch (activated by hitting it)"],
+			[4, "Unused"],
+			[5, "Multitag (Ordered)"],
+			[6, "Tag Point (Ordered)"],
+			[7, "Invisible Switch (activated if player nearby)"],
+			[8, "Courtyard Bomb Soldier"],
+			[9, "Invisible Item (only pickup if rolling)"],
+		]
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
 		Target = "Var"
 	[[Actor.Property]]
 		Mask = 1984
-		Name = "Collectible to Spawn"
+		Name = "Collectible To Spawn"
 		Target = "Var"
 	[[Actor.Property]]
 		Mask = 255
-		Name = "# of Collectibles / Spawn Trigger"
+		Name = "Number of Collectibles / Spawn Trigger"
 		Target = "ZRot"
 	[[Actor.Property]]
 		Mask = 63488
