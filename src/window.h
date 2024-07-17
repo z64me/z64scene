@@ -19,6 +19,8 @@ struct CameraFly
 	Vec3f eye;
 	Vec3f lookAt;
 	float fovy;
+	float camDirY;
+	uint16_t camDirYbin;
 };
 
 struct Input

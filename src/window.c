@@ -473,6 +473,9 @@ static inline void *camera_flythrough(Matrix *m)
 		, 0
 	);
 	
+	gState.cameraFly.camDirY = atan2f(m->mf[2][0], m->mf[0][0]);
+	gState.cameraFly.camDirYbin = RadToBin(-gState.cameraFly.camDirY) + 0x8000;
+	
 	//LogDebug("%f %f %f", UNFOLD_ARRAY_3(float, look));
 	memcpy(&gState.cameraFly.eye, pos, sizeof(pos));
 	//memcpy(&gState.cameraFly.lookAt, look, sizeof(look));
@@ -1953,6 +1956,9 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 	void GlobalGameplayFrames(WrenVM* vm) {
 		wrenSetSlotDouble(vm, 0, sGameplayFrames);
 	}
+	void GlobalCamDirY(WrenVM* vm) {
+		wrenSetSlotDouble(vm, 0, gState.cameraFly.camDirYbin);
+	}
 	void CollisionRaycastSnapToFloor(WrenVM *vm) {
 		Vec3f point = {
 			wrenGetSlotDouble(vm, 1),
@@ -2087,6 +2093,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		}
 		else if (streq(className, "Global")) {
 			if (streq(signature, "GameplayFrames")) return GlobalGameplayFrames;
+			else if (streq(signature, "CamDirY")) return GlobalCamDirY;
 		}
 	}
 	

@@ -236,6 +236,7 @@ struct ActorDatabase
 				}
 				class Global {
 					foreign static GameplayFrames
+					foreign static CamDirY
 				}
 			)");
 			
