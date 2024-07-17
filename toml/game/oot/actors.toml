@@ -32,7 +32,8 @@
 	Category = "5"
 	Objects = [50]
 	RenderCode = """
-		System.print("Hello, Stalfos!")
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 6) // idle stand animation
 	"""
 	[[Actor.Property]]
 		Mask = 65535
