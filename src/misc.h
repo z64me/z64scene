@@ -58,7 +58,8 @@ struct CutsceneOot;
 	INSTANCE_PREV_DEFAULT, \
 	INSTANCE_PREV_DEFAULT, \
 	UUID, \
-	INSTANCE_POS_PREV_INIT \
+	INSTANCE_POS_PREV_INIT, \
+	1.0 \
 }
 #define INSTANCE_PREV_INIT INSTANCE_PREV_INIT_UUID(InstanceNewUuid())
 
@@ -399,6 +400,7 @@ struct Instance
 		uint32_t params;
 		uint32_t uuid;
 		Vec3f    pos;
+		float    rendercodeScaleFactor;
 		bool     positionSnapped;
 		Vec3s    triNormal16;
 	} prev;

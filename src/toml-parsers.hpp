@@ -196,6 +196,7 @@ struct ActorDatabase
 					foreign static AddChild(type, params)
 					foreign static AddChild(type, params, x, y, z)
 					foreign static AddChild(type, params, x, y, z, xrot, yrot, zrot)
+					foreign static SetChildScale(child, scale)
 				}
 				class Draw {
 					foreign static SetScale(xscale, yscale, zscale)

@@ -1592,7 +1592,8 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			Matrix_RotateY_s(sYrotGlobal, MTXMODE_APPLY);
 			Matrix_RotateX_s(sXrotGlobal, MTXMODE_APPLY);
 			Matrix_RotateZ_s(sZrotGlobal, MTXMODE_APPLY);
-			Matrix_Scale(sXscale, sYscale, sZscale, MTXMODE_APPLY);
+			float scale = inst->prev.rendercodeScaleFactor;
+			Matrix_Scale(sXscale * scale, sYscale * scale, sZscale * scale, MTXMODE_APPLY);
 			Matrix_Translate(sXposLocal, sYposLocal, sZposLocal, MTXMODE_APPLY);
 			
 			if (shouldUse) {
@@ -1697,6 +1698,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		struct Instance *inst = WREN_UDATA;
 		sb_clear(inst->rendercodeChildren);
 	}
+	void InstSetChildScale(WrenVM *vm) {
+		struct Instance *inst = WREN_UDATA;
+		int childIndex = wrenGetSlotDouble(vm, 1);
+		if (childIndex >= 0 && childIndex < sb_count(inst->rendercodeChildren))
+			inst->rendercodeChildren[childIndex].prev.rendercodeScaleFactor = wrenGetSlotDouble(vm, 2);
+	}
 	void InstAddChild(WrenVM *vm, int argc) {
 		struct Instance *inst = WREN_UDATA;
 		int type = wrenGetSlotDouble(vm, 1);
@@ -1717,6 +1724,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			yrot = wrenGetSlotDouble(vm, 7);
 			zrot = wrenGetSlotDouble(vm, 8);
 		}
+		wrenSetSlotDouble(vm, 0, sb_count(inst->rendercodeChildren));
 		struct Instance child = {
 			.id = type,
 			.params = params,
@@ -2039,6 +2047,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "AddChild(_,_)")) return InstAddChild2;
 			else if (streq(signature, "AddChild(_,_,_,_,_)")) return InstAddChild5;
 			else if (streq(signature, "AddChild(_,_,_,_,_,_,_,_)")) return InstAddChild8;
+			else if (streq(signature, "SetChildScale(_,_)")) return InstSetChildScale;
 		}
 		else if (streq(className, "Draw")) {
 			if (streq(signature, "SetScale(_,_,_)")) return DrawSetScale3;
