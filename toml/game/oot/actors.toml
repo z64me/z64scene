@@ -429,6 +429,7 @@
 				
 				Udata.DrawFuncs = {
 					"Rupee": Fn.new {
+						Draw.SetGlobalRotation(0, 960 * Global.GameplayFrames, 0)
 						Draw.PopulateSegment(0x08, Udata.RupeeTex)
 						Draw.Mesh(Udata.RupeeDL)
 					},
