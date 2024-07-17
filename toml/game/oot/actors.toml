@@ -2361,11 +2361,16 @@
 	Objects = [160]
 
 [[Actor]]
-	Name = "Hole in Ground Exit"
+	Name = "Grotto Hole in Ground Exit"
 	Index = 155
 	Category = "7"
 	Notes = "Z ROTATION +0xF = Destination //Type 0 only\n-0000 Generic\n-0001 Big Skulltula\n-0002 Heart Piece Scrub\n-0003 Two Redeads\n-0004 Three Deku Salescrubs\n-0005 Webbed\n-0006 Octorok\n-0007 Two Deku Salescrubs - Deku Nut Upgrade\n-0008 Two Wolfos\n-0009 Bombable wall\n-000A Two Deku Salescrubs - Green Pot\n-000B Tektite\n-000C Forest Stage\n-000D Cow\n+0x0300 = Type\n-0000 Visible\n-0100 Appear on Song of Storms\n-0200 Appear when Bombed or hit with Megaton Hammer\n+0xE0 = Contents, Used by Chest 0181 when loading the destination.\n-0000 Blue Rupee (5)\n-0020 Red Rupee (20)\n-0040 Yellow Rupee (200)\n-0060 Bombs (20)\n-0080 Bombs (1)\n-00A0 Bombs (1)\n-00C0 Bombs (1)\n-00E0 Bombs (1) //Used for no item when chest does not exist\n+0x1F = Chest Flag //Used by Chest Actor 0181"
 	Objects = [2]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.SetGlobalRotation(0, Global.CamDirY + 0x8000, 0) // face the camera
+		Draw.Mesh(0x05001390) // gGrottoDL
+	"""
 	[[Actor.Property]]
 		Mask = 768
 		Name = "Type"
