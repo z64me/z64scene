@@ -417,14 +417,195 @@
 	Name = "Collectable Item"
 	Index = 21
 	Category = "7"
+	Objects = [ 0x0001 ]
 	Notes = "+0x3F00 = Collectible Flag"
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			if (Udata.DrawFuncs is Null)
+			{
+				System.print("init DrawFuncs for Collectable Item actor")
+				
+				Udata.DrawFuncs = {
+					"Rupee": Fn.new {
+						Draw.PopulateSegment(0x08, Udata.RupeeTex)
+						Draw.Mesh(Udata.RupeeDL)
+					},
+					"HeartPiece": Fn.new {
+					},
+					"HeartContainer": Fn.new {
+					},
+					"GetItem": Fn.new {
+					},
+					"Billboard": Fn.new {
+					},
+				}
+			}
+			
+			// wrenlang doesn't have enums, but pretend it does
+			//#!enum Item00Type {
+				var RUPEE_GREEN = 0x00
+				var RUPEE_BLUE = 0x01
+				var RUPEE_RED = 0x02
+				var RECOVERY_HEART = 0x03
+				var BOMBS_A = 0x04
+				var ARROWS_SINGLE = 0x05
+				var HEART_PIECE = 0x06
+				var HEART_CONTAINER = 0x07
+				var ARROWS_SMALL = 0x08
+				var ARROWS_MEDIUM = 0x09
+				var ARROWS_LARGE = 0x0A
+				var BOMBS_B = 0x0B
+				var NUTS = 0x0C
+				var STICK = 0x0D
+				var MAGIC_LARGE = 0x0E
+				var MAGIC_SMALL = 0x0F
+				var SEEDS = 0x10
+				var SMALL_KEY = 0x11
+				var FLEXIBLE = 0x12
+				var RUPEE_ORANGE = 0x13
+				var RUPEE_PURPLE = 0x14
+				var SHIELD_DEKU = 0x15
+				var SHIELD_HYLIAN = 0x16
+				var TUNIC_ZORA = 0x17
+				var TUNIC_GORON = 0x18
+				var BOMBS_SPECIAL = 0x19
+				var MAX = 0x1A
+				var NONE = 0xFF
+			//#!end }
+			
+			// wren also doesn't have switch-case, so if's are used
+			var type = Props.Type
+			var drawFunc = Null
+			var yOffset = 980
+			var unk_158 = 0
+			var scale = 0.01
+			if (type == RUPEE_GREEN
+				|| type == RUPEE_BLUE
+				|| type == RUPEE_RED
+				|| type == RUPEE_ORANGE
+				|| type == RUPEE_PURPLE
+			) {
+				drawFunc = Udata.DrawFuncs["Rupee"]
+				scale = 0.015
+				yOffset = 750.0
+				if (type == RUPEE_ORANGE) scale = 0.045
+				else if (type == RUPEE_PURPLE) scale = 0.03
+				
+				Udata.RupeeTex = [
+					0x04042140, // gRupeeGreenTex
+					0x04042160, // gRupeeBlueTex
+					0x04042180, // gRupeeRedTex
+					0x040421c0, // gRupeePinkTex
+					0x040421a0, // gRupeeOrangeTex
+				][type <= RUPEE_RED ? type : (type - 0x10)]
+				Udata.RupeeDL = 0x04042440
+			}
+			else if (type == HEART_PIECE) {
+				drawFunc = Udata.DrawFuncs["HeartPiece"]
+				unk_158 = 0
+				yOffset = 650
+				scale = 0.02
+			}
+			else if (type == HEART_CONTAINER) {
+				drawFunc = Udata.DrawFuncs["HeartContainer"]
+				yOffset = 430
+				unk_158 = 0
+				scale = 0.02
+			}
+			else if (type == SHIELD_DEKU) {
+				drawFunc = Udata.DrawFuncs["GetItem"]
+				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_SHIELD_1)
+				//Actor_SetObjectDependency(play, &actor)
+				scale = 0.5
+				yOffset = 0
+				//shadowScale = 0.6
+				//actor.world.rot.x = 0x4000
+			}
+			else if (type == SHIELD_HYLIAN) {
+				drawFunc = Udata.DrawFuncs["GetItem"]
+				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_SHIELD_2)
+				//Actor_SetObjectDependency(play, &actor)
+				scale = 0.5
+				yOffset = 0
+				//shadowScale = 0.6
+				//actor.world.rot.x = 0x4000
+			}
+			else if (type == TUNIC_ZORA
+				|| type == TUNIC_GORON
+			) {
+				drawFunc = Udata.DrawFuncs["GetItem"]
+				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_CLOTHES)
+				//Actor_SetObjectDependency(play, &actor)
+				scale = 0.5
+				yOffset = 0
+				//shadowScale = 0.6
+				//actor.world.rot.x = 0x4000
+			}
+			else
+			{
+				drawFunc = Udata.DrawFuncs["Billboard"]
+				
+				if (type == SMALL_KEY) {
+					unk_158 = 0
+					scale = 0.03
+					yOffset = 350
+				}
+				else if (type == RECOVERY_HEART) {
+					//actor.home.rot.z = Rand_CenteredFloat(65535)
+					yOffset = 430
+					scale = 0.02
+				}
+				else if (type == ARROWS_SINGLE) {
+					yOffset = 400
+					scale = 0.02
+				}
+				else if (type == ARROWS_SMALL
+					|| type == ARROWS_MEDIUM
+					|| type == ARROWS_LARGE
+				) {
+					scale = 0.035
+					yOffset = 250
+				}
+				else if (type == BOMBS_A
+					|| type == BOMBS_B
+					|| type == NUTS
+					|| type == STICK
+					|| type == MAGIC_SMALL
+					|| type == SEEDS
+					|| type == BOMBS_SPECIAL
+				) {
+					scale = 0.03
+					yOffset = 320
+				}
+				else if (type == MAGIC_LARGE) {
+					scale = 0.045
+					yOffset = 320
+				}
+				else if (type == FLEXIBLE) {
+					yOffset = 500
+					scale = 0.01
+				}
+			}
+			
+			Udata.DrawFunc = drawFunc
+			Udata.Scale = scale
+			Udata.YOffset = yOffset
+			Udata.unk_158 = unk_158
+		}
+		
+		Draw.SetScale(Udata.Scale)
+		Draw.SetLocalPosition(0, Udata.YOffset, 0)
+		if (Udata.DrawFunc != Null)
+			Udata.DrawFunc.call()
+	"""
 	[[Actor.Property]]
-		Mask = 16128
+		Mask = 0x3F00
 		Name = "Collectible Flag"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 49407
-		Name = "Presets"
+		Mask = 0x00FF
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Green Rupee"],
