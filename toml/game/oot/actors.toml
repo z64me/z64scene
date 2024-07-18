@@ -434,8 +434,13 @@
 						Draw.Mesh(Udata.RupeeDL)
 					},
 					"HeartPiece": Fn.new {
+						Draw.SetGlobalRotation(0, 960 * Global.GameplayFrames, 0)
+						Draw.Mesh(0x0403b030) // gHeartPieceInteriorDL
 					},
 					"HeartContainer": Fn.new {
+						Draw.SetGlobalRotation(0, 960 * Global.GameplayFrames, 0)
+						Draw.Mesh(0x0403bcd8) // gHeartContainerInteriorDL
+						Draw.Mesh(0x0403bba0) // gHeartContainerExteriorDL
 					},
 					"GetItem": Fn.new {
 						Draw.PopulateSegment(0x06, 0, Udata.ObjectId)
@@ -694,6 +699,7 @@
 			[4,"Bomb"],
 			[5,"Arrow (1) //Used for collecting arrows stuck in walls"],
 			[6,"Heart Piece"],
+			[7,"Beta Heart Container"],
 			[8,"Deku Seeds (5) or Arrows (5)"],
 			[9,"Deku Seeds (5) or Arrows (10)"],
 			[10,"Deku Seeds (5) or Arrows (30)"],
@@ -711,7 +717,7 @@
 			[22,"Hylian Shield"],
 			[23,"Zora Tunic"],
 			[24,"Goron Tunic"],
-			[25,"Bombs (5)"],
+			[25,"Bombs (5)##duplicate"],
 			[26,"Invisible Item"]
 		]
 
