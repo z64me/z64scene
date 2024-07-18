@@ -1804,6 +1804,12 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 		gSPDisplayList((*sRenderCodeSegment)++, address);
 		gRenderCodeDrewSomething = true;
 	}
+	void DrawBuiltinSetupDL(WrenVM* vm) {
+		int index = wrenGetSlotDouble(vm, 1);
+		
+		if (index >= 0 && index < ARRAY_COUNT(n64_material_setup_dl))
+			gSPDisplayList((*sRenderCodeSegment)++, n64_material_setup_dl[index]);
+	}
 	void DrawSetPrimColor3(WrenVM* vm) {
 		gDPSetPrimColor((*sRenderCodeSegment)++,
 			0, // minlevel
@@ -2061,6 +2067,7 @@ static WrenForeignMethodFn RenderCodeBindForeignMethod(
 			else if (streq(signature, "UseObjectSlot(_)")) return DrawUseObjectSlot;
 			else if (streq(signature, "UseAnimationsFromObjectSlot(_)")) return DrawUseAnimationsFromObjectSlot;
 			else if (streq(signature, "Mesh(_)")) return DrawMesh;
+			else if (streq(signature, "BuiltinSetupDL(_)")) return DrawBuiltinSetupDL;
 			else if (streq(signature, "Skeleton(_)")) return DrawSkeleton1;
 			else if (streq(signature, "Skeleton(_,_)")) return DrawSkeleton2;
 			else if (streq(signature, "Skeleton(_,_,_)")) return DrawSkeleton3;

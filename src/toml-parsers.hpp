@@ -224,6 +224,7 @@ struct ActorDatabase
 					foreign static TwoTexScroll(tile1, x1, y1, w1, h1, tile2, x2, y2, w2, h2)
 					foreign static PopulateSegment(segment, addressOfData)
 					foreign static PopulateSegment(segment, addressOfData, objectId)
+					foreign static BuiltinSetupDL(indexSetupDL)
 				}
 				class Math {
 					foreign static SinS(s16angle)
