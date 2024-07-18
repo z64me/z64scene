@@ -1571,6 +1571,7 @@ static double sZrotGlobal = 0;
 static Vec3f sPosGlobal = {0};
 static GbiGfx **sRenderCodeSegment = 0;
 static void *gRenderCodeBillboards = 0;
+static const void *gKeepData = 0;
 static Matrix gBillboardMatrix[2];
 #define NEW_RENDERCODE_HOOK_ARGC(FUNC, ARGC) void FUNC##ARGC(WrenVM *vm) { FUNC(vm, ARGC); }
 static WrenForeignMethodFn RenderCodeBindForeignMethod(
@@ -2138,6 +2139,8 @@ bool RenderCodeGo(struct Instance *inst)
 		// billboard matrices live in segment 0x01
 		gSPSegment(POLY_OPA_DISP++, 0x1, gRenderCodeBillboards);
 		gSPSegment(POLY_XLU_DISP++, 0x1, gRenderCodeBillboards);
+		gSPSegment(POLY_OPA_DISP++, 0x04, gKeepData);
+		gSPSegment(POLY_XLU_DISP++, 0x04, gKeepData);
 		sRenderCodeSegment = &POLY_OPA_DISP;
 		if (wrenCall(vm, rc->callHandle) != WREN_RESULT_SUCCESS)
 			LogDebug("failed to invoke function");
@@ -2706,6 +2709,15 @@ void WindowMainLoop(const char *sceneFn)
 		if (isRaycasting)
 			worldRayData.isSelectingInstance = true,
 			worldRayData.renderGroup = RENDERGROUP_INST;
+		
+		// keep
+		if (!gKeepData)
+		{
+			struct Object *obj = GuiGetObjectDataFromId(0x0001);
+			
+			if (obj)
+				gKeepData = obj->file->data;
+		}
 		
 		// draw shape at each instance position
 		n64_draw_dlist(matBlank);
