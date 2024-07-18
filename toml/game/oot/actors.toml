@@ -4857,13 +4857,29 @@
 	Category = "6"
 	Notes = "+0x10 = Spawns Bugs\n-0000 No\n-0010 Yes\n+0x0F00 = Drop Table //0-12, anything higher becomes drop table 0\n+0xF000 = Switch Flag (High Bits)\n+0xC0 = Switch Flag (Low Bits)"
 	Objects = [2]
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			var type = Props.Type
+			
+			Udata.scale = [0.1, 0.4][type]
+			Udata.yOffset = [58, 80][type]
+			Udata.mesh = [
+				0x0500a880, // gFieldKakeraDL
+				0x0500a3b8, // gSilverRockDL
+			][type]
+		}
+		Draw.SetScale(Udata.scale)
+		Draw.SetLocalPosition(0, Udata.yOffset, 0)
+		Draw.Mesh(Udata.mesh)
+	"""
 	[[Actor.Property]]
 		Mask = 61440
-		Name = "Switch Flag (High Bits)"
+		Name = "Switch Flag Upper Bits"
 		Target = "Var"
 	[[Actor.Property]]
 		Mask = 192
-		Name = "Switch Flag (Low Bits)"
+		Name = "Switch Flag Low Bits"
 		Target = "Var"
 	[[Actor.Property]]
 		Mask = 16
@@ -4873,6 +4889,14 @@
 		Mask = 3840
 		Name = "Drop Table"
 		Target = "Var"
+	[[Actor.Property]]
+		Mask = 1
+		Name = "Type"
+		Target = "Var"
+		Dropdown = [
+			[0, "Small liftable rock"],
+			[1, "Silver Gauntlets Rock"]
+		]
 	[[Actor.Property]]
 		Mask = 47
 		Name = "Presets"
@@ -4887,15 +4911,33 @@
 	Index = 335
 	Category = "6"
 	Objects = [2]
+	RenderCode = """
+		if (Props.Type >= 3)
+			return
+		if (Inst.PropertyChanged)
+		{
+			var params = [
+				[ 0.01, 0x05000500 ], // gHanaDL
+				[  0.1, 0x0500a880 ], // gFieldKakeraDL
+				[  0.4, 0x0500b9d0 ], // gFieldBushDL
+			][Props.Type]
+			
+			Udata.scale = params[0]
+			Udata.yOffset = Props.Type == 1 ? 58 : 0
+			Udata.mesh = params[1]
+		}
+		Draw.SetScale(Udata.scale)
+		Draw.SetLocalPosition(0, Udata.yOffset, 0)
+		Draw.Mesh(Udata.mesh)
+	"""
 	[[Actor.Property]]
-		Mask = 65535
-		Name = "Presets"
+		Mask = 3
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Flower for grave"],
 			[1,"Non-liftable small rock"],
 			[2,"Uncuttable small shrub"],
-			[3,"Erratic collision data"]
 		]
 
 [[Actor]]
@@ -4999,6 +5041,10 @@
 					positions.remove(pos)
 					continue
 				}
+				
+				// y offset for rock
+				if (mesh == myMeshRock)
+					y = y + 58 * 0.1
 				
 				pos[1] = y
 			}
