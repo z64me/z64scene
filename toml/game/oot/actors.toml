@@ -1727,6 +1727,14 @@
 	Index = 95
 	Category = "8"
 	Objects = [189]
+	RenderCode = """
+		Draw.SetScale(0.4)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 5 + 20, 0)
+		Draw.SetGlobalRotation(0, Global.GameplayFrames * 0x400, 0)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x06001290) // gGiHeartBorderDL
+		Draw.Mesh(0x06001470) // gGiHeartContainerDL
+	"""
 
 [[Actor]]
 	Name = "Deku Scrub"
