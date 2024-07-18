@@ -438,6 +438,10 @@
 					"HeartContainer": Fn.new {
 					},
 					"GetItem": Fn.new {
+						if (Udata.RenderInit != Null)
+							Udata.RenderInit.call()
+						Draw.PopulateSegment(0x06, 0, Udata.ObjectId)
+						Draw.Mesh(Udata.MeshAddr)
 					},
 					"Billboard": Fn.new {
 					},
@@ -482,6 +486,15 @@
 			var yOffset = 980
 			var unk_158 = 0
 			var scale = 0.01
+			var SetupDrawGetItem = Fn.new {
+				| objectId, meshAddr, yOffset_, scale_, renderInit |
+				yOffset = yOffset_
+				scale = scale_
+				drawFunc = Udata.DrawFuncs["GetItem"]
+				Udata.ObjectId = objectId
+				Udata.MeshAddr = meshAddr
+				Udata.RenderInit = renderInit
+			}
 			if (type == RUPEE_GREEN
 				|| type == RUPEE_BLUE
 				|| type == RUPEE_RED
@@ -515,6 +528,22 @@
 				unk_158 = 0
 				scale = 0.02
 			}
+			else if (type == RECOVERY_HEART) // 3D recovery heart
+				SetupDrawGetItem.call(
+					0x00B7
+					, 0x060000e0
+					, 430 / 16 // 3D version uses 2D values, scaled by 16
+					, 0.02 * 16
+					, Fn.new {
+						Draw.SetGlobalRotation(0, 960 * Global.GameplayFrames, 0)
+						Draw.BeginSegment(0x08)
+							Draw.TwoTexScroll(
+								0, Global.GameplayFrames * -3, 32, 32,
+								0, Global.GameplayFrames * -2, 32, 32
+							)
+						Draw.EndSegment()
+					}
+				)
 			else if (type == SHIELD_DEKU) {
 				drawFunc = Udata.DrawFuncs["GetItem"]
 				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_SHIELD_1)
@@ -554,6 +583,7 @@
 					yOffset = 350
 				}
 				else if (type == RECOVERY_HEART) {
+					// TODO 2D recovery heart
 					//actor.home.rot.z = Rand_CenteredFloat(65535)
 					yOffset = 430
 					scale = 0.02
