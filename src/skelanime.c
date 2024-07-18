@@ -149,7 +149,8 @@ static void SkelAnime_Limb(const struct Object *obj, const uint32_t skelSeg, u8 
 		
 		Matrix_TranslateRotateZYX(&rpos, &rot);
 		
-		if (limb->dList)
+		const struct ObjectLimbOverride *override = FindLimbOverride(limbOverrides, limbId);
+		if (limb->dList || override)
 		{
 			if (mtx && *mtx)
 			{
@@ -160,7 +161,6 @@ static void SkelAnime_Limb(const struct Object *obj, const uint32_t skelSeg, u8 
 			
 			bool restoreObject = false;
 			uint32_t dlist = u32r(&limb->dList);
-			const struct ObjectLimbOverride *override = FindLimbOverride(limbOverrides, limbId);
 			//if (limbOverrides) LogDebug("limbOverrides = %p, %d = %08x vs %d vs %p", limbOverrides, limbOverrides[0].limbIndex, limbOverrides[0].segAddr, limbId, override);
 			if (override)
 			{
