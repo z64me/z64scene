@@ -438,9 +438,9 @@
 					"HeartContainer": Fn.new {
 					},
 					"GetItem": Fn.new {
+						Draw.PopulateSegment(0x06, 0, Udata.ObjectId)
 						if (Udata.RenderInit != Null)
 							Udata.RenderInit.call()
-						Draw.PopulateSegment(0x06, 0, Udata.ObjectId)
 						Draw.Mesh(Udata.MeshAddr)
 					},
 					"Billboard": Fn.new {
@@ -545,33 +545,52 @@
 					}
 				)
 			else if (type == SHIELD_DEKU) {
-				drawFunc = Udata.DrawFuncs["GetItem"]
-				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_SHIELD_1)
-				//Actor_SetObjectDependency(play, &actor)
-				scale = 0.5
-				yOffset = 0
-				//shadowScale = 0.6
-				//actor.world.rot.x = 0x4000
+				SetupDrawGetItem.call(
+					0x00CB
+					, 0x06000a50 // gGiDekuShieldDL
+					, 0
+					, 0.5
+					, Fn.new {
+						//shadowScale = 0.6
+						Draw.SetGlobalRotation(-0x4000, 0, 0)
+					}
+				)
 			}
 			else if (type == SHIELD_HYLIAN) {
-				drawFunc = Udata.DrawFuncs["GetItem"]
-				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_SHIELD_2)
-				//Actor_SetObjectDependency(play, &actor)
-				scale = 0.5
-				yOffset = 0
-				//shadowScale = 0.6
-				//actor.world.rot.x = 0x4000
+				SetupDrawGetItem.call(
+					0x00DC
+					, 0x06000c70 // gGiHylianShieldDL
+					, 0
+					, 0.5
+					, Fn.new {
+						//shadowScale = 0.6
+						Draw.SetGlobalRotation(-0x4000, 0, 0)
+					}
+				)
 			}
 			else if (type == TUNIC_ZORA
 				|| type == TUNIC_GORON
 			) {
-				drawFunc = Udata.DrawFuncs["GetItem"]
-				//actor.objBankIndex = Object_GetIndex(&play->objectCtx, OBJECT_GI_CLOTHES)
-				//Actor_SetObjectDependency(play, &actor)
-				scale = 0.5
-				yOffset = 0
-				//shadowScale = 0.6
-				//actor.world.rot.x = 0x4000
+				if (type == TUNIC_ZORA) {
+					Udata.TunicCollarColorDL = 0x06001500
+					Udata.TunicColorDL = 0x06001540
+				} else {
+					Udata.TunicCollarColorDL = 0x060014e0
+					Udata.TunicColorDL = 0x06001520
+				}
+				SetupDrawGetItem.call(
+					0x00F2
+					, 0x06001608 // gGiTunicDL
+					, 0
+					, 0.5
+					, Fn.new {
+						//shadowScale = 0.6
+						Draw.SetGlobalRotation(-0x4000, 0, 0)
+						Draw.Mesh(Udata.TunicCollarColorDL)
+						Draw.Mesh(0x06001560) // gGiTunicCollarDL
+						Draw.Mesh(Udata.TunicColorDL)
+					}
+				)
 			}
 			else
 			{
