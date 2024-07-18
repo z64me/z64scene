@@ -95,26 +95,53 @@ void SkelAnime_Update(SkelAnime* this, double deltaTimeFrames)
 	const struct ObjectAnimation *anim = this->animation;
 	const struct Object *obj = anim->object;
 	
+	// frozen on frame 0 in an animation playing in reverse = ensure signbit is set
+	// (frame '0' is the first frame, and frame '-0' is the last frame)
+	if (!this->curFrame && signbit(this->playSpeed) && !signbit(this->curFrame))
+		this->curFrame *= -1;
+	
+	float curFrame = this->curFrame;
+	
 	n64_segment_set(obj->segment, obj->file->data);
 	
 	this->endFrame = anim->numFrames - 1;
-	SkelAnime_GetFrameData(anim, floor(this->curFrame), this->limbCount, this->jointTable);
-	SkelAnime_GetFrameData(anim, wrapf(floor(this->curFrame) + 1, 0, this->endFrame), this->limbCount, this->morphTable);
 	
-	SkelAnime_InterpFrameTable(
-		this->limbCount,
-		this->jointTable,
-		this->jointTable,
-		this->morphTable,
-		fmod(this->curFrame, 1.0f)
-	);
-	
-	if (this->curFrame < this->endFrame)
-		this->curFrame += this->playSpeed * deltaTimeFrames;
+	// animation in reverse
+	// TODO consolidate these so there's less code
+	if (signbit(curFrame))
+	{
+		curFrame = this->endFrame + fmodf(curFrame, this->endFrame);
+		
+		SkelAnime_GetFrameData(anim, floor(curFrame), this->limbCount, this->jointTable);
+		SkelAnime_GetFrameData(anim, wrapf(floor(curFrame) - 1, 0, this->endFrame), this->limbCount, this->morphTable);
+		
+		SkelAnime_InterpFrameTable(
+			this->limbCount,
+			this->jointTable,
+			this->jointTable,
+			this->morphTable,
+			1.0 - fmod(curFrame, 1.0f)
+		);
+	}
 	else
-		this->curFrame = 0;
+	{
+		curFrame = fmodf(curFrame, this->endFrame);
+		
+		SkelAnime_GetFrameData(anim, floor(curFrame), this->limbCount, this->jointTable);
+		SkelAnime_GetFrameData(anim, wrapf(floor(curFrame) + 1, 0, this->endFrame), this->limbCount, this->morphTable);
+		
+		SkelAnime_InterpFrameTable(
+			this->limbCount,
+			this->jointTable,
+			this->jointTable,
+			this->morphTable,
+			fmod(curFrame, 1.0f)
+		);
+	}
 	
-	this->prevFrame = this->curFrame;
+	this->curFrame += this->playSpeed * deltaTimeFrames;
+	
+	this->prevFrame = curFrame;
 }
 
 static void SkelAnime_Limb(const struct Object *obj, const uint32_t skelSeg, u8 limbId, MtxN64** mtx, Vec3s* jointTable, const struct ObjectLimbOverride *limbOverrides)
