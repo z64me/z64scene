@@ -4131,7 +4131,19 @@
 	Name = "Grass Clump, doesn't regrow"
 	Index = 293
 	Category = "6"
+	Objects = [ 0x0002 ]
 	Notes = "+0x0010 = Spawns set of 3 bugs\n+0xFF00 = Random Drop Table\n-FF00 No Table"
+	RenderCode = """
+		if (Props.Type >= 3)
+			return
+		Draw.PopulateSegment(0x06, 0, 0x012B)
+		Draw.SetScale(0.4)
+		Draw.Mesh([
+			0x0500b9d0, // gFieldBushDL
+			0x06000140, // object_kusa_DL_000140
+			0x06000140, // object_kusa_DL_000140
+		][Props.Type])
+	"""
 	[[Actor.Property]]
 		Mask = 16
 		Name = "Spawn Bugs"
@@ -4141,8 +4153,8 @@
 		Name = "Random Drop Table (Nullable)"
 		Target = "Var"
 	[[Actor.Property]]
-		Mask = 239
-		Name = "Presets"
+		Mask = 3
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Normal shrub. Random drops. //Use object 0002"],
