@@ -179,6 +179,19 @@
 #ifndef STB_STRETCHY_BUFFER_H_INCLUDED
 #define STB_STRETCHY_BUFFER_H_INCLUDED
 
+// how many int's are packed in before the beginning of the stretchy_buffer
+// (i like to keep this number even so struct members are 64-byte aligned)
+#define SB_HEADER_COUNT 4
+
+// the defaults for each of them, when initializing a new stretchy_buffer
+// (the first two should always be 0; all values after that are udata)
+// (the number of elements should match SB_HEADER_COUNT)
+#define SB_HEADER_DEFAULT_UDATA_INSTEAD -1
+#define SB_HEADER_DEFAULTS { 0, 0, SB_HEADER_DEFAULT_UDATA_INSTEAD, 0 }
+
+// aliases for each
+#define sb_udata_instead stb__sb2
+
 #define sb_array(TYPE, NAME) TYPE *NAME
 
 #define sb_foreach(V, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof((V)[0]) *each = &(V)[eachIndex]; CODE }
@@ -242,9 +255,10 @@
 	stb__sbn(a)--; \
 }
 
-#define stb__sbraw(a) ((int *) (void *) (a) - 2)
+#define stb__sbraw(a) ((int *) (void *) (a) - SB_HEADER_COUNT)
 #define stb__sbm(a)   stb__sbraw(a)[0]
 #define stb__sbn(a)   stb__sbraw(a)[1]
+#define stb__sb2(a)   stb__sbraw(a)[2]
 
 #define stb__sbneedgrow(a,n)  ((a)==0 || stb__sbn(a)+(n) >= stb__sbm(a))
 #define stb__sbmaybegrow(a,n) (stb__sbneedgrow(a,(n)) ? stb__sbgrow(a,n) : 0)
@@ -302,17 +316,20 @@ static void * stb__sbgrowf(void *arr, int increment, int itemsize)
    int dbl_cur = arr ? 2*stb__sbm(arr) : 0;
    int min_needed = stb_sb_count(arr) + increment;
    int m = dbl_cur > min_needed ? dbl_cur : min_needed;
-   int *p = (int *) realloc(arr ? stb__sbraw(arr) : 0, itemsize * m + sizeof(int)*2);
+   int *p = (int *) realloc(arr ? stb__sbraw(arr) : 0, itemsize * m + sizeof(int)*SB_HEADER_COUNT);
    if (p) {
+      const int defaults[] = SB_HEADER_DEFAULTS;
+      assert(sizeof(defaults) / sizeof(*defaults) == SB_HEADER_COUNT);
       if (!arr)
-         p[1] = 0;
+         for (int i = 1; i < SB_HEADER_COUNT; ++i)
+            p[i] = defaults[i];
       p[0] = m;
-      return p+2;
+      return p + SB_HEADER_COUNT;
    } else {
       #ifdef STRETCHY_BUFFER_OUT_OF_MEMORY
       STRETCHY_BUFFER_OUT_OF_MEMORY ;
       #endif
-      return (void *) (2*sizeof(int)); // try to force a NULL pointer exception later
+      return (void *) (SB_HEADER_COUNT*sizeof(int)); // try to force a NULL pointer exception later
    }
 }
 #endif // STB_STRETCHY_BUFFER_H_INCLUDED
