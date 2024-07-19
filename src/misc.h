@@ -22,6 +22,9 @@ struct CutsceneOot;
 #include <stdint.h>
 #include <stdbool.h>
 
+// use sb_array_ud to indicate which sb_array's use udata
+#define sb_array_ud sb_array
+
 // where tmp files live
 #define WHERE_TMP "tmp/"
 
@@ -419,9 +422,9 @@ struct RoomMeshSimple
 struct RoomHeader
 {
 	struct Room *room;
-	sb_array(struct Instance, instances);
-	sb_array(struct ObjectEntry, objects);
-	sb_array(struct RoomMeshSimple, displayLists);
+	sb_array_ud(struct Instance, instances);
+	sb_array_ud(struct ObjectEntry, objects);
+	sb_array_ud(struct RoomMeshSimple, displayLists);
 	sb_array(uint32_t, unhandledCommands);
 	uint32_t addr;
 	uint8_t meshFormat;
@@ -452,26 +455,26 @@ struct ActorPath
 struct SceneHeader
 {
 	struct Scene *scene;
-	sb_array(struct Instance, spawns);
-	sb_array(ZeldaLight, lights);
+	sb_array_ud(struct Instance, spawns);
+	sb_array_ud(ZeldaLight, lights);
 	sb_array(uint32_t, unhandledCommands);
-	sb_array(struct ActorPath, paths);
-	sb_array(struct Instance, doorways);
+	sb_array_ud(struct ActorPath, paths);
+	sb_array_ud(struct Instance, doorways);
 	struct CutsceneOot *cutsceneOot;
-	sb_array(struct CutsceneListMm, cutsceneListMm);
-	sb_array(ActorCsCamInfo, actorCsCamInfo);
-	sb_array(ActorCutscene, actorCutscenes);
+	sb_array_ud(struct CutsceneListMm, cutsceneListMm);
+	sb_array_ud(ActorCsCamInfo, actorCsCamInfo);
+	sb_array_ud(ActorCutscene, actorCutscenes);
 	uint32_t addr;
 	int numRooms;
 	struct {
 		int sceneSetupType;
-		sb_array(AnimatedMaterial, sceneSetupData);
+		sb_array_ud(AnimatedMaterial, sceneSetupData);
 	} mm;
-	sb_array(struct {
+	sb_array_ud(struct {
 		uint16_t subkeepObjectId; // object id associated w/ segment 5
 		uint8_t fairyHintsId;
 	}, specialFiles);
-	sb_array(uint16_t, exits); // TODO if == 0, fall back to header[0] exit data
+	sb_array_ud(uint16_t, exits);
 	bool isBlank;
 };
 

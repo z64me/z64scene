@@ -1450,7 +1450,6 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			LogDebug(" -> %04x", *each);
 		});
 		
-		// TODO if matches header[0] exits, set == 0 to indicate no unique exits
 		sb_udata_segaddr(result->exits) = exitsSegAddr;
 	}
 	
