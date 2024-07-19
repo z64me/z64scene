@@ -1734,6 +1734,7 @@ static void DrawMenuBar(void)
 			IMGUI_COMBO_HOVER(gGui->selectedRoomIndex, sb_count(gScene->rooms));
 			
 			// header select
+			int numHeaders = sb_count(gScene->headers);
 			WITH_WIDTH(128)
 			ImGui::Combo(
 				"##MenuBar##HeaderIndex"
@@ -1741,12 +1742,16 @@ static void DrawMenuBar(void)
 				, [](void* data, int n) {
 					static char test[256];
 					sprintf(test, "Header %d", n);
+					if (n == sb_count(gScene->headers))
+						sprintf(test, "Add new header##AddNewHeader");
 					return (const char*)test;
 				}
 				, 0
-				, sb_count(gScene->headers)
+				, numHeaders + 1 // last one = add new header
 			);
-			IMGUI_COMBO_HOVER(gGui->selectedHeaderIndex, sb_count(gScene->headers));
+			IMGUI_COMBO_HOVER(gGui->selectedHeaderIndex, numHeaders);
+			if (gGui->selectedHeaderIndex == numHeaders)
+				SceneAddHeader(gScene, 0);
 			
 			// day select
 			gGui->halfDayBits = 0xffff; // using for oot and mm (mm overrides it)

@@ -344,6 +344,21 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 {
+	// new blank header
+	if (!header)
+	{
+		struct SceneHeader h = {
+			.scene = scene,
+		};
+		
+		sb_push(scene->headers, h);
+		
+		sb_foreach(scene->rooms, {
+			RoomAddHeader(each, 0);
+		})
+		return;
+	}
+	
 	header->scene = scene;
 	
 	sb_push(scene->headers, *header);
@@ -607,6 +622,17 @@ struct DataBlob *MiscSkeletonDataBlobs(struct File *file, struct DataBlob *head,
 
 void RoomAddHeader(struct Room *room, struct RoomHeader *header)
 {
+	// new blank header
+	if (!header)
+	{
+		struct RoomHeader h = {
+			.room = room,
+		};
+		
+		sb_push(room->headers, h);
+		return;
+	}
+	
 	header->room = room;
 	
 	sb_push(room->headers, *header);
