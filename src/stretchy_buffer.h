@@ -200,7 +200,7 @@
 
 #define sb_foreach_backwards(V, CODE) for (int eachIndex = sb_count(V); eachIndex > 0; --eachIndex) { typeof((V)[0]) *each = &(V)[eachIndex - 1]; CODE }
 
-#define sb_foreach_named(V, NAME, CODE) for (int eachIndex = 0; eachIndex < sb_count(V); ++eachIndex) { typeof((V)[0]) *NAME = &(V)[eachIndex]; CODE }
+#define sb_foreach_named(V, NAME, CODE) for (int NAME##Index = 0; NAME##Index < sb_count(V); ++NAME##Index) { typeof((V)[0]) *NAME = &(V)[NAME##Index]; CODE }
 
 #ifndef NO_STRETCHY_BUFFER_SHORT_NAMES
 #define sb_free   stb_sb_free
