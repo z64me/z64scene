@@ -187,10 +187,12 @@
 // (the first two should always be 0; all values after that are udata)
 // (the number of elements should match SB_HEADER_COUNT)
 #define SB_HEADER_DEFAULT_UDATA_INSTEAD -1
-#define SB_HEADER_DEFAULTS { 0, 0, SB_HEADER_DEFAULT_UDATA_INSTEAD, 0 }
+#define SB_HEADER_DEFAULT_UDATA_SEGADDR 0
+#define SB_HEADER_DEFAULTS { 0, 0, SB_HEADER_DEFAULT_UDATA_INSTEAD, SB_HEADER_DEFAULT_UDATA_SEGADDR }
 
 // aliases for each
 #define sb_udata_instead stb__sb2
+#define sb_udata_segaddr stb__sb3
 
 #define sb_array(TYPE, NAME) TYPE *NAME
 
@@ -259,6 +261,7 @@
 #define stb__sbm(a)   stb__sbraw(a)[0]
 #define stb__sbn(a)   stb__sbraw(a)[1]
 #define stb__sb2(a)   stb__sbraw(a)[2]
+#define stb__sb3(a)   stb__sbraw(a)[3]
 
 #define stb__sbneedgrow(a,n)  ((a)==0 || stb__sbn(a)+(n) >= stb__sbm(a))
 #define stb__sbmaybegrow(a,n) (stb__sbneedgrow(a,(n)) ? stb__sbgrow(a,n) : 0)

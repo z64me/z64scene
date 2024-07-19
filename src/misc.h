@@ -467,12 +467,11 @@ struct SceneHeader
 		int sceneSetupType;
 		sb_array(AnimatedMaterial, sceneSetupData);
 	} mm;
-	struct {
+	sb_array(struct {
 		uint16_t subkeepObjectId; // object id associated w/ segment 5
 		uint8_t fairyHintsId;
-	} *specialFiles;
+	}, specialFiles);
 	sb_array(uint16_t, exits); // TODO if == 0, fall back to header[0] exit data
-	uint32_t exitsSegAddr;
 	bool isBlank;
 };
 

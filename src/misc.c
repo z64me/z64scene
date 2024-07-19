@@ -699,6 +699,7 @@ void SceneHeaderFree(struct SceneHeader *header)
 	sb_free(header->doorways);
 	sb_free(header->actorCutscenes);
 	sb_free(header->unhandledCommands);
+	sb_free(header->specialFiles);
 	
 	sb_foreach(header->actorCsCamInfo, {
 		sb_free(each->actorCsCamFuncData);
@@ -1164,11 +1165,13 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		uint8_t *entrances;
 		int count;
 		int countEntrances; // unused for now, but 'entrances' is a LUT into 'positions', so counts can vary
+		uint32_t posSegAddr;
 	} spawnPoints = {0};
 	uint8_t *altHeadersArray = 0;
 	result->mm.sceneSetupType = -1;
 	int exitsCount = 0;
 	int altHeadersCount = 0;
+	uint32_t exitsSegAddr = 0;
 	
 	// unlikely a scene header
 	if (private_IsLikelyHeader(addr, 0x02, file->size) == false)
@@ -1200,6 +1203,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			case 0x00: // spawn point positions
 				spawnPoints.positions = data8 + (u32r(walk + 4) & 0x00ffffff);
 				spawnPoints.count = walk[1]; // approximation, acceptable for now
+				spawnPoints.posSegAddr = u32r(walk + 4);
 				break;
 			
 			case 0x06: // spawn point entrances
@@ -1213,9 +1217,11 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						, (uint32_t)(walk - data8)
 					);
 				
-				result->specialFiles = calloc(1, sizeof(result->specialFiles));
+				(void)sb_add(result->specialFiles, 1);
 				result->specialFiles->fairyHintsId = walk[1];
 				result->specialFiles->subkeepObjectId = u16r(walk + 6);
+				// doesn't reference data, so no sb_udata_segaddr
+				// (may end up matching that to objectList for corresponding RoomHeader)
 				break;
 			
 			case 0x04: // room list
@@ -1229,6 +1235,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					sb_push(result->lights
 						, private_ZeldaLightParse(arr + 0x16 * i)
 					);
+				sb_udata_segaddr(result->lights) = u32r(walk + 4);
 				break;
 			
 			case 0x18: { // alternate headers
@@ -1243,6 +1250,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				sb_foreach(result->mm.sceneSetupData, {
 					LogDebug("texanim[%d] type%d, seg%d", eachIndex, each->type, each->segment);
 				});
+				sb_udata_segaddr(result->mm.sceneSetupData) = u32r(walk + 4);
 				//Die("%d texanims", sb_count(result->mm.sceneSetupData));
 				break;
 			}
@@ -1285,6 +1293,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->paths, path);
 				}
+				sb_udata_segaddr(result->paths) = u32r(walk + 4);
 				
 				LogDebug("%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
 				sb_foreach(result->paths, { LogDebug(" -> %d points,", sb_count(each->points)); } );
@@ -1316,6 +1325,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->doorways, doorway);
 				}
+				sb_udata_segaddr(result->doorways) = u32r(walk + 4);
 				break;
 			}
 			
@@ -1333,7 +1343,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x13: { // exit list
-				result->exitsSegAddr = u32r(walk + 4);
+				exitsSegAddr = u32r(walk + 4);
 				exitsCount = walk[1];
 				break;
 			}
@@ -1359,6 +1369,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						
 						sb_push(result->actorCsCamInfo, tmp);
 					}
+					sb_udata_segaddr(result->actorCsCamInfo) = w1;
 				}
 				break;
 			}
@@ -1385,6 +1396,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 							})
 						);
 					}
+					sb_udata_segaddr(result->actorCutscenes) = w1;
 				}
 				break;
 			}
@@ -1413,10 +1425,11 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			sb_push(result->spawns, tmp);
 		}
+		sb_udata_segaddr(result->spawns) = spawnPoints.posSegAddr;
 	}
 	
 	// parse exit list after header loop, b/c count is derived from collision data
-	if (result->exitsSegAddr
+	if (exitsSegAddr
 		&& (exitsCount
 			|| (scene->collisions
 				&& scene->collisions->numExits
@@ -1424,7 +1437,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		)
 	)
 	{
-		const uint8_t *exitData = n64_segment_get(result->exitsSegAddr);
+		const uint8_t *exitData = n64_segment_get(exitsSegAddr);
 		
 		if (!exitsCount)
 			exitsCount = scene->collisions->numExits;
@@ -1438,6 +1451,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		});
 		
 		// TODO if matches header[0] exits, set == 0 to indicate no unique exits
+		sb_udata_segaddr(result->exits) = exitsSegAddr;
 	}
 	
 	// add after parsing
@@ -1519,6 +1533,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 					sb_push(result->instances
 						, private_InstanceParse(arr + 16 * i, INSTANCE_TAB_ACTOR)
 					);
+				sb_udata_segaddr(result->instances) = u32r(walk + 4);
 				break;
 			}
 			
@@ -1532,6 +1547,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 							.type = OBJECT_ENTRY_TYPE_EXPLICIT,
 						})
 					);
+				sb_udata_segaddr(result->objects) = u32r(walk + 4);
 				break;
 			}
 			
@@ -1637,6 +1653,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				{
 					LogDebug("unsupported mesh header type %d", d[0]);
 				}
+				sb_udata_segaddr(result->displayLists) = u32r(walk + 4);
 				break;
 			}
 			
