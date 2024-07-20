@@ -134,7 +134,6 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 	const uint8_t *match = 0;
 	const uint8_t *matchStart = haystack + FIRST_HEADER_SIZE;
 	uint32_t matchLimit = gWork->size - FIRST_HEADER_SIZE;
-	struct DataBlob *walk = gBlobsWritten;
 	while (matchLimit > 0)
 	{
 		match = MemmemAligned(
@@ -149,22 +148,25 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 			return 0;
 		
 		// if the match doesn't overlap with a blob, use it
-		for ( ; walk; walk = walk->udata)
-			if ((match - haystack) <
-				(walk->updatedSegmentAddress & 0xffffff)
-			) break;
-		if (!walk)
-			break;
+		bool matchOverlaps = false;
+		for (struct DataBlob *walk = gBlobsWritten; walk; walk = walk->udata)
+		{
+			uint32_t aStart = matchStart - haystack;
+			uint32_t aEnd = aStart + blob->sizeBytes;
+			uint32_t bStart = walk->updatedSegmentAddress & 0xffffff;
+			uint32_t bEnd = bStart + walk->sizeBytes;
+			
+			if (aStart < bEnd && aEnd > bStart)
+			{
+				matchOverlaps = true;
+				matchStart = haystack + bEnd;
+				// prevent running past the end of the file
+				matchLimit = (bEnd >= gWork->size) ? 0 : (gWork->size - bEnd);
+				break;
+			}
+		}
 		
-		// if control flow reaches this point, the match
-		// overlapped with a blob, so skip that blob
-		uint32_t blobEnd = walk->sizeBytes
-			+ (walk->updatedSegmentAddress & 0xffffff);
-		matchStart = haystack + blobEnd;
-		matchLimit = gWork->size - blobEnd;
-		
-		// ran past the end of the file
-		if (blobEnd >= gWork->size)
+		if (matchOverlaps == false)
 			break;
 	}
 	
