@@ -32,7 +32,12 @@ if (altHeadersArray) { \
 	if (altHeadersCount) { \
 		dataEnd = headers + altHeadersCount * 4; \
 		while (headers < dataEnd) { \
-			FUNC(PARAM, u32r(headers)); \
+			uint32_t w = u32r(headers); \
+			if (w == 0) { \
+				typeof(*result) blank = { .isBlank = true }; \
+				sb_push(PARAM->headers, blank); \
+			} \
+			FUNC(PARAM, w); \
 			headers += 4; \
 		} \
 	} \
