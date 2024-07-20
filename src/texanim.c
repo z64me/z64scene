@@ -910,6 +910,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 	sb_array(AnimatedMaterial, result) = 0;
 	AnimatedMaterial64 *matAnim = n64_segment_get(segAddr);
 	
+	sb_new(result);
+	
 	#define READY(type) \
 		type##64 *in = data; \
 		type *out = (type*)calloc(1, sizeof(*out)); \
@@ -1063,7 +1065,7 @@ void AnimatedMaterialToWorkblob(
 {
 	WorkblobPush(4);
 	
-	if ((matAnim != NULL) && (matAnim->segment != 0))
+	if (sb_count(matAnim) && (matAnim->segment != 0))
 	{
 		for (int segment = 0; segment >= 0; ++matAnim)
 		{

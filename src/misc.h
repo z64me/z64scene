@@ -87,6 +87,28 @@ struct CutsceneOot;
 float f32r(const void *data);
 uint32_t f32tou32(float v);
 
+// the base macro, resolves one level deep (acceptable for most cases)
+#define HEADERBLOCK_INSTEAD(STRUCT, MEMBER, OTHERS) ( \
+	((STRUCT)->MEMBER) \
+		? (sb_udata_instead((STRUCT)->MEMBER) != SB_HEADER_DEFAULT_UDATA_INSTEAD \
+			? &((OTHERS)[(instead = sb_udata_instead((STRUCT)->MEMBER))].MEMBER) \
+			: (instead = -1, &((STRUCT)->MEMBER))) \
+		: &((OTHERS)[(instead = 0)].MEMBER) \
+)
+
+// this macro accepts output from the above macro, and walks full depth
+// (beware of circular dependencies; ideally, this is avoided altogether by
+//  not inherting header blocks that are themselves inheriting other blocks)
+// (so ideally, this macro never has to be used)
+#define HEADERBLOCK_FINALIZE(VARIABLE, MEMBER, OTHERS) \
+	while (VARIABLE && sb_udata_instead((*VARIABLE)) != SB_HEADER_DEFAULT_UDATA_INSTEAD) \
+		VARIABLE = &((OTHERS)[(instead = sb_udata_instead((*VARIABLE)))].MEMBER);
+
+// this macro handles the variable declaration and full inheritance resolution
+#define HEADERBLOCK(TYPE, NAME, STRUCT, MEMBER, OTHERS) \
+	TYPE **NAME = HEADERBLOCK_INSTEAD(STRUCT, MEMBER, OTHERS); \
+	HEADERBLOCK_FINALIZE(NAME, MEMBER, OTHERS);
+
 #endif /* macros */
 
 #if 1 // region: enum strings
@@ -421,7 +443,6 @@ struct RoomMeshSimple
 
 struct RoomHeader
 {
-	struct Room *room;
 	sb_array_ud(struct Instance, instances);
 	sb_array_ud(struct ObjectEntry, objects);
 	sb_array_ud(struct RoomMeshSimple, displayLists);
@@ -452,6 +473,12 @@ struct ActorPath
 	sb_array(Vec3f, points);
 };
 
+struct SpecialFiles
+{
+	uint16_t subkeepObjectId; // object id associated w/ segment 5
+	uint8_t fairyHintsId;
+};
+
 struct SceneHeader
 {
 	struct Scene *scene;
@@ -466,14 +493,9 @@ struct SceneHeader
 	sb_array_ud(ActorCutscene, actorCutscenes);
 	uint32_t addr;
 	int numRooms;
-	struct {
-		int sceneSetupType;
-		sb_array_ud(AnimatedMaterial, sceneSetupData);
-	} mm;
-	sb_array_ud(struct {
-		uint16_t subkeepObjectId; // object id associated w/ segment 5
-		uint8_t fairyHintsId;
-	}, specialFiles);
+	int mmSceneSetupType;
+	sb_array_ud(AnimatedMaterial, mmSceneSetupData);
+	sb_array_ud(struct SpecialFiles, specialFiles);
 	sb_array_ud(uint16_t, exits);
 	bool isBlank;
 };
@@ -499,6 +521,7 @@ void SceneToFilename(struct Scene *scene, const char *filename);
 struct Room *RoomFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 void SceneReadyDataBlobs(struct Scene *scene);
+void SceneDetermineInheritance(struct Scene *scene);
 void Die(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 const char *QuickFmt(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void *Calloc(size_t howMany, size_t sizeEach);

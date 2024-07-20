@@ -26,6 +26,61 @@ static uint32_t gWorkFindAlignment = 0;
 #define FIRST_HEADER &(struct DataBlob){ .sizeBytes = FIRST_HEADER_SIZE }
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
+static int instead;
+
+// these macros are for managing inheritance for certain header commands
+//
+// duplicate detection is briefly turned off for this, to avoid implicit
+// inheritance across scene save->load cycle, since inheritance is derived
+// from different blocks pointing to the same data (see SceneDetermineInheritance)
+#define SKIP_IF_INHERIT_OLD(X) \
+	void *sbTmp__ = header->X; \
+	bool oldAllowDuplicates__ = gWorkblobAllowDuplicates; \
+	WorkblobAllowDuplicates(true); \
+	if (sb_udata_instead(header->X) != SB_HEADER_DEFAULT_UDATA_INSTEAD) { \
+		void *ok = HEADERBLOCK_INSTEAD(header, X, headerArray); \
+		if (!ok) LogDebug("tried remap but "#X" resolves to 0"); \
+		gWorkblobAddr = sb_udata_segaddr(ok); \
+		LogDebug("*** "#X" %p use %08x ***", ok, sb_udata_segaddr(ok)); \
+		WorkblobPut32(gWorkblobAddr); \
+		goto CONCAT(L_InheritSkipsHere, X); \
+	}
+#define SKIP_IF_INHERIT(X) \
+	void *sbTmp__ = header->X; \
+	bool oldAllowDuplicates__ = gWorkblobAllowDuplicates; \
+	WorkblobAllowDuplicates(true); \
+	if (instead != -1) { \
+		gWorkblobAddr = sb_udata_segaddr(header->X); \
+		LogDebug("*** "#X" %p use %08x ***", header->X, sb_udata_segaddr(header->X)); \
+		WorkblobPut32(gWorkblobAddr); \
+		goto CONCAT(L_InheritSkipsHere, X); \
+	}
+#define INHERIT_SKIPS_HERE(X) \
+	CONCAT(L_InheritSkipsHere, X): \
+	WorkblobAllowDuplicates(oldAllowDuplicates__); \
+	if (instead == -1 && sbTmp__) { \
+		LogDebug("*** "#X" %p store %08x ***", sbTmp__, gWorkblobAddr); \
+		sb_udata_segaddr(sbTmp__) = gWorkblobAddr; \
+	}
+#define RESOLVE_ONE(X) \
+	if (header->X) \
+		header->X = HEADERBLOCK_INSTEAD(header, X, headerArray); \
+	if (!sb_count(header->X)) \
+		header->X = 0;
+#define RESOLVE_INHERITANCE_INLINE(X) ( \
+	header->X \
+	&& ( \
+		( \
+			(resolveTmp = (void**)HEADERBLOCK_INSTEAD(header, X, headerArray)) \
+			&& *resolveTmp \
+			&& (header->X = *resolveTmp) \
+		) \
+		|| (instead = -1) /* not a comparator: resets instead to -1 state */ \
+	) \
+	&& sb_count(header->X) \
+)
+#undef RESOLVE_INHERITANCE_INLINE(X)
+#define RESOLVE_INHERITANCE_INLINE(X) header->X
 
 // invoke once on program exit for cleanup
 void SceneWriterCleanup(void)
@@ -255,8 +310,22 @@ static void WorkblobThisExactlyEnd(void)
 	gWorkblobExactlyThisSize = 0;
 }
 
-static void WorkFirstHeader(void)
+static void WorkFirstHeader(uint32_t alternateHeadersAddr)
 {
+	// update 0x18 command address
+	if (alternateHeadersAddr)
+	{
+		uint8_t *dst = gWork->data;
+		
+		dst[4] = alternateHeadersAddr >> 24;
+		dst[5] = alternateHeadersAddr >> 16;
+		dst[6] = alternateHeadersAddr >>  8;
+		dst[7] = alternateHeadersAddr >>  0;
+		
+		return;
+	}
+	
+	// copy header[0] to start of file
 	gWorkblob += 1;
 	
 	memcpy(gWork->data, gWorkblob->refData, gWorkblob->sizeBytes);
@@ -278,10 +347,25 @@ static void WorkAppendRoomShapeImage(RoomShapeImage image)
 	WorkblobPut16(image.tlutCount);
 }
 
-static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
+static uint32_t WorkAppendRoomHeader(struct Room *room, struct RoomHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
 {
 	if (header->isBlank)
 		return 0;
+	
+	assert(room && room->headers);
+	
+	struct RoomHeader *headerArray = room->headers;
+	struct RoomHeader headerCopy = *header;
+	header = &headerCopy;
+	void **resolveTmp;
+	
+	// experimented with frontloading
+	/*
+	struct RoomHeader *headerInput = header;
+	struct RoomHeader headerResolved = *header;
+	header = &headerResolved;
+	RESOLVE_ONE(objects)
+	*/
 	
 	WorkblobSegment(0x03);
 	
@@ -300,7 +384,7 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// mesh header command
-	if (header->displayLists)
+	if (RESOLVE_INHERITANCE_INLINE(displayLists))
 	{
 		WorkblobPut32(0x0A000000);
 		
@@ -405,9 +489,11 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 	}
 	
 	// object list
-	if (header->objects)
+	if (RESOLVE_INHERITANCE_INLINE(objects))
 	{
 		WorkblobPut32(0x0B000000 | (sb_count(header->objects) << 16));
+		
+		SKIP_IF_INHERIT(objects);
 		
 		WorkblobPush(4);
 		
@@ -416,12 +502,16 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		});
 		
 		WorkblobPut32(WorkblobPop());
+		
+		INHERIT_SKIPS_HERE(objects)
 	}
 	
 	// actor list
-	if (header->instances)
+	if (RESOLVE_INHERITANCE_INLINE(instances))
 	{
 		WorkblobPut32(0x01000000 | (sb_count(header->instances) << 16));
+		
+		SKIP_IF_INHERIT(instances);
 		
 		WorkblobPush(4);
 		
@@ -438,6 +528,8 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 		});
 		
 		WorkblobPut32(WorkblobPop());
+		
+		INHERIT_SKIPS_HERE(instances)
 	}
 	
 	// end header command
@@ -449,6 +541,13 @@ static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alterna
 
 static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
 {
+	assert(scene && scene->headers);
+	
+	struct SceneHeader *headerArray = scene->headers;
+	struct SceneHeader headerCopy = *header;
+	header = &headerCopy;
+	void **resolveTmp;
+	
 	// this is a bandaid solution for z64rom, which assumes
 	// the alternate header block ends where the next block
 	// begins; this hack guarantees one small block that is
@@ -477,7 +576,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	sb_foreach(header->unhandledCommands, { WorkblobPut32(*each); });
 	
 	// special files
-	if (header->specialFiles)
+	if (RESOLVE_INHERITANCE_INLINE(specialFiles))
 	{
 		WorkblobPut32(0x07000000 | (header->specialFiles->fairyHintsId << 16));
 		WorkblobPut32(header->specialFiles->subkeepObjectId);
@@ -512,9 +611,11 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	}
 	
 	// environment list command
-	if (header->lights)
+	if (RESOLVE_INHERITANCE_INLINE(lights))
 	{
 		WorkblobPut32(0x0F000000 | (sb_count(header->lights) << 16));
+		
+		SKIP_IF_INHERIT(lights)
 		
 		WorkblobPush(4);
 		sb_foreach(header->lights, {
@@ -534,15 +635,19 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPop();
 		
 		WorkblobPut32(gWorkblobAddr);
+		
+		INHERIT_SKIPS_HERE(lights)
 	}
 	
 	// animated materials
-	if (header->mm.sceneSetupData)
+	if (RESOLVE_INHERITANCE_INLINE(mmSceneSetupData) && header->mmSceneSetupType != -1)
 	{
 		WorkblobPut32(0x1A000000);
 		
+		SKIP_IF_INHERIT(mmSceneSetupData)
+		
 		AnimatedMaterialToWorkblob(
-			header->mm.sceneSetupData
+			header->mmSceneSetupData
 			, WorkblobPush
 			, WorkblobPop
 			, WorkblobPut8
@@ -551,12 +656,16 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		);
 		
 		WorkblobPut32(gWorkblobAddr);
+		
+		INHERIT_SKIPS_HERE(mmSceneSetupData)
 	}
 	
 	// path list
-	if (header->paths)
+	if (RESOLVE_INHERITANCE_INLINE(paths))
 	{
 		WorkblobPut32(0x0D000000 | (sb_count(header->paths) << 16));
+		
+		SKIP_IF_INHERIT(paths)
 		
 		WorkblobPush(4);
 		
@@ -575,10 +684,14 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		});
 		
 		WorkblobPut32(WorkblobPop());
+		
+		INHERIT_SKIPS_HERE(paths)
 	}
 	
 	// spawn points
-	if (header->spawns)
+	// NOTE: because this uses two commands, inheritance is handled differently
+	//       (SKIP_IF_INHERIT and INHERIT_SKIPS_HERE are not used)
+	if (RESOLVE_INHERITANCE_INLINE(spawns))
 	{
 		// NOTE: 0x06 command must precede 0x00 command
 		WorkblobPut32(0x06000000 | (sb_count(header->spawns) << 16));
@@ -604,6 +717,8 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			WorkblobPut16(inst.params);
 		});
 		WorkblobPop();
+		// this preserves inheritance structure across save/load cycles
+		if (instead != -1) gWorkblobAddr = sb_udata_segaddr(header->spawns);
 		WorkblobPut32(gWorkblobAddr);
 	}
 	
@@ -618,21 +733,27 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	}
 	
 	// exits
-	if (header->exits)
+	if (RESOLVE_INHERITANCE_INLINE(exits))
 	{
 		WorkblobPut32(0x13000000 | (sb_count(header->exits) << 16));
+		
+		SKIP_IF_INHERIT(exits);
 		
 		WorkblobPush(4);
 		sb_foreach(header->exits, { WorkblobPut16(*each); });
 		WorkblobPop();
 		
 		WorkblobPut32(gWorkblobAddr);
+		
+		INHERIT_SKIPS_HERE(exits)
 	}
 	
 	// doorways
-	if (header->doorways)
+	if (RESOLVE_INHERITANCE_INLINE(doorways))
 	{
 		WorkblobPut32(0x0E000000 | (sb_count(header->doorways) << 16));
+		
+		SKIP_IF_INHERIT(doorways);
 		
 		WorkblobPush(4);
 		sb_foreach(header->doorways, {
@@ -651,6 +772,8 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		WorkblobPop();
 		
 		WorkblobPut32(gWorkblobAddr);
+		
+		INHERIT_SKIPS_HERE(doorways)
 	}
 	
 	// cutscenes
@@ -673,9 +796,11 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	}
 	
 	// cutscene lists
-	if (sb_count(header->cutsceneListMm))
+	if (RESOLVE_INHERITANCE_INLINE(cutsceneListMm))
 	{
 		WorkblobPut32(0x17000000 | (sb_count(header->cutsceneListMm) << 16));
+		
+		SKIP_IF_INHERIT(cutsceneListMm);
 		
 		CutsceneListMmToWorkblob(
 			header->cutsceneListMm
@@ -689,12 +814,16 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		);
 		
 		WorkblobPut32(gWorkblobAddr);
+		
+		INHERIT_SKIPS_HERE(cutsceneListMm)
 	}
 	
 	// actor cutscene camera data
-	if (sb_count(header->actorCsCamInfo))
+	if (RESOLVE_INHERITANCE_INLINE(actorCsCamInfo))
 	{
 		WorkblobPut32(0x02000000 | (sb_count(header->actorCsCamInfo) << 16));
+		
+		SKIP_IF_INHERIT(actorCsCamInfo);
 		
 		WorkblobPush(4);
 		sb_foreach(header->actorCsCamInfo, {
@@ -711,12 +840,16 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		});
 		
 		WorkblobPut32(WorkblobPop());
+		
+		INHERIT_SKIPS_HERE(actorCsCamInfo)
 	}
 	
 	// actor cutscenes
-	if (sb_count(header->actorCutscenes))
+	if (RESOLVE_INHERITANCE_INLINE(actorCutscenes))
 	{
 		WorkblobPut32(0x1B000000 | (sb_count(header->actorCutscenes) << 16));
+		
+		SKIP_IF_INHERIT(actorCutscenes)
 		
 		WorkblobPush(2);
 		sb_foreach(header->actorCutscenes, {
@@ -733,6 +866,8 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 		});
 		
 		WorkblobPut32(WorkblobPop());
+		
+		INHERIT_SKIPS_HERE(actorCutscenes)
 	}
 	
 	// end header command
@@ -776,12 +911,16 @@ void RoomToFilename(struct Room *room, const char *filename)
 	
 	// append room headers
 	{
+		// main header
+		WorkAppendRoomHeader(room, &room->headers[0], sb_count(room->headers) > 1, sb_count(room->headers) - 1);
+		WorkFirstHeader(0);
+		
 		// alternate headers
 		uint32_t alternateHeadersAddr = 0;
 		sb_array(uint32_t, alternateHeaders) = 0;
 		sb_foreach(room->headers, {
 			if (eachIndex)
-				sb_push(alternateHeaders, WorkAppendRoomHeader(each, 0, 0));
+				sb_push(alternateHeaders, WorkAppendRoomHeader(room, each, 0, 0));
 		});
 		if (sb_count(alternateHeaders))
 		{
@@ -791,9 +930,8 @@ void RoomToFilename(struct Room *room, const char *filename)
 			alternateHeadersAddr = WorkblobPop();
 		}
 		
-		// main header
-		WorkAppendRoomHeader(&room->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
-		WorkFirstHeader();
+		if (alternateHeadersAddr)
+			WorkFirstHeader(alternateHeadersAddr);
 		sb_free(alternateHeaders);
 	}
 	
@@ -862,6 +1000,10 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	
 	// append scene headers
 	{
+		// main header
+		WorkAppendSceneHeader(scene, &scene->headers[0], sb_count(scene->headers) > 1, sb_count(scene->headers) - 1);
+		WorkFirstHeader(0);
+		
 		// alternate headers
 		uint32_t alternateHeadersAddr = 0;
 		sb_array(uint32_t, alternateHeaders) = 0;
@@ -877,9 +1019,9 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 			alternateHeadersAddr = WorkblobPop();
 		}
 		
-		// main header
-		WorkAppendSceneHeader(scene, &scene->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
-		WorkFirstHeader();
+		// update main header
+		if (alternateHeadersAddr)
+			WorkFirstHeader(alternateHeadersAddr);
 		sb_free(alternateHeaders);
 	}
 	

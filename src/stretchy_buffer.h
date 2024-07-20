@@ -213,6 +213,7 @@
 #define sb_last   stb_sb_last
 #define sb_clear  stb_sb_clear
 #define sb_new    stb_sb_new
+#define sb_ensure_exists stb_sb_ensure_exists
 #define sb_contains stb_sb_contains
 #define sb_contains_ref stb_sb_contains_ref
 #define sb_contains_copy stb_sb_contains_copy
@@ -229,7 +230,8 @@
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
 //#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
 #define stb_sb_clear(a)        { if (a) stb__sbn(a) = 0; } // c++
-#define stb_sb_new(a)          { (void)stb_sb_add(a, 1); stb_sb_clear(a); }
+#define stb_sb_new(a)          { (void)stb_sb_add(a, 1); memset(a, 0, sizeof(*a)); stb_sb_clear(a); }
+#define stb_sb_ensure_exists(a) if (!a) stb_sb_new(a);
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
 #define stb_sb_contains_copy(HAYSTACK, NEEDLE) (sb_find_copy(HAYSTACK, NEEDLE) >= 0)

@@ -335,6 +335,9 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 			Die("could not find room_%d", i);
 	}
 	
+	// determine inheritance structure
+	//SceneDetermineInheritance(scene);
+	
 	// test this out
 	SceneReadyDataBlobs(scene);
 	
@@ -586,6 +589,116 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	});
 }
 
+// determine inheritance structure
+void SceneDetermineInheritance(struct Scene *scene)
+{
+	#define REQUIRED true
+	#define NEEDLE_SEGADDR(X) ((uint32_t)sb_udata_segaddr(needle->X))
+	#define HAYSTACK_SEGADDR(X) ((uint32_t)sb_udata_segaddr(haystack->X))
+	#define NEEDLE_HAYSTACK_MATCH(X) (NEEDLE_SEGADDR(X) == HAYSTACK_SEGADDR(X))
+	#define DO_ONE(X, IS_REQUIRED) DO_ONE_EXT(X, IS_REQUIRED, {})
+	#define ENSURE_ONE(X, IS_REQUIRED) \
+		if (!needle->X) { /* no match = blank array */ \
+			sb_new(needle->X); \
+			/* if not header 0, inherit from header 0 */ \
+			if (IS_REQUIRED && needleIndex) \
+				sb_udata_instead(needle->X) = 0; \
+		}
+	#define DO_ONE_EXT(X, IS_REQUIRED, ONMATCH) \
+		ENSURE_ONE(X, IS_REQUIRED) \
+		else if ( \
+			sb_udata_instead(needle->X) == SB_HEADER_DEFAULT_UDATA_INSTEAD \
+			&& haystack->X \
+			&& NEEDLE_HAYSTACK_MATCH(X) \
+		) { \
+			sb_udata_instead(needle->X) = haystackIndex; \
+			sb_clear(needle->X); \
+			LogDebug("inheritance: remap " #X "[%d] to [%d]", needleIndex, haystackIndex); \
+			do ONMATCH while(0); \
+		}
+	// determine where inheritance is used across headers
+	// for each needle, search the haystack for a matching needle
+	sb_foreach_named(scene->rooms, room,
+	{
+		sb_foreach_named(room->headers, needle,
+		{
+			// guarantee these exist for header[0]
+			if (needleIndex == 0)
+			{
+				ENSURE_ONE(displayLists, false)
+				ENSURE_ONE(instances, false)
+				ENSURE_ONE(objects, false)
+				continue;
+			}
+			
+			sb_foreach_named(room->headers, haystack,
+			{
+				// only inherit from previous headers; no forward inheritance
+				if (haystackIndex >= needleIndex)
+					break;
+					//continue; // use == and continue for forward inheritance
+				
+				// required
+				DO_ONE(displayLists, REQUIRED) // unlikely to vary across headers
+				
+				// optional data, guarantee they exist
+				DO_ONE(instances, false)
+				DO_ONE(objects, false)
+				
+				// matching instance list implies matching object list
+				sb_udata_instead(needle->objects) = sb_udata_instead(needle->instances);
+			})
+		})
+	})
+	sb_foreach_named(scene->headers, needle,
+	{
+		// guarantee these exist for header[0]
+		if (needleIndex == 0)
+		{
+			ENSURE_ONE(spawns, REQUIRED)
+			ENSURE_ONE(specialFiles, REQUIRED)
+			continue;
+		}
+		
+		sb_foreach_named(scene->headers, haystack,
+		{
+			// only inherit from previous headers; no forward inheritance
+			if (haystackIndex >= needleIndex)
+				break;
+				//continue; // use == and continue for forward inheritance
+			
+			// required
+			DO_ONE(spawns, REQUIRED)
+			DO_ONE(lights, REQUIRED)
+			DO_ONE(mmSceneSetupData, REQUIRED)
+			
+			// technically required, but allowed to be zero-length
+			DO_ONE(actorCsCamInfo, false)
+			DO_ONE(actorCutscenes, false)
+			
+			// these are technically optional, but the more
+			// more practical default behavior is to inherit
+			// from header 0 if they don't exist
+			DO_ONE(doorways, REQUIRED)
+			DO_ONE(exits, REQUIRED)
+			//DO_ONE(specialFiles, REQUIRED)
+			
+			// unique specialFiles for each header, no inheritance for now
+			//sb_udata_instead(needle->specialFiles) = -1;
+			
+			// optional
+			DO_ONE(paths, false)
+		})
+	})
+	#undef REQUIRED
+	#undef NEEDLE_SEGADDR
+	#undef HAYSTACK_SEGADDR
+	#undef NEEDLE_HAYSTACK_MATCH
+	#undef ENSURE_ONE
+	#undef DO_ONE_EXT
+	#undef DO_ONE
+}
+
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs)
 {
 	for (struct DataBlob *blob = head; blob; blob = blob->next)
@@ -626,14 +739,11 @@ void RoomAddHeader(struct Room *room, struct RoomHeader *header)
 	if (!header)
 	{
 		struct RoomHeader h = {
-			.room = room,
 		};
 		
 		sb_push(room->headers, h);
 		return;
 	}
-	
-	header->room = room;
 	
 	sb_push(room->headers, *header);
 	
@@ -714,7 +824,7 @@ void SceneHeaderFree(struct SceneHeader *header)
 	CutsceneOotFree(header->cutsceneOot);
 	CutsceneListMmFree(header->cutsceneListMm);
 	
-	AnimatedMaterialFree(header->mm.sceneSetupData);
+	AnimatedMaterialFree(header->mmSceneSetupData);
 	
 	sb_free(header->exits);
 }
@@ -1168,7 +1278,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		uint32_t posSegAddr;
 	} spawnPoints = {0};
 	uint8_t *altHeadersArray = 0;
-	result->mm.sceneSetupType = -1;
+	result->mmSceneSetupType = -1;
 	int exitsCount = 0;
 	int altHeadersCount = 0;
 	uint32_t exitsSegAddr = 0;
@@ -1220,6 +1330,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				(void)sb_add(result->specialFiles, 1);
 				result->specialFiles->fairyHintsId = walk[1];
 				result->specialFiles->subkeepObjectId = u16r(walk + 6);
+				LogDebug("specialFiles %p, instead = %d", result->specialFiles, sb_udata_instead(result->specialFiles));
 				// doesn't reference data, so no sb_udata_segaddr
 				// (may end up matching that to objectList for corresponding RoomHeader)
 				break;
@@ -1235,6 +1346,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					sb_push(result->lights
 						, private_ZeldaLightParse(arr + 0x16 * i)
 					);
+				sb_ensure_exists(result->lights);
 				sb_udata_segaddr(result->lights) = u32r(walk + 4);
 				break;
 			
@@ -1245,13 +1357,14 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			}
 			
 			case 0x1A: { // mm texture animation
-				result->mm.sceneSetupType = 1;
-				result->mm.sceneSetupData = AnimatedMaterialNewFromSegment(u32r(walk + 4));
-				sb_foreach(result->mm.sceneSetupData, {
+				result->mmSceneSetupType = 1;
+				result->mmSceneSetupData = AnimatedMaterialNewFromSegment(u32r(walk + 4));
+				sb_foreach(result->mmSceneSetupData, {
 					LogDebug("texanim[%d] type%d, seg%d", eachIndex, each->type, each->segment);
 				});
-				sb_udata_segaddr(result->mm.sceneSetupData) = u32r(walk + 4);
-				//Die("%d texanims", sb_count(result->mm.sceneSetupData));
+				sb_ensure_exists(result->mmSceneSetupData);
+				sb_udata_segaddr(result->mmSceneSetupData) = u32r(walk + 4);
+				//Die("%d texanims", sb_count(result->mmSceneSetupData));
 				break;
 			}
 			
@@ -1293,6 +1406,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->paths, path);
 				}
+				sb_ensure_exists(result->paths);
 				sb_udata_segaddr(result->paths) = u32r(walk + 4);
 				
 				LogDebug("%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
@@ -1325,6 +1439,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->doorways, doorway);
 				}
+				sb_ensure_exists(result->doorways);
 				sb_udata_segaddr(result->doorways) = u32r(walk + 4);
 				break;
 			}
@@ -1333,7 +1448,11 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				uint32_t w1 = u32r(walk + 4);
 				LogDebug("cutscene header %08x", w1);
 				if (walk[1])
+				{
 					result->cutsceneListMm = CutsceneListMmNewFromData(n64_segment_get(w1), file->dataEnd, walk[1]);
+					sb_ensure_exists(result->cutsceneListMm);
+					sb_udata_segaddr(result->cutsceneListMm) = w1;
+				}
 				else
 					result->cutsceneOot = CutsceneOotNewFromData(n64_segment_get(w1), file->dataEnd);
 				break;
@@ -1369,6 +1488,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						
 						sb_push(result->actorCsCamInfo, tmp);
 					}
+					sb_ensure_exists(result->actorCsCamInfo);
 					sb_udata_segaddr(result->actorCsCamInfo) = w1;
 				}
 				break;
@@ -1396,6 +1516,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 							})
 						);
 					}
+					sb_ensure_exists(result->actorCutscenes);
 					sb_udata_segaddr(result->actorCutscenes) = w1;
 				}
 				break;
@@ -1425,6 +1546,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			sb_push(result->spawns, tmp);
 		}
+		sb_ensure_exists(result->spawns);
 		sb_udata_segaddr(result->spawns) = spawnPoints.posSegAddr;
 	}
 	
@@ -1450,6 +1572,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			LogDebug(" -> %04x", *each);
 		});
 		
+		sb_ensure_exists(result->exits);
 		sb_udata_segaddr(result->exits) = exitsSegAddr;
 	}
 	
@@ -1532,6 +1655,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 					sb_push(result->instances
 						, private_InstanceParse(arr + 16 * i, INSTANCE_TAB_ACTOR)
 					);
+				sb_ensure_exists(result->instances);
 				sb_udata_segaddr(result->instances) = u32r(walk + 4);
 				break;
 			}
@@ -1546,6 +1670,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 							.type = OBJECT_ENTRY_TYPE_EXPLICIT,
 						})
 					);
+				sb_ensure_exists(result->objects);
 				sb_udata_segaddr(result->objects) = u32r(walk + 4);
 				break;
 			}
@@ -1652,6 +1777,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				{
 					LogDebug("unsupported mesh header type %d", d[0]);
 				}
+				sb_ensure_exists(result->displayLists);
 				sb_udata_segaddr(result->displayLists) = u32r(walk + 4);
 				break;
 			}

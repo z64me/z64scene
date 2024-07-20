@@ -2565,8 +2565,8 @@ void WindowMainLoop(const char *sceneFn)
 			// animate water in forest test scene
 			if (scene->file->size == 0x11240)
 				AnimateTheWater();
-			else if (sceneHeader->mm.sceneSetupType != -1)
-				TexAnimSetupSceneMM(sceneHeader->mm.sceneSetupType, sceneHeader->mm.sceneSetupData);
+			else if (sceneHeader->mmSceneSetupType != -1)
+				TexAnimSetupSceneMM(sceneHeader->mmSceneSetupType, sceneHeader->mmSceneSetupData);
 			
 			if (each->headers[0].meshFormat == 2)
 			{
