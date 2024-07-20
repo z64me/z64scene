@@ -24,6 +24,7 @@
 
 enum DataBlobType
 {
+	DATA_BLOB_TYPE_UNSET,
 	DATA_BLOB_TYPE_MESH,
 	DATA_BLOB_TYPE_VERTEX,
 	DATA_BLOB_TYPE_MATRIX,
@@ -36,6 +37,7 @@ enum DataBlobType
 
 struct DataBlob
 {
+	void *udata;
 	struct DataBlob *next;
 	const void *refData; // is a reference, do not free
 	const void *refDataFileEnd;

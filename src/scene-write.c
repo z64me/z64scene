@@ -26,6 +26,7 @@ static uint32_t gWorkFindAlignment = 0;
 #define FIRST_HEADER &(struct DataBlob){ .sizeBytes = FIRST_HEADER_SIZE }
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
+static struct DataBlob *gBlobsWritten = 0;
 
 // invoke once on program exit for cleanup
 void SceneWriterCleanup(void)
@@ -66,6 +67,9 @@ static void WorkReady(void)
 	// big alignment for meshes and textures etc
 	gWorkFindAlignment = 8;
 	
+	// no blobs written so far
+	gBlobsWritten = 0;
+	
 	if (!gWork)
 		gWork = FileNew("work", WORKBUF_SIZE);
 	
@@ -93,6 +97,34 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 	
 	if (!needle || gWork->size <= FIRST_HEADER_SIZE)
 		return 0;
+	
+	// this is faster, but more importantly, it prevents smaller
+	// textures from being coalesced into larger textures, which
+	// causes the larger textures to be assumed smaller than they
+	// actually are, which causes bytes to be trimmed off the end
+	// of them on subsequent save/load cycles
+	// (changing the trim algorithm would be a simpler alternative,
+	// if this is ever revisited, but this seems more predictable)
+	if (blob->type != DATA_BLOB_TYPE_UNSET)
+	{
+		for (struct DataBlob *walk = gBlobsWritten
+			; walk; walk = walk->udata
+		)
+			if (walk->type == blob->type
+				&& walk->sizeBytes == blob->sizeBytes
+				&& walk->refData
+				&& blob->refData
+				&& !memcmp(walk->refData
+					, blob->refData
+					, blob->sizeBytes
+				)
+			)
+				return (blob->updatedSegmentAddress =
+					walk->updatedSegmentAddress
+				);
+		
+		return 0;
+	}
 	
 	const uint8_t *match = MemmemAligned(
 		haystack + FIRST_HEADER_SIZE
@@ -132,6 +164,13 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	
 	if ((addr = WorkFindDatablob(blob)))
 		return addr;
+	
+	// link into list of known written datablobs
+	if (blob->type != DATA_BLOB_TYPE_UNSET)
+	{
+		blob->udata = gBlobsWritten;
+		gBlobsWritten = blob;
+	}
 	
 	if (blob->refData)
 		memcpy(dest, blob->refData, blob->sizeBytes);
@@ -760,6 +799,9 @@ void RoomToFilename(struct Room *room, const char *filename)
 	// write output file
 	FileToFilename(gWork, filename);
 	
+	// clear udata
+	datablob_foreach(room->blobs, { each->udata = 0; })
+	
 	// append all non-mesh blobs first
 	datablob_foreach_filter(room->blobs, != DATA_BLOB_TYPE_MESH, {
 		WorkAppendDatablob(each);
@@ -844,6 +886,9 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	// prepare fresh work buffer
 	WorkReady();
 	WorkAppendDatablob(FIRST_HEADER);
+	
+	// clear udata
+	datablob_foreach(scene->blobs, { each->udata = 0; })
 	
 	// append all non-mesh blobs first
 	datablob_foreach_filter(scene->blobs, != DATA_BLOB_TYPE_MESH, {
