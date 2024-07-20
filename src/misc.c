@@ -542,6 +542,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	{
 		sb_foreach(scene->rooms, {
 			
+			memset(each->file->data, -1, each->file->size);
 			for (struct DataBlob *blob = each->blobs; blob; blob = blob->next)
 				memset((void*)blob->refData, 0, blob->sizeBytes);
 			
@@ -555,6 +556,15 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			fwrite(file->data, 1, file->size, fp);
 			fclose(fp);
 		});
+		
+		char tmp[1024];
+		struct File *file = scene->file;
+		memset(file->data, -1, file->size);
+		datablob_foreach(scene->blobs, { memset((void*)each->refData, 0, each->sizeBytes); })
+		sprintf(tmp, "%s.test", file->filename);
+		FILE *fp = fopen(tmp, "wb");
+		fwrite(file->data, 1, file->size, fp);
+		fclose(fp);
 		
 		exit(0);
 	}
