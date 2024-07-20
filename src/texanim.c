@@ -388,7 +388,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	TexturePtr* texList = Lib_SegmentedToVirtual(texAnimParams->textureList);
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
 	int32_t curFrame = (uint32_t)sMatAnimStep % texAnimParams->durationFrames;
-	void* tex = n64_segment_get(texList[texId[curFrame]]);
+	void* tex = ParseSegmentAddress(texList[texId[curFrame]]);
 	
 	OPEN_DISPS();
 	
@@ -908,7 +908,7 @@ void TexAnimSetGameplayFrames(float frames)
 AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 {
 	sb_array(AnimatedMaterial, result) = 0;
-	AnimatedMaterial64 *matAnim = n64_segment_get(segAddr);
+	AnimatedMaterial64 *matAnim = ParseSegmentAddress(segAddr);
 	
 	#define READY(type) \
 		type##64 *in = data; \
@@ -921,14 +921,14 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 		mat.params = out;
 	
 	#define READY_PTR(type, name) \
-		type *name = n64_segment_get(u32r(&in->name));
+		type *name = ParseSegmentAddress(u32r(&in->name));
 	
 	if ((matAnim != NULL) && (matAnim->segment != 0))
 	{
 		for (int segment = 0; segment >= 0; ++matAnim)
 		{
 			AnimatedMaterial mat = { matAnim->segment, u16r(&matAnim->type) };
-			void *data = n64_segment_get(u32r(&matAnim->params));
+			void *data = ParseSegmentAddress(u32r(&matAnim->params));
 			
 			//LogDebug("push type %d seg %d", mat.type, mat.segment);
 			
@@ -996,8 +996,15 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 							sb_push(out->textureIndexList, textureIndex);
 						}
 					}
-					for (int i = 0; i < textureIndexMax; ++i)
-						sb_push(out->textureList, u32r(&textureList[i]));
+					for (int i = 0; i < textureIndexMax; ++i) {
+						uint32_t segAddr = u32r(&textureList[i]);
+						sb_push(out->textureList, segAddr);
+						
+						// TODO the dimensions can be derived from the material
+						//      associated with the ram segment that is populated
+						//      with this texture list
+						//ParseSegmentAddress(segAddr); // queues associated datablob
+					}
 					break;
 				}
 			}

@@ -1273,7 +1273,7 @@ struct CutsceneListMm *CutsceneListMmNewFromData(const u8 *data, const u8 *dataE
 		LogDebug("append cutscene %08x", u32r(data));
 		
 		sb_push(result, ((CutsceneListMm) {
-			.script = CutsceneMmNewFromData(n64_segment_get(u32r(data)), dataEnd),
+			.script = CutsceneMmNewFromData(ParseSegmentAddress(u32r(data)), dataEnd),
 			.nextEntrance = u16r(data + 4),
 			.spawn = u8r(data + 6),
 			.spawnFlags = u8r(data + 7),

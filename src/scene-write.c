@@ -126,13 +126,47 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 		return 0;
 	}
 	
-	const uint8_t *match = MemmemAligned(
-		haystack + FIRST_HEADER_SIZE
-		, gWork->size - FIRST_HEADER_SIZE
-		, needle
-		, blob->sizeBytes
-		, gWorkFindAlignment
-	);
+	// find matches not in material/vertex/mesh/etc blobs
+	// (for the same reason as the above explanation: data
+	// coalesced into a larger block is harder to separate
+	// later; the savings from having small two-byte blocks
+	// reuse texture data are not worth it)
+	const uint8_t *match = 0;
+	const uint8_t *matchStart = haystack + FIRST_HEADER_SIZE;
+	uint32_t matchLimit = gWork->size - FIRST_HEADER_SIZE;
+	struct DataBlob *walk = gBlobsWritten;
+	while (matchLimit > 0)
+	{
+		match = MemmemAligned(
+			matchStart
+			, matchLimit
+			, needle
+			, blob->sizeBytes
+			, gWorkFindAlignment
+		);
+		
+		if (!match)
+			return 0;
+		
+		// if the match doesn't overlap with a blob, use it
+		for ( ; walk; walk = walk->udata)
+			if ((match - haystack) <
+				(walk->updatedSegmentAddress & 0xffffff)
+			) break;
+		if (!walk)
+			break;
+		
+		// if control flow reaches this point, the match
+		// overlapped with a blob, so skip that blob
+		uint32_t blobEnd = walk->sizeBytes
+			+ (walk->updatedSegmentAddress & 0xffffff);
+		matchStart = haystack + blobEnd;
+		matchLimit = gWork->size - blobEnd;
+		
+		// ran past the end of the file
+		if (blobEnd >= gWork->size)
+			break;
+	}
 	
 	if (match)
 		return ((blob->updatedSegmentAddress =
@@ -183,11 +217,12 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	;
 	gWork->size += blob->sizeBytes;
 	
-	/*
-	LogDebug("append blob type %d at %08x"
-		, blob->type, gWork->size - blob->sizeBytes
+	LogDebug("append blob type %d size %08x at %08x (formerly %08x)"
+		, blob->type
+		, blob->sizeBytes
+		, (uint32_t)(gWork->size - blob->sizeBytes)
+		, blob->originalSegmentAddress
 	);
-	*/
 	
 	return blob->updatedSegmentAddress;
 }

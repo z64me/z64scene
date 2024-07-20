@@ -224,6 +224,41 @@ void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_
 	return MemmemAligned(haystack, haystackLen, needle, needleLen, 1);
 }
 
+static struct Scene *sParsingScene = 0;
+static struct Room *sParsingRoom = 0;
+#define ParseSegmentAddressNoPush n64_segment_get // XXX for testing, don't use this macro in production
+void *ParseSegmentAddress(uint32_t segAddr)
+{
+	sb_array(uint32_t, *blobsPending) = 0;
+	
+	switch (segAddr >> 24)
+	{
+		case 0x02:
+			blobsPending = &sParsingScene->blobsPending;
+			break;
+		
+		case 0x03:
+			blobsPending = &sParsingRoom->blobsPending;
+			break;
+	}
+	
+	if (blobsPending)
+	{
+		// omit duplicates, just to be safe
+		bool contains = false;
+		sb_foreach(*blobsPending, {
+			if (*each == segAddr) {
+				contains = true;
+				break;
+			}
+		})
+		if (contains == false)
+			sb_push(*blobsPending, segAddr);
+	}
+	
+	return n64_segment_get(segAddr);
+}
+
 float f32r(const void *data)
 {
 	const uint8_t *d = data;
@@ -422,6 +457,19 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		// add eof marker
 		each->blobs = DataBlobPush(each->blobs, each->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
 		
+		// add pending blobs
+		sb_foreach_named(each->blobsPending, pending_, {
+			uint32_t pending = *pending_;
+			each->blobs = DataBlobPush(
+				each->blobs
+				, ((uint8_t*)each->file->data) + (pending & 0x00ffffff)
+				, 0
+				, pending
+				, DATA_BLOB_TYPE_GENERIC
+				, 0
+			);
+		})
+		
 		LogDebug("'%s' data blobs:", each->file->filename);
 		DataBlobPrintAll(each->blobs);
 	});
@@ -430,6 +478,19 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	
 	// add eof marker
 	scene->blobs = DataBlobPush(scene->blobs, scene->file->dataEnd, 0, -1, DATA_BLOB_TYPE_EOF, &eofRef);
+	
+	// add pending blobs
+	sb_foreach_named(scene->blobsPending, pending_, {
+		uint32_t pending = *pending_;
+		scene->blobs = DataBlobPush(
+			scene->blobs
+			, ((uint8_t*)scene->file->data) + (pending & 0x00ffffff)
+			, 0
+			, pending
+			, DATA_BLOB_TYPE_GENERIC
+			, 0
+		);
+	})
 	
 	LogDebug("'%s' data blobs:", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);
@@ -478,6 +539,10 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		{
 			struct DataBlob *a = array[i];
 			struct DataBlob *b = array[i + 1];
+			
+			// don't attempt to resize empty data blobs
+			if (!a->sizeBytes)
+				continue;
 			
 			// don't trim overlapping meshes
 			// (aka the G_ENDDL command could get stripped off
@@ -778,7 +843,7 @@ void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 
 CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 {
-	const uint8_t *data = n64_segment_get(segAddr);
+	const uint8_t *data = ParseSegmentAddress(segAddr);
 	const uint8_t *nest;
 	
 	if (!data) return 0;
@@ -790,7 +855,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	result->minBounds = (Vec3s){ u16r(data + 0), u16r(data + 2), u16r(data +  4) };
 	result->maxBounds = (Vec3s){ u16r(data + 6), u16r(data + 8), u16r(data + 10) };
 	result->numVertices = u16r(data + 12);
-	if ((nest = n64_segment_get(u32r(data + 16))))
+	if ((nest = ParseSegmentAddress(u32r(data + 16))))
 	{
 		result->vtxList = Calloc(result->numVertices, sizeof(*(result->vtxList)));
 		
@@ -805,7 +870,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	}
 	result->numPolygons = u16r(data + 20);
 	result->numSurfaceTypes = 0;
-	if ((nest = n64_segment_get(u32r(data + 24))))
+	if ((nest = ParseSegmentAddress(u32r(data + 24))))
 	{
 		result->polyList = Calloc(result->numPolygons, sizeof(*(result->polyList)));
 		
@@ -826,7 +891,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 				result->numSurfaceTypes = poly.type + 1;
 		}
 	}
-	if ((nest = n64_segment_get(u32r(data + 28))))
+	if ((nest = ParseSegmentAddress(u32r(data + 28))))
 	{
 		result->surfaceTypeList = Calloc(result->numSurfaceTypes, sizeof(*(result->surfaceTypeList)));
 		
@@ -849,7 +914,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 				result->numCameras = cameraIndex + 1;
 		}
 	}
-	if ((nest = n64_segment_get(u32r(data + 32))))
+	if ((nest = ParseSegmentAddress(u32r(data + 32))))
 	{
 		for (int i = 0; i < result->numCameras; ++i)
 		{
@@ -861,7 +926,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 				.dataAddr = u32r(elem + 4)
 			};
 			
-			elem = n64_segment_get(cam.dataAddr); // bgCamFuncData
+			elem = ParseSegmentAddress(cam.dataAddr); // bgCamFuncData
 			if (!(cam.dataAddrResolved = elem))
 			{
 				sb_push(result->bgCamList, cam);
@@ -909,7 +974,7 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 		}
 	}
 	result->numWaterBoxes = u16r(data + 36);
-	if ((nest = n64_segment_get(u32r(data + 40))))
+	if ((nest = ParseSegmentAddress(u32r(data + 40))))
 	{
 		result->waterBoxes = Calloc(result->numWaterBoxes, sizeof(*(result->waterBoxes)));
 		
@@ -1200,8 +1265,10 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	}
 	
 	// walk the header
-	for (walk += addr & 0x00ffffff; (void*)walk < file->dataEnd; walk += 8)
+	for (walk = ParseSegmentAddress(addr); (void*)walk < file->dataEnd; walk += 8)
 	{
+		uint32_t w1 = u32r(walk + 4);
+		
 		// not a header
 		if ((addr & 0xffffff) && *walk > 0x1f)
 		{
@@ -1216,13 +1283,13 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x00: // spawn point positions
-				spawnPoints.positions = data8 + (u32r(walk + 4) & 0x00ffffff);
+				spawnPoints.positions = ParseSegmentAddress(w1);
 				spawnPoints.count = walk[1]; // approximation, acceptable for now
-				spawnPoints.posSegAddr = u32r(walk + 4);
+				spawnPoints.posSegAddr = w1;
 				break;
 			
 			case 0x06: // spawn point entrances
-				spawnPoints.entrances = data8 + (u32r(walk + 4) & 0x00ffffff);
+				spawnPoints.entrances = ParseSegmentAddress(w1);
 				spawnPoints.countEntrances = walk[1];
 				break;
 			
@@ -1244,34 +1311,33 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x0F: // light list
-				uint8_t *arr = data8 + (u32r(walk + 4) & 0x00ffffff);
+				uint8_t *arr = ParseSegmentAddress(w1);
 				
 				for (int i = 0; i < walk[1]; ++i)
 					sb_push(result->lights
 						, private_ZeldaLightParse(arr + 0x16 * i)
 					);
-				sb_udata_segaddr(result->lights) = u32r(walk + 4);
+				//sb_udata_segaddr(result->lights) = w1;
 				break;
 			
 			case 0x18: { // alternate headers
-				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
+				altHeadersArray = ParseSegmentAddress(w1);
 				altHeadersCount = walk[1];
 				break;
 			}
 			
 			case 0x1A: { // mm texture animation
 				result->mm.sceneSetupType = 1;
-				result->mm.sceneSetupData = AnimatedMaterialNewFromSegment(u32r(walk + 4));
+				result->mm.sceneSetupData = AnimatedMaterialNewFromSegment(w1);
 				sb_foreach(result->mm.sceneSetupData, {
 					LogDebug("texanim[%d] type%d, seg%d", eachIndex, each->type, each->segment);
 				});
-				sb_udata_segaddr(result->mm.sceneSetupData) = u32r(walk + 4);
+				//sb_udata_segaddr(result->mm.sceneSetupData) = w1;
 				//Die("%d texanims", sb_count(result->mm.sceneSetupData));
 				break;
 			}
 			
 			case 0x03: { // collision header
-				uint32_t w1 = u32r(walk + 4);
 				if (scene->collisions && scene->collisions->originalSegmentAddress != w1)
 					Die("multiple collision headers with different segment addresses");
 				else if (!scene->collisions)
@@ -1281,7 +1347,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x0D: { // paths
 				int numPaths = walk[1];
-				const uint8_t *arr = n64_segment_get(u32r(walk + 4));
+				const uint8_t *arr = ParseSegmentAddress(w1);
 				
 				for (int i = 0; i < numPaths || !numPaths; ++i, arr += 8)
 				{
@@ -1295,7 +1361,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					if (numPoints == 0
 						|| (data8 + (pathStart & 0x00ffffff)) >= (uint8_t*)file->dataEnd
-						|| !(elem = n64_segment_get(pathStart))
+						|| !(elem = ParseSegmentAddress(pathStart))
 					)
 						break;
 					
@@ -1308,9 +1374,9 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->paths, path);
 				}
-				sb_udata_segaddr(result->paths) = u32r(walk + 4);
+				//sb_udata_segaddr(result->paths) = w1;
 				
-				LogDebug("%08x has %d paths : {", u32r(walk + 4), sb_count(result->paths));
+				LogDebug("%08x has %d paths : {", w1, sb_count(result->paths));
 				sb_foreach(result->paths, { LogDebug(" -> %d points,", sb_count(each->points)); } );
 				LogDebug("}");
 				break;
@@ -1318,7 +1384,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x0E: { // doorways
 				int numPaths = walk[1];
-				const uint8_t *arr = n64_segment_get(u32r(walk + 4));
+				const uint8_t *arr = ParseSegmentAddress(w1);
 				
 				for (int i = 0; i < numPaths; ++i, arr += 16)
 				{
@@ -1340,17 +1406,16 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					sb_push(result->doorways, doorway);
 				}
-				sb_udata_segaddr(result->doorways) = u32r(walk + 4);
+				//sb_udata_segaddr(result->doorways) = w1;
 				break;
 			}
 			
 			case 0x17: { // cutscenes
-				uint32_t w1 = u32r(walk + 4);
 				LogDebug("cutscene header %08x", w1);
 				if (walk[1])
-					result->cutsceneListMm = CutsceneListMmNewFromData(n64_segment_get(w1), file->dataEnd, walk[1]);
+					result->cutsceneListMm = CutsceneListMmNewFromData(ParseSegmentAddress(w1), file->dataEnd, walk[1]);
 				else
-					result->cutsceneOot = CutsceneOotNewFromData(n64_segment_get(w1), file->dataEnd);
+					result->cutsceneOot = CutsceneOotNewFromData(ParseSegmentAddress(w1), file->dataEnd);
 				break;
 			}
 			
@@ -1358,22 +1423,21 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				break;
 			
 			case 0x13: { // exit list
-				exitsSegAddr = u32r(walk + 4);
+				exitsSegAddr = w1;
 				exitsCount = walk[1];
 				break;
 			}
 			
 			// MM only
 			case 0x02: { // actor cutscene camera data
-				uint32_t w1 = u32r(walk + 4);
-				const uint8_t *d = n64_segment_get(w1);
+				const uint8_t *d = ParseSegmentAddress(w1);
 				
 				if (w1 && d)
 				{
 					for (int i = 0; i < walk[1]; ++i, d += 8)
 					{
 						ActorCsCamInfo tmp = { .setting = u16r(d) };
-						const uint8_t *arr = n64_segment_get(u32r(d + 4));
+						const uint8_t *arr = ParseSegmentAddress(u32r(d + 4));
 						
 						for (int num = u16r(d + 2); num; --num, arr += 6)
 						{
@@ -1384,13 +1448,12 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						
 						sb_push(result->actorCsCamInfo, tmp);
 					}
-					sb_udata_segaddr(result->actorCsCamInfo) = w1;
+					//sb_udata_segaddr(result->actorCsCamInfo) = w1;
 				}
 				break;
 			}
 			case 0x1B: { // actor cutscene list
-				uint32_t w1 = u32r(walk + 4);
-				const uint8_t *d = n64_segment_get(w1);
+				const uint8_t *d = ParseSegmentAddress(w1);
 				
 				if (w1 && d)
 				{
@@ -1411,7 +1474,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 							})
 						);
 					}
-					sb_udata_segaddr(result->actorCutscenes) = w1;
+					//sb_udata_segaddr(result->actorCutscenes) = w1;
 				}
 				break;
 			}
@@ -1422,7 +1485,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			default:
 				sb_push(result->unhandledCommands, u32r(walk));
-				sb_push(result->unhandledCommands, u32r(walk + 4));
+				sb_push(result->unhandledCommands, w1);
 				break;
 		}
 	}
@@ -1440,7 +1503,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			sb_push(result->spawns, tmp);
 		}
-		sb_udata_segaddr(result->spawns) = spawnPoints.posSegAddr;
+		//sb_udata_segaddr(result->spawns) = spawnPoints.posSegAddr;
 	}
 	
 	// parse exit list after header loop, b/c count is derived from collision data
@@ -1452,7 +1515,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		)
 	)
 	{
-		const uint8_t *exitData = n64_segment_get(exitsSegAddr);
+		const uint8_t *exitData = ParseSegmentAddress(exitsSegAddr);
 		
 		if (!exitsCount)
 			exitsCount = scene->collisions->numExits;
@@ -1465,7 +1528,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			LogDebug(" -> %04x", *each);
 		});
 		
-		sb_udata_segaddr(result->exits) = exitsSegAddr;
+		//sb_udata_segaddr(result->exits) = exitsSegAddr;
 	}
 	
 	// add after parsing
@@ -1525,8 +1588,10 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 	}
 	
 	// walk the header
-	for (walk += addr & 0x00ffffff; (void*)walk < file->dataEnd; walk += 8)
+	for (walk = ParseSegmentAddress(addr); (void*)walk < file->dataEnd; walk += 8)
 	{
+		uint32_t w1 = u32r(walk + 4);
+		
 		// not a header
 		if ((addr & 0xffffff) && *walk > 0x1f)
 		{
@@ -1541,18 +1606,18 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				break;
 			
 			case 0x01: { // instances
-				uint8_t *arr = data8 + (u32r(walk + 4) & 0x00ffffff);
+				uint8_t *arr = ParseSegmentAddress(w1);
 				
 				for (int i = 0; i < walk[1]; ++i)
 					sb_push(result->instances
 						, private_InstanceParse(arr + 16 * i, INSTANCE_TAB_ACTOR)
 					);
-				sb_udata_segaddr(result->instances) = u32r(walk + 4);
+				//sb_udata_segaddr(result->instances) = w1;
 				break;
 			}
 			
 			case 0x0B: { // object id's
-				uint8_t *arr = data8 + (u32r(walk + 4) & 0x00ffffff);
+				uint8_t *arr = ParseSegmentAddress(w1);
 				
 				for (int i = 0; i < walk[1]; ++i)
 					sb_push(result->objects
@@ -1561,19 +1626,19 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 							.type = OBJECT_ENTRY_TYPE_EXPLICIT,
 						})
 					);
-				sb_udata_segaddr(result->objects) = u32r(walk + 4);
+				//sb_udata_segaddr(result->objects) = w1;
 				break;
 			}
 			
 			case 0x0A: { // mesh header
-				uint8_t *d = data8 + (u32r(walk + 4) & 0x00ffffff);
+				uint8_t *d = ParseSegmentAddress(w1);
 				
 				result->meshFormat = d[0];
 				
 				if (d[0] == 2)
 				{
 					int num = d[1];
-					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
+					uint8_t *arr = ParseSegmentAddress(u32r(d + 4));
 					
 					for (int i = 0; i < num; ++i)
 					{
@@ -1593,7 +1658,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				else if (d[0] == 0)
 				{
 					int num = d[1];
-					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
+					uint8_t *arr = ParseSegmentAddress(u32r(d + 4));
 					
 					for (int i = 0; i < num; ++i)
 					{
@@ -1610,7 +1675,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				// maps that use prerendered backgrounds
 				else if (d[0] == 1)
 				{
-					uint8_t *arr = data8 + (u32r(d + 4) & 0x00ffffff);
+					uint8_t *arr = ParseSegmentAddress(u32r(d + 4));
 					
 					// DL's
 					for (int i = 0; ; ++i)
@@ -1642,7 +1707,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 								.numBackgrounds = u8r(d + 8),
 							};
 							LogDebug("prerender w/ %d bg's", result->image.multi.numBackgrounds);
-							const uint8_t *work = data8 + (u32r(d + 12) & 0x00ffffff);
+							const uint8_t *work = ParseSegmentAddress(u32r(d + 12));
 							LogDebug("work = %08x %p", (u32r(d + 12) & 0x00ffffff), work);
 							for (int i = 0; i < result->image.multi.numBackgrounds; ++i, work += 28)
 							{
@@ -1667,12 +1732,12 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 				{
 					LogDebug("unsupported mesh header type %d", d[0]);
 				}
-				sb_udata_segaddr(result->displayLists) = u32r(walk + 4);
+				//sb_udata_segaddr(result->displayLists) = w1;
 				break;
 			}
 			
 			case 0x18: { // alternate headers
-				altHeadersArray = data8 + (u32r(walk + 4) & 0x00ffffff);
+				altHeadersArray = ParseSegmentAddress(w1);
 				altHeadersCount = walk[1];
 				break;
 			}
@@ -1682,7 +1747,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr)
 			
 			default:
 				sb_push(result->unhandledCommands, u32r(walk));
-				sb_push(result->unhandledCommands, u32r(walk + 4));
+				sb_push(result->unhandledCommands, w1);
 				break;
 		}
 	}
@@ -1705,6 +1770,7 @@ static struct Scene *private_SceneParseAfterLoad(struct Scene *scene)
 	assert(file->size);
 	
 	n64_segment_set(0x02, file->data);
+	sParsingScene = scene;
 	
 	// just in case user alternates between MM and OoT scenes
 	gInstanceHandlerMm = false;
@@ -1740,6 +1806,9 @@ static struct Room *private_RoomParseAfterLoad(struct Room *room)
 	assert(file);
 	assert(file->data);
 	assert(file->size);
+	
+	n64_segment_set(0x03, file->data);
+	sParsingRoom = room;
 	
 	private_RoomParseAddHeader(room, 0x03000000);
 	

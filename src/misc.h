@@ -441,6 +441,7 @@ struct Room
 	struct File *file;
 	struct Scene *scene;
 	struct DataBlob *blobs;
+	sb_array(uint32_t, blobsPending);
 	sb_array(struct RoomHeader, headers);
 };
 
@@ -482,6 +483,7 @@ struct Scene
 {
 	struct File *file;
 	struct DataBlob *blobs;
+	sb_array(uint32_t, blobsPending);
 	sb_array(struct TextureBlob, textureBlobs);
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);
@@ -532,6 +534,8 @@ void WindowSaveSceneAs(void);
 
 CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
 void CollisionHeaderFree(CollisionHeader *header);
+
+void *ParseSegmentAddress(uint32_t segAddr);
 
 #endif /* function prototypes */
 
