@@ -21,6 +21,8 @@ static void ProjectParse_rom(struct Project *proj, struct File *file)
 	const uint8_t *dataEnd = file->dataEnd; dataEnd -= searchAlign;
 	const uint8_t *searchEnd = dataEnd - searchAlign;
 	
+	proj->type = PROJECT_TYPE_ROM;
+	
 	for (const uint8_t *walk = dataStart; walk < searchEnd; walk += searchAlign)
 	{
 		// assume scenes always start with 0x15 or 0x18 followed by 0x15
