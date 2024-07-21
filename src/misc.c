@@ -67,6 +67,21 @@ if (altHeadersArray) { \
 			else \
 				break; \
 		})
+// XXX leaving above code for reference, but it's better to
+//     be safe than sorry (is possible to have blank headers
+//     at the end of the header list, after all, so cap it at
+//     a sane maximum value instead using below code)
+//     i test >= b/c header[0] is not an alternate header, and
+//     b/c the number of alternate headers = totalHeaders - 1
+#undef TRIM_ALTERNATE_HEADERS
+#define TRIM_ALTERNATE_HEADERS(PARAM) \
+	if (PARAM) \
+		while (sb_count(PARAM) >= MAX_SCENE_ROOM_HEADERS) { \
+			if (sb_last(PARAM).isBlank) \
+				sb_pop(PARAM); \
+			else \
+				break; \
+		}
 
 // pad blank alternate headers onto the end
 #define PAD_ALTERNATE_HEADERS(PARAM, HOWMANY) \

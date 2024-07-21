@@ -1801,7 +1801,7 @@ static void DrawMenuBar(void)
 					return (const char*)test;
 				}
 				, 0
-				, numHeaders + 1 // last one = add new header
+				, numHeaders + (numHeaders < MAX_SCENE_ROOM_HEADERS) // last one = add new header
 			);
 			IMGUI_COMBO_HOVER(gGui->selectedHeaderIndex, numHeaders);
 			if (gGui->selectedHeaderIndex == numHeaders)
