@@ -890,6 +890,9 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	{
 		filename = scene->file->filename;
 		useOriginalFilenames = true;
+		
+		if (filename == 0)
+			return;
 	}
 	else
 	{

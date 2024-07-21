@@ -20,6 +20,17 @@ enum ProjectType
 	PROJECT_TYPE_ZZROMTOOL,
 	PROJECT_TYPE_ZZRTL,
 	PROJECT_TYPE_Z64ROM,
+	PROJECT_TYPE_ROM,
+};
+
+struct ProjectScene
+{
+	char *name;
+	int id;
+	
+	uint32_t startAddress;
+	uint32_t endAddress;
+	uint32_t sizeBytes;
 };
 
 struct Project
@@ -35,6 +46,9 @@ struct Project
 	sb_array(char *, foldersObject);
 	sb_array(char *, foldersActor);
 	sb_array(char *, foldersActorSrc);
+	
+	sb_array(struct ProjectScene, scenes);
+	struct File *file;
 };
 
 struct Project *ProjectNewFromFilename(const char *filename);

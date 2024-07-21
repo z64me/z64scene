@@ -467,6 +467,7 @@ struct SceneHeader
 	sb_array_ud(ActorCutscene, actorCutscenes);
 	uint32_t addr;
 	int numRooms;
+	const uint8_t *roomStartEndAddrs;
 	struct {
 		int sceneSetupType;
 		sb_array_ud(AnimatedMaterial, sceneSetupData);
@@ -497,6 +498,7 @@ struct Scene
 
 struct Scene *SceneFromFilename(const char *filename);
 struct Scene *SceneFromFilenamePredictRooms(const char *filename);
+struct Scene *SceneFromRomOffset(struct File *rom, uint32_t romStart, uint32_t romEnd);
 void SceneToFilename(struct Scene *scene, const char *filename);
 struct Room *RoomFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
@@ -528,7 +530,9 @@ struct Instance InstanceMakeWritable(struct Instance inst);
 struct Instance InstanceMakeReadable(struct Instance inst);
 
 struct Scene *WindowOpenFile(void);
-struct Scene *WindowLoadScene(const char *fn);
+#define WindowLoadSceneFromRom(FILE, START, END) WindowLoadSceneExt(0, FILE, START, END)
+#define WindowLoadScene(FN) WindowLoadSceneExt(FN, 0, 0, 0)
+struct Scene *WindowLoadSceneExt(const char *fn, struct File *romFile, uint32_t romStart, uint32_t romEnd);
 void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
 

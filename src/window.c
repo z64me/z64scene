@@ -921,10 +921,23 @@ void WindowSaveSceneAs(void)
 	GuiPushModal("Saved scene and room files successfully.");
 }
 
-struct Scene *WindowLoadScene(const char *fn)
+struct Scene *WindowLoadSceneExt(const char *fn, struct File *romFile, uint32_t romStart, uint32_t romEnd)
 {
-	LogDebug("%s", fn);
-	struct Scene *scene = SceneFromFilenamePredictRooms(fn);
+	struct Scene *scene = 0;
+	
+	if (fn)
+	{
+		LogDebug("%s", fn);
+		scene = SceneFromFilenamePredictRooms(fn);
+	}
+	else if (romFile)
+	{
+		LogDebug("load %08x from %s", romStart, romFile->shortname);
+		scene = SceneFromRomOffset(romFile, romStart, romEnd);
+	}
+	
+	if (!scene)
+		return *gSceneP;
 	
 	// cleanup
 	if (*gSceneP)
@@ -2809,8 +2822,13 @@ void WindowMainLoop(const char *sceneFn)
 		// queued scene cleanup (win32 needs this)
 		if (gState.queueSceneForFree)
 		{
-			SceneFree(gState.queueSceneForFree);
-			gState.queueSceneForFree = 0;
+			static int queueReset = 0;
+			if (!queueReset) queueReset = 3;
+			if (queueReset && (--queueReset) <= 0) {
+				LogDebug("doing delayed cleanup");
+				SceneFree(gState.queueSceneForFree);
+				gState.queueSceneForFree = 0;
+			}
 		}
 
 		// glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

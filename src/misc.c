@@ -382,6 +382,42 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 	return scene;
 }
 
+struct Room *RoomFromRomOffset(struct File *rom, uint32_t romStart, uint32_t romEnd)
+{
+	struct Room *room = Calloc(1, sizeof(*room));
+	
+	room->file = FileFromData(
+		((uint8_t*)rom->data) + romStart
+		, romEnd - romStart
+		, false
+	);
+	
+	return private_RoomParseAfterLoad(room);
+}
+
+struct Scene *SceneFromRomOffset(struct File *rom, uint32_t romStart, uint32_t romEnd)
+{
+	struct Scene *scene = Calloc(1, sizeof(*scene));
+	
+	scene->file = FileFromData(
+		((uint8_t*)rom->data) + romStart
+		, romEnd - romStart
+		, false
+	);
+	
+	private_SceneParseAfterLoad(scene);
+	struct SceneHeader *header = &scene->headers[0];
+	for (int i = 0; i < header->numRooms; ++i)
+	{
+		uint32_t start = u32r(header->roomStartEndAddrs + i * 8);
+		uint32_t end = u32r(header->roomStartEndAddrs + i * 8 + 4);
+		
+		SceneAddRoom(scene, RoomFromRomOffset(rom, start, end));
+	}
+	
+	return scene;
+}
+
 void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 {
 	// new blank header
@@ -725,7 +761,7 @@ void FileFree(struct File *file)
 	if (!file)
 		return;
 	
-	if (file->data)
+	if (file->data && file->ownsData)
 		free(file->data);
 	
 	if (file->filename)
@@ -1308,6 +1344,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			
 			case 0x04: // room list
 				result->numRooms = walk[1];
+				result->roomStartEndAddrs = ParseSegmentAddress(w1);
 				break;
 			
 			case 0x0F: // light list

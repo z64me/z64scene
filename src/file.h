@@ -16,11 +16,13 @@ struct File
 	char *filename;
 	char *shortname;
 	size_t size;
+	bool ownsData;
 };
 
 bool FileExists(const char *filename);
 struct File *FileNew(const char *filename, size_t size);
 struct File *FileFromFilename(const char *filename);
+struct File *FileFromData(void *data, size_t size, bool ownsData);
 int FileToFilename(struct File *file, const char *filename);
 const char *FileGetError(void);
 void FileFree(struct File *file);

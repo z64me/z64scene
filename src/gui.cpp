@@ -1391,6 +1391,36 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			}
 		}
 	},
+	new LinkedStringFunc{
+		"Project"
+		, []() {
+			Project *project = gGuiSettings.project;
+			
+			ImGui::Text("contains %d scenes", sb_count(project->scenes));
+			static int current = -1;
+			if (ImGui::BeginListBox("##ProjectSceneList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				sb_foreach(project->scenes, {
+					char tmp[256];
+					const char *name = each->name;
+					if (!name) {
+						name = tmp;
+						snprintf(tmp, sizeof(tmp), "%08x - %08x", each->startAddress, each->endAddress);
+					}
+					//ImGui::Text(name);
+					const bool is_selected = (current == eachIndex);
+					if (ImGui::Selectable(name, is_selected)) {
+						current = eachIndex;
+						LogDebug("load scene %d", current);
+						WindowLoadSceneFromRom(project->file, each->startAddress, each->endAddress);
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				})
+				ImGui::EndListBox();
+			}
+		}
+	},
 };
 
 static void DrawSidebar(void)
@@ -1463,11 +1493,12 @@ static void DrawSidebar(void)
 			}
 		}
 		
+		int numTabs = sizeof(gSidebarTabs) / sizeof(*gSidebarTabs);
 		MultiLineTabBarGeneric(
 			"SidebarTabs"
 			, reinterpret_cast<const void**>(gSidebarTabs)
-			, sizeof(gSidebarTabs) / sizeof(*gSidebarTabs)
-			, 6
+			, numTabs - (!gGuiSettings.project)
+			, 6 - (!!gGuiSettings.project)
 			, &which
 			, [](const void **arr, const int index) -> const char* {
 				const LinkedStringFunc **ready = reinterpret_cast<const LinkedStringFunc**>(arr);
@@ -1477,7 +1508,7 @@ static void DrawSidebar(void)
 		//ImGui::TextWrapped(gSidebarTabs[which]->name); // test
 		
 		// draw the selected sidebar
-		if (gScene)
+		if (gScene || which == numTabs - 1)
 			gSidebarTabs[which]->func();
 		
 		// example using MultiLineTabBar(), for illustrative purposes
@@ -1654,7 +1685,7 @@ static void DrawMenuBar(void)
 					gScene = newScene;
 				}
 			}
-			if (ImGui::MenuItem("Save", "Ctrl+S", false, !!gScene))
+			if (ImGui::MenuItem("Save", "Ctrl+S", false, gScene && gScene->file->ownsData))
 			{
 				WindowSaveScene();
 			}
@@ -1675,6 +1706,29 @@ static void DrawMenuBar(void)
 				const char *fn;
 				
 				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "z64 romhack projects\0*.rtl;*.zzrpl;*.toml\0", NULL, NULL);
+				
+				if (fn)
+				{
+					gGuiSettings.project = ProjectNewFromFilename(fn);
+					
+					// game (oot or mm) comes from project
+					LogDebug("project->game = '%s'", gGuiSettings.project->game);
+					gGuiSettings.projectIsReady = false;
+					GuiLoadBaseDatabases(gGuiSettings.project->game);
+					gGuiSettings.projectIsReady = true;
+					
+					TomlInjectDataFromProject(
+						gGuiSettings.project
+						, &gGuiSettings.actorDatabase
+						, &gGuiSettings.objectDatabase
+					);
+				}
+			}
+			else if (ImGui::MenuItem("Load scenes from rom"))
+			{
+				const char *fn;
+				
+				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "Zelda 64 rom files\0*.z64\0", NULL, NULL);
 				
 				if (fn)
 				{
