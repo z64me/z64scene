@@ -93,6 +93,8 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 );
 void DatablobFree(struct DataBlob *blob);
 void DatablobFreeList(struct DataBlob *listHead);
+void DataBlobListRemoveBlankEntries(struct DataBlob **listHead);
+struct DataBlob *DataBlobListFindBlobWithOriginalSegmentAddress(struct DataBlob *listHead, uint32_t originalSegmentAddress);
 void DataBlobSegmentSetup(int segmentIndex, const void *data, const void *dataEnd, struct DataBlob *head);
 struct DataBlobSegment *DataBlobSegmentGet(int segmentIndex);
 struct DataBlob *DataBlobSegmentGetHead(int segmentIndex);

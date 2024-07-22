@@ -457,11 +457,15 @@ void SceneAddHeader(struct Scene *scene, struct SceneHeader *header)
 	free(header);
 }
 
+#define FOR_EXTERNAL_SEGMENTS for (int i = 0x08; i <= 0x0F; ++i)
 void SceneReadyDataBlobs(struct Scene *scene)
 {
 	static uint32_t eofRef = 0; // used so eof blobs have one ref each
 	
 	DataBlobSegmentSetup(2, scene->file->data, scene->file->dataEnd, scene->blobs);
+	
+	// allows texture data blobs from unpopulated external segments, for flipbooks
+	FOR_EXTERNAL_SEGMENTS { DataBlobSegmentSetup(i, 0, 0x0, 0); }
 	
 	sb_foreach(scene->rooms, {
 		
@@ -542,6 +546,45 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			, 0
 		);
 	})
+	
+	// determine the dimensions of flipbook textures
+	// referenced by the texture lists (the sizes of
+	// each flipbook texture can be derived from the
+	// material associated with the ram segment that
+	// is populated with each texture list)
+	sb_foreach_named(scene->headers, sceneHeader, {
+		sb_foreach_named(sceneHeader->mm.sceneSetupData, material, {
+			int segment = ABS_ALT(material->segment) + 7;
+			if (material->type == 5) {
+				AnimatedMatTexCycleParams *params = material->params;
+				//LogDebug("textureList containing %d textures", sb_count(params->textureList));
+				struct DataBlob *match = DataBlobListFindBlobWithOriginalSegmentAddress(
+					DataBlobSegmentGetHead(segment)
+					, segment << 24
+				);
+				if (!match)
+					continue;
+				sb_foreach(params->textureList, {
+					uint32_t addr = each->addr;
+					scene->blobs = DataBlobPush(
+						scene->blobs
+						, ((uint8_t*)scene->file->data) + (addr & 0x00ffffff)
+						, match->sizeBytes
+						, addr
+						, DATA_BLOB_TYPE_TEXTURE
+						, &each->addrBEU32
+						// IMPORTANT TODO addrBEU32 refs will break on textureList
+						//                reallocs, so switch to an id system later
+					);
+					scene->blobs->data = match->data; // texture dimensions
+				})
+			}
+		})
+	})
+	FOR_EXTERNAL_SEGMENTS { DatablobFreeList(DataBlobSegmentGetHead(i)); }
+	
+	// test
+	//DataBlobListRemoveBlankEntries(&scene->blobs);
 	
 	LogDebug("'%s' data blobs:", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);

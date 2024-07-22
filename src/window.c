@@ -2557,10 +2557,14 @@ void WindowMainLoop(const char *sceneFn)
 			gRenderCodeBillboards = billboards;
 		}
 		
+		n64_segment_set(0x02, scene->file->data);
+		
 		sb_foreach(scene->rooms, {
 			void *sceneSegment = scene->file->data;
 			void *roomSegment = each->file->data;
 			struct SceneHeader *sceneHeader = &scene->headers[0];
+			
+			n64_segment_set(0x03, roomSegment);
 			
 			gXPSetId(POLY_OPA_DISP++, RENDERGROUP_ROOM | eachIndex);
 			gXPSetId(POLY_XLU_DISP++, RENDERGROUP_ROOM | eachIndex);

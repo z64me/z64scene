@@ -30,6 +30,18 @@
 
 static texAnimStep_t sGameplayFrames;
 
+static uint32_t Swap32(const uint32_t b)
+{
+	uint32_t result = 0;
+	
+	result |= ((b >> 24) & 0xff) <<  0;
+	result |= ((b >> 16) & 0xff) <<  8;
+	result |= ((b >>  8) & 0xff) << 16;
+	result |= ((b >>  0) & 0xff) << 24;
+	
+	return result;
+}
+
 #if 1 // region: private types
 
 typedef struct {
@@ -388,7 +400,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	TexturePtr* texList = Lib_SegmentedToVirtual(texAnimParams->textureList);
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
 	int32_t curFrame = (uint32_t)sMatAnimStep % texAnimParams->durationFrames;
-	void* tex = ParseSegmentAddress(texList[texId[curFrame]]);
+	void* tex = ParseSegmentAddress(texList[texId[curFrame]].addr);
 	
 	OPEN_DISPS();
 	
@@ -998,12 +1010,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					}
 					for (int i = 0; i < textureIndexMax; ++i) {
 						uint32_t segAddr = u32r(&textureList[i]);
-						sb_push(out->textureList, segAddr);
-						
-						// TODO the dimensions can be derived from the material
-						//      associated with the ram segment that is populated
-						//      with this texture list
-						//ParseSegmentAddress(segAddr); // queues associated datablob
+						sb_push(out->textureList, (TexturePtr){ segAddr });
 					}
 					break;
 				}
@@ -1143,7 +1150,7 @@ void AnimatedMaterialToWorkblob(
 					
 					// textureList
 					WorkblobPush(4);
-					sb_foreach(p->textureList, { WorkblobPut32(*each); });
+					sb_foreach(p->textureList, { WorkblobPut32(Swap32(each->addrBEU32)); });
 					WorkblobPut32(WorkblobPop());
 					
 					// textureIndexList

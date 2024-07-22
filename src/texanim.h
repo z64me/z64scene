@@ -21,7 +21,10 @@ typedef float texAnimStep_t;
 
 #if 1 // region: types
 
-typedef uint32_t TexturePtr; // segment address
+typedef struct {
+	uint32_t addr;
+	uint32_t addrBEU32;
+} TexturePtr; // segment address
 
 typedef struct {
 	/* 0x0 */ uint8_t r;

@@ -102,6 +102,43 @@ void DatablobFreeList(struct DataBlob *listHead)
 	}
 }
 
+void DataBlobListRemoveBlankEntries(struct DataBlob **listHead)
+{
+	struct DataBlob *prev = 0;
+	struct DataBlob *next = 0;
+	
+	for (struct DataBlob *blob = *listHead; blob; blob = next)
+	{
+		next = blob->next;
+		
+		// unlink from list
+		if (blob->refData == 0)
+		{
+			if (prev == 0)
+				*listHead = next;
+			else
+				prev->next = next;
+			
+			DatablobFree(blob);
+			continue;
+		}
+		
+		prev = blob;
+	}
+}
+
+struct DataBlob *DataBlobListFindBlobWithOriginalSegmentAddress(
+	struct DataBlob *listHead
+	, uint32_t originalSegmentAddress
+)
+{
+	for (struct DataBlob *blob = listHead; blob; blob = blob->next)
+		if (blob->originalSegmentAddress == originalSegmentAddress)
+			return blob;
+	
+	return 0;
+}
+
 // listHead = DataBlobPush(listHead, ...)
 struct DataBlob *DataBlobPush(
 	struct DataBlob *listHead
@@ -1006,7 +1043,8 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 				uint32_t width = Textures(CurrentTex).RealWidth;
 				uint32_t height = Textures(CurrentTex).RealHeight;
 				
-				if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)))
+				// allows texture data blobs from unpopulated external segments, for flipbooks
+				if ((realAddr = DataBlobSegmentAddressToRealAddress(addr)) || true)
 				{
 					int lineSize = Textures(CurrentTex).LineSize;
 					size_t lineSizeBytes = lineSize * sizeof(uint64_t);
@@ -1041,6 +1079,10 @@ void DataBlobSegmentsPopulateFromMeshNew(uint32_t segAddr, void *originator)
 						LogDebug("warning: width height %d x %d", trueWidth, trueHeight);
 					
 					blob = DataBlobSegmentPush(realAddr, size, addr, DATA_BLOB_TYPE_TEXTURE, Textures(CurrentTex).DramRef);
+					
+					// extra safety
+					if (!blob)
+						break;
 					
 					// don't overwrite texture size if size already set
 					if (!blob->data.texture.w)

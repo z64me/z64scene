@@ -210,7 +210,7 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	
 	if (blob->refData)
 		memcpy(dest, blob->refData, blob->sizeBytes);
-	else
+	else if (blob->type == DATA_BLOB_TYPE_UNSET) // maybe DATA_BLOB_TYPE_BLANK sometime?
 		memset(dest, 0, blob->sizeBytes);
 	
 	blob->updatedSegmentAddress =

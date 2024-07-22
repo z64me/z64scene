@@ -50,6 +50,8 @@ struct CutsceneOot;
 
 #define MIN(A, B) (((A) < (B)) ? (A) : (B))
 
+#define ABS_ALT(x) ((x) < 0 ? -(x) : (x))
+
 #define MAX_SCENE_ROOM_HEADERS 256
 
 #define CODE_AS_STRING(...) # __VA_ARGS__
