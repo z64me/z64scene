@@ -401,6 +401,8 @@ static void drop_callback(GLFWwindow* window, int count, const char *files[])
 		WindowLoadObject(filename);
 	else if (!strcmp(extensionLower, "zanim"))
 		WindowLoadAnimation(filename);
+	else if (strstr("z64|zzrpl|rtl|toml", extensionLower))
+		GuiLoadProject(filename);
 	
 	free(extensionLower);
 }

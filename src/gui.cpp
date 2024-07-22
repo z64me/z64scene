@@ -1712,21 +1712,7 @@ static void DrawMenuBar(void)
 				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "z64 romhack projects\0*.rtl;*.zzrpl;*.toml\0", NULL, NULL);
 				
 				if (fn)
-				{
-					gGuiSettings.project = ProjectNewFromFilename(fn);
-					
-					// game (oot or mm) comes from project
-					LogDebug("project->game = '%s'", gGuiSettings.project->game);
-					gGuiSettings.projectIsReady = false;
-					GuiLoadBaseDatabases(gGuiSettings.project->game);
-					gGuiSettings.projectIsReady = true;
-					
-					TomlInjectDataFromProject(
-						gGuiSettings.project
-						, &gGuiSettings.actorDatabase
-						, &gGuiSettings.objectDatabase
-					);
-				}
+					GuiLoadProject(fn);
 			}
 			else if (ImGui::MenuItem("Load scenes from rom"))
 			{
@@ -1735,21 +1721,7 @@ static void DrawMenuBar(void)
 				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "Zelda 64 rom files\0*.z64\0", NULL, NULL);
 				
 				if (fn)
-				{
-					gGuiSettings.project = ProjectNewFromFilename(fn);
-					
-					// game (oot or mm) comes from project
-					LogDebug("project->game = '%s'", gGuiSettings.project->game);
-					gGuiSettings.projectIsReady = false;
-					GuiLoadBaseDatabases(gGuiSettings.project->game);
-					gGuiSettings.projectIsReady = true;
-					
-					TomlInjectDataFromProject(
-						gGuiSettings.project
-						, &gGuiSettings.actorDatabase
-						, &gGuiSettings.objectDatabase
-					);
-				}
+					GuiLoadProject(fn);
 			}
 			ImGui::EndMenu();
 		}
@@ -2168,6 +2140,23 @@ extern "C" void GuiErrorPopup(const char *message)
 {
 	LogDebug("set error popup = '%s'", message);
 	gGuiSettings.errorMessagePopupBody = message;
+}
+
+extern "C" void GuiLoadProject(const char *fn)
+{
+	gGuiSettings.project = ProjectNewFromFilename(fn);
+	
+	// game (oot or mm) comes from project
+	LogDebug("project->game = '%s'", gGuiSettings.project->game);
+	gGuiSettings.projectIsReady = false;
+	GuiLoadBaseDatabases(gGuiSettings.project->game);
+	gGuiSettings.projectIsReady = true;
+	
+	TomlInjectDataFromProject(
+		gGuiSettings.project
+		, &gGuiSettings.actorDatabase
+		, &gGuiSettings.objectDatabase
+	);
 }
 
 // for testing all the things

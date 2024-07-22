@@ -96,6 +96,7 @@ CPP_FUNC_PREFIX struct Object *GuiGetObjectDataFromId(int objectId);
 CPP_FUNC_PREFIX void GuiLoadBaseDatabases(const char *gameId);
 CPP_FUNC_PREFIX void GuiSetInterop(struct GuiInterop *interop);
 CPP_FUNC_PREFIX void GuiErrorPopup(const char *message);
+CPP_FUNC_PREFIX void GuiLoadProject(const char *fn);
 
 #endif /* Z64SCENE_GUI_H_INCLUDED */
 
