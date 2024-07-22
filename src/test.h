@@ -10,3 +10,4 @@ void TestWren(void);
 void Testz64convertScene(char **scenePath);
 void Testz64convertObject(char **objectPath);
 void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename);
+void TestSaveLoadCycles(const char *filename);

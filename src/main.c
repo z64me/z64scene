@@ -21,6 +21,8 @@ int main(int argc, char *argv[])
 {
 	struct Scene *scene = 0;
 	
+	ExePath(argv[0]);
+	
 	// tests
 #ifndef NDEBUG
 	// test wren
@@ -42,6 +44,12 @@ int main(int argc, char *argv[])
 			Testz64convertObject(&objectPath);
 			if (objectPath)
 				LogDebug("probably worked, obj at '%s'", objectPath);
+		}
+		else if (!strcmp(which, "TestSaveLoadCycles"))
+		{
+			if (!(which = argv[2])) Die("TestSaveLoadCycles: not enough args");
+			TestSaveLoadCycles(which);
+			return 0; // exit immediately after test
 		}
 		else
 			result = which;
@@ -99,6 +107,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	// XXX: use the builtin test 'z64convert TestSaveLoadCycles path/to/scene' instead
 	// test: open and re-export a single scene (argv[1] -> argv[2])
 #if 0
 	if (argc >= 2)
@@ -116,6 +125,7 @@ int main(int argc, char *argv[])
 	return 0;
 #endif
 
+	// XXX: use the builtin test 'z64convert TestSaveLoadCycles path/to/project' instead
 	// test: open and re-export a list of scenes
 	// also does scene analysis
 	// one filename per line, e.g.

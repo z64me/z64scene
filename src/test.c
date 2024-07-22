@@ -11,6 +11,7 @@
 #include <z64convert.h>
 
 #include "logging.h"
+#include "project.h"
 #include "misc.h"
 
 // for reporting the correct line number in wren callbacks
@@ -589,6 +590,116 @@ void TestAnalyzeSceneActors(struct Scene *scene, const char *logFilename)
 			})
 		})
 	})
+}
+
+void TestSaveLoadCycle(struct Scene *scene, uint32_t identifier)
+{
+	// these are macros b/c ExePath() reuses an internal buffer
+	// for each result it returns, overwriting its previous output
+	#define tmpname        ExePath(WHERE_TMP"test_scene.zscene")
+	#define logToFilename  ExePath(WHERE_TMP"logfile.txt")
+	static FILE *logTo = 0;
+	static bool wroteLog = false;
+	
+	if (!logTo)
+		logTo = fopen(logToFilename, "w"),
+		wroteLog = false;
+	
+	if (!scene)
+	{
+		if (logTo)
+			fclose(logTo),
+			logTo = 0;
+		
+		if (wroteLog)
+		{
+			struct File *tmp = FileFromFilename(logToFilename);
+			
+			LogDebug("\n%s\n", (char*)tmp->data);
+			
+			FileFree(tmp);
+		}
+		else
+			LogDebug("no errors to report");
+		
+		return;
+	}
+	
+	// write and load scene A
+	SceneToFilename(scene, tmpname);
+	struct File *a = FileFromFilename(tmpname);
+	
+	// load scene A and write as scene B
+	struct Scene *sceneB = SceneFromFilenamePredictRooms(tmpname);
+	SceneToFilename(sceneB, tmpname);
+	SceneFree(sceneB);
+	
+	// load scene B
+	struct File *b = FileFromFilename(tmpname);
+	
+	// check for mismatch
+	if (a->size != b->size // sizes don't match
+		|| memcmp(a->data, b->data, a->size) // contents don't match
+	)
+	{
+		char wow[4096] = WHERE_TMP;
+		sprintf(wow + strlen(wow), "%08x", identifier);
+		fprintf(logTo, "mismatch on scene %08x, writing to %s[_b]\n", identifier, ExePath(wow));
+		wroteLog = true;
+		
+		FileToFilename(a, ExePath(wow));
+		strcat(wow, "_b");
+		FileToFilename(b, ExePath(wow));
+	}
+	
+	// cleanup
+	FileFree(a);
+	FileFree(b);
+}
+
+void TestSaveLoadCycles(const char *filename)
+{
+	const char *extension = strrchr(filename, '.');
+	
+	if (!extension)
+		return;
+	
+	extension += 1;
+	
+	if (strstr("z64|zzrpl|rtl|toml", extension))
+	{
+		struct Project *project = ProjectNewFromFilename(filename);
+		
+		sb_foreach(project->scenes, {
+			struct Scene *scene = 0;
+			
+			if (project->type == PROJECT_TYPE_ROM)
+				scene = SceneFromRomOffset(
+					project->file
+					, each->startAddress
+					, each->endAddress
+				);
+			else if (each->filename)
+				scene = SceneFromFilenamePredictRooms(each->filename);
+			
+			if (!scene)
+				Die("failed to load scene");
+			
+			TestSaveLoadCycle(scene, each->startAddress);
+			SceneFree(scene);
+		})
+		
+		ProjectFree(project);
+	}
+	else if (!strcmp(extension, "zscene"))
+	{
+		struct Scene *scene = SceneFromFilenamePredictRooms(filename);
+		TestSaveLoadCycle(scene, 0);
+		SceneFree(scene);
+	}
+	
+	// display test results
+	TestSaveLoadCycle(0, 0);
 }
 
 void Testz64convertScene(char **scenePath)
