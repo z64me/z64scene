@@ -23,6 +23,7 @@ FILE_LIST_DEFINE_PREFIX(FileListAttribIsSortedById) // specifies file list is so
 #define FILE_LIST_ON_PREFIX(STRING, CODE) \
 	if ((STRING) == FileListHasPrefixId \
 		|| (STRING) == FileListAttribIsHead \
+		|| (STRING) == FileListAttribIsSortedById \
 	) { CODE; }
 
 bool FileExists(const char *filename)
@@ -132,6 +133,9 @@ int FileSetError(const char *fmt, ...)
 
 void FileListFree(sb_array(char *, list))
 {
+	if (!list)
+		return;
+	
 	// if it owns the strings it references, free non-prefix strings
 	if (sb_contains_ref(list, FileListAttribIsHead))
 	{
@@ -149,6 +153,8 @@ void FileListFree(sb_array(char *, list))
 
 sb_array(char *, FileListFromDirectory)(const char *path, int depth, bool wantFiles, bool wantFolders, bool allocateIds)
 {
+	FILE_LIST_ON_PREFIX(path, return 0)
+	
 	sb_array(char *, result) = 0;
 	int padEach = 0;
 	
@@ -232,6 +238,9 @@ sb_array(char *, FileListSortById)(sb_array(char *, list))
 
 sb_array(char *, FileListFilterBy)(sb_array(char *, list), const char *contains, const char *excludes)
 {
+	if (!list)
+		return 0;
+	
 	sb_array(char *, result) = 0;
 	bool hasPrefixId = sb_contains_ref(list, FileListHasPrefixId);
 	int containsLen = contains ? strlen(contains) : 0;

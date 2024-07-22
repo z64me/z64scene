@@ -254,6 +254,40 @@ struct Project *ProjectNewFromFilename(const char *filename)
 	)
 		ProjectParse_rom(proj, file);
 	
+	if (proj->type != PROJECT_TYPE_ROM)
+	{
+		sb_array(char *, foldersScene) = FileListFilterByWithVanilla(proj->foldersAll, "scene", proj->vanilla);
+		
+		LogDebug("building project scene list");
+		sb_foreach(foldersScene, {
+			sb_array(char *, files) = FileListFromDirectory(*each, 1, true, false, false);
+			sb_array(char *, zscenes) = FileListFilterBy(files, ".zscene", 0);
+			
+			if (sb_count(zscenes) == 1)
+			{
+				const char *lastSlash = strrchr(*each, '/');
+				
+				if (lastSlash)
+				{
+					lastSlash += 1; // skip the slash
+					LogDebug("add '%s'", lastSlash);
+					
+					sb_push(proj->scenes, ((struct ProjectScene){
+						.filename = Strdup(zscenes[0]),
+						.name = Strdup(lastSlash),
+						.startAddress = FileListFilePrefix(*each) // id
+					}));
+				}
+			}
+			
+			FileListFree(files);
+			FileListFree(zscenes);
+		})
+		LogDebug("success");
+		
+		FileListFree(foldersScene);
+	}
+	
 	// print vanilla folder
 	if (proj->vanilla)
 		LogDebug("vanilla = '%s'", proj->vanilla);

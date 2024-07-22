@@ -26,6 +26,7 @@ enum ProjectType
 struct ProjectScene
 {
 	char *name;
+	char *filename;
 	int id;
 	
 	uint32_t startAddress;

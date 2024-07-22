@@ -1412,7 +1412,11 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					if (ImGui::Selectable(name, is_selected)) {
 						current = eachIndex;
 						LogDebug("load scene %d", current);
-						WindowLoadSceneFromRom(project->file, each->startAddress, each->endAddress);
+						
+						if (project->type == PROJECT_TYPE_ROM)
+							WindowLoadSceneFromRom(project->file, each->startAddress, each->endAddress);
+						else if (each->filename)
+							WindowLoadScene(each->filename);
 					}
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
