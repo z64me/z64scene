@@ -161,7 +161,7 @@ struct DataBlob *DataBlobPush(
 				each->sizeBytes = sizeBytes;
 			
 			// keep track of references to ram segment
-			if (ref)
+			if (ref && !sb_contains_ref(each->refs, ref))
 				sb_push(each->refs, ref);
 			
 			// already at beginning of list

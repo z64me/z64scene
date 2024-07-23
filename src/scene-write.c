@@ -219,12 +219,14 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	;
 	gWork->size += blob->sizeBytes;
 	
+	/*
 	LogDebug("append blob type %d size %08x at %08x (formerly %08x)"
 		, blob->type
 		, blob->sizeBytes
 		, (uint32_t)(gWork->size - blob->sizeBytes)
 		, blob->originalSegmentAddress
 	);
+	*/
 	
 	return blob->updatedSegmentAddress;
 }
@@ -841,6 +843,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 	
 	// append all non-mesh blobs first
 	datablob_foreach_filter(room->blobs, != DATA_BLOB_TYPE_MESH, {
+		if (sb_count(each->refs) == 0) continue; // skip deleted textures
 		WorkAppendDatablob(each);
 		DataBlobApplyUpdatedSegmentAddresses(each);
 	});
@@ -932,6 +935,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	
 	// append all non-mesh blobs first
 	datablob_foreach_filter(scene->blobs, != DATA_BLOB_TYPE_MESH, {
+		if (sb_count(each->refs) == 0) continue; // skip deleted textures
 		WorkAppendDatablob(each);
 		DataBlobApplyUpdatedSegmentAddresses(each);
 	});
