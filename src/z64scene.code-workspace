@@ -39,7 +39,30 @@
 			"bitset": "c",
 			"set": "c",
 			"inttypes.h": "c",
-			"algorithm": "c"
+			"algorithm": "c",
+			"*.def": "c",
+			"bit": "c",
+			"cstdlib": "c",
+			"exception": "c",
+			"memory_resource": "c",
+			"cmath": "c",
+			"fstream": "c",
+			"iostream": "c",
+			"istream": "c",
+			"mutex": "c",
+			"new": "c",
+			"numeric": "c",
+			"ostream": "c",
+			"sstream": "c",
+			"stop_token": "c",
+			"typeinfo": "c",
+			"semaphore": "c",
+			"initializer_list": "c",
+			"string.h": "c",
+			"assert.h": "c",
+			"stdlib.h": "c",
+			"extmath.h": "c",
+			"list": "cpp"
 		}
 	}
 }

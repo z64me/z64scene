@@ -173,6 +173,7 @@ static void AnimatedMat_SetColor(int32_t segment, F3DPrimColor* primColorResult,
  */
 static void AnimatedMat_DrawColor(int32_t segment, void* params) {
 	AnimatedMatColorParams* colorAnimParams = (AnimatedMatColorParams*)params;
+	if (!colorAnimParams->durationFrames) return;
 	F3DPrimColor* primColor = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColor;
 	int32_t curFrame = (uint32_t)sMatAnimStep % colorAnimParams->durationFrames;
@@ -199,6 +200,7 @@ static int32_t AnimatedMat_Lerp(int32_t min, int32_t max, float norm) {
  */
 static void AnimatedMat_DrawColorLerp(int32_t segment, void* params) {
 	AnimatedMatColorParams* colorAnimParams = (AnimatedMatColorParams*)params;
+	if (!colorAnimParams->durationFrames) return;
 	F3DPrimColor* primColorMax = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorMax;
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
@@ -312,6 +314,7 @@ static uint8_t Scene_LagrangeInterpColor(int32_t n, float x[], float fx[], float
  */
 static void AnimatedMat_DrawColorNonLinearInterp(int32_t segment, void* params) {
 	AnimatedMatColorParams* colorAnimParams = (AnimatedMatColorParams*)params;
+	if (!colorAnimParams->durationFrames) return;
 	F3DPrimColor* primColorCur = Lib_SegmentedToVirtual(colorAnimParams->primColors);
 	F3DEnvColor* envColorCur = Lib_SegmentedToVirtual(colorAnimParams->envColors);
 	uint16_t* keyFrames = Lib_SegmentedToVirtual(colorAnimParams->keyFrames);
@@ -399,6 +402,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	AnimatedMatTexCycleParams* texAnimParams = params;
 	TexturePtr* texList = Lib_SegmentedToVirtual(texAnimParams->textureList);
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
+	if (!sb_count(texList) || !sb_count(texId)) return;
 	int32_t curFrame = (uint32_t)sMatAnimStep % texAnimParams->durationFrames;
 	void* tex = ParseSegmentAddress(texList[texId[curFrame]].addr);
 	
@@ -431,10 +435,10 @@ static void AnimatedMat_DrawMain(AnimatedMaterial* matAnim, float alphaRatio, te
 	sMatAnimStep = step;
 	sMatAnimFlags = flags;
 	
-	if ((matAnim != NULL) && (matAnim->segment != 0)) {
+	if (sb_count(matAnim) && (matAnim->segment != 0)) {
 		do {
 			segment = matAnim->segment;
-			segmentAbs = ABS_ALT(segment) + 7;
+			segmentAbs = ABS_ALT(segment) + ANIMATED_MAT_SEGMENT_OFFSET;
 			//LogDebug("populate segment 0x%02x type %d params %p", segmentAbs, matAnim->type, matAnim->params);
 			matAnimDrawHandlers[matAnim->type](segmentAbs, Lib_SegmentedToVirtual(matAnim->params));
 			matAnim++;
@@ -805,6 +809,27 @@ static void DrawConfigMatAnimManualStep(void) {
 
 #if 1 // region: public animatedmat
 
+static const char *AnimatedMatTypeName[] =
+{
+	"DrawTexScroll",
+	"DrawTwoTexScroll",
+	"DrawColor",
+	"DrawColorLerp",
+	"DrawColorNonLinearInterp",
+	"DrawTexCycle",
+	"Count",
+};
+
+const char *AnimatedMatType_AsString(enum AnimatedMatType type)
+{
+	return AnimatedMatTypeName[type];
+}
+
+const char **AnimatedMatType_Names(void)
+{
+	return AnimatedMatTypeName;
+}
+
 /**
  * Draws an animated material to both OPA and XLU buffers.
  */
@@ -917,6 +942,50 @@ void TexAnimSetGameplayFrames(float frames)
 	sGameplayFrames = frames;
 }
 
+AnimatedMaterial AnimatedMaterialNewFromDefault(AnimatedMatType type, int segment)
+{
+	AnimatedMaterial result = {0};
+	void *params = 0;
+	
+	result.type = type;
+	result.segment = segment;
+	
+	switch (type)
+	{
+		case AnimatedMatType_DrawTexScroll:
+		case AnimatedMatType_DrawTwoTexScroll:
+			params = calloc(1 + type, sizeof(AnimatedMatTexScrollParams));
+			break;
+		
+		case AnimatedMatType_DrawColor:
+		case AnimatedMatType_DrawColorLerp:
+		case AnimatedMatType_DrawColorNonLinearInterp:
+		{
+			AnimatedMatColorParams *work = calloc(1, sizeof(*work));
+			sb_new(work->primColors);
+			//sb_new(work->envColors); // leave off by default
+			sb_new(work->keyFrames);
+			params = work;
+			break;
+		}
+		
+		case AnimatedMatType_DrawTexCycle:
+		{
+			AnimatedMatTexCycleParams *work = calloc(1, sizeof(*work));
+			sb_new(work->textureIndexList);
+			sb_new(work->textureList);
+			params = work;
+			break;
+		}
+		
+		case AnimatedMatType_Count:
+			break;
+	}
+	
+	result.params = params;
+	return result;
+}
+
 AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 {
 	sb_array(AnimatedMaterial, result) = 0;
@@ -948,8 +1017,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 			
 			switch (mat.type)
 			{
-				case 0: // AnimatedMat_DrawTexScroll
-				case 1: // AnimatedMat_DrawTwoTexScroll
+				case AnimatedMatType_DrawTexScroll:
+				case AnimatedMatType_DrawTwoTexScroll:
 				{
 					READY_ARRAY(AnimatedMatTexScrollParams, mat.type + 1)
 					
@@ -963,9 +1032,9 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					break;
 				}
 				
-				case 2: // AnimatedMat_DrawColor
-				case 3: // AnimatedMat_DrawColorLerp
-				case 4: // AnimatedMat_DrawColorNonLinearInterp
+				case AnimatedMatType_DrawColor:
+				case AnimatedMatType_DrawColorLerp:
+				case AnimatedMatType_DrawColorNonLinearInterp:
 				{
 					READY(AnimatedMatColorParams)
 					READY_PTR(F3DPrimColor, primColors)
@@ -989,10 +1058,33 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					if (keyFrames && !out->keyFrames)
 						for (int i = 0; i < out->keyFrameCount; ++i)
 							sb_push(out->keyFrames, u16r(&keyFrames[i]));
+					
+					// duration makes for easier editing for the end-user
+					if (out->keyFrames)
+						sb_foreach(out->keyFrames, {
+							uint16_t next =
+								(each == &sb_last(out->keyFrames))
+								? out->durationFrames // total
+								: each[1] // next
+							;
+							uint16_t len = next - each[0];
+							sb_push(out->durationEachKey, len);
+						})
+					
+					// MM expects last frame to be a copy of the 1st frame,
+					// but with a duration of 1 (abstracted this to provide
+					// a better UX) (excuse the resulting mess)
+					if (USE_TEXANIM_MM_LOOP_HACK(&mat))
+					{
+						sb_pop(out->primColors);
+						sb_pop(out->envColors);
+						sb_pop(out->keyFrames);
+						sb_pop(out->durationEachKey);
+					}
 					break;
 				}
 				
-				case 5: // AnimatedMat_DrawTexCycle
+				case AnimatedMatType_DrawTexCycle:
 				{
 					READY(AnimatedMatTexCycleParams)
 					READY_PTR(uint32_t, textureList)
@@ -1014,6 +1106,9 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					}
 					break;
 				}
+				
+				case AnimatedMatType_Count:
+					break;
 			}
 			
 			sb_push(result, mat);
@@ -1027,41 +1122,50 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 	return result;
 }
 
-void AnimatedMaterialFree(AnimatedMaterial *sbArr)
+void AnimatedMaterialFree(AnimatedMaterial *each)
+{
+	switch (each->type)
+	{
+		case AnimatedMatType_DrawTexScroll:
+		case AnimatedMatType_DrawTwoTexScroll:
+			free(each->params);
+			break;
+		
+		case AnimatedMatType_DrawColor:
+		case AnimatedMatType_DrawColorLerp:
+		case AnimatedMatType_DrawColorNonLinearInterp:
+		{
+			AnimatedMatColorParams *params = each->params;
+			
+			sb_free(params->primColors);
+			sb_free(params->envColors);
+			sb_free(params->keyFrames);
+			sb_free(params->durationEachKey);
+			
+			free(params);
+			break;
+		}
+		
+		case AnimatedMatType_DrawTexCycle:
+		{
+			AnimatedMatTexCycleParams *params = each->params;
+			
+			sb_free(params->textureList);
+			sb_free(params->textureIndexList);
+			
+			free(params);
+			break;
+		}
+		
+		case AnimatedMatType_Count:
+			break;
+	}
+}
+
+void AnimatedMaterialFreeList(AnimatedMaterial *sbArr)
 {
 	sb_foreach(sbArr, {
-		switch (each->type)
-		{
-			case 0: // AnimatedMat_DrawTexScroll
-			case 1: // AnimatedMat_DrawTwoTexScroll
-				free(each->params);
-				break;
-			
-			case 2: // AnimatedMat_DrawColor
-			case 3: // AnimatedMat_DrawColorLerp
-			case 4: // AnimatedMat_DrawColorNonLinearInterp
-			{
-				AnimatedMatColorParams *params = each->params;
-				
-				sb_free(params->primColors);
-				sb_free(params->envColors);
-				sb_free(params->keyFrames);
-				
-				free(params);
-				break;
-			}
-			
-			case 5: // AnimatedMat_DrawTexCycle
-			{
-				AnimatedMatTexCycleParams *params = each->params;
-				
-				sb_free(params->textureList);
-				sb_free(params->textureIndexList);
-				
-				free(params);
-				break;
-			}
-		}
+		AnimatedMaterialFree(each);
 	})
 	sb_free(sbArr);
 }
@@ -1077,7 +1181,7 @@ void AnimatedMaterialToWorkblob(
 {
 	WorkblobPush(4);
 	
-	if ((matAnim != NULL) && (matAnim->segment != 0))
+	if (sb_count(matAnim) && (matAnim->segment != 0))
 	{
 		for (int segment = 0; segment >= 0; ++matAnim)
 		{
@@ -1089,8 +1193,8 @@ void AnimatedMaterialToWorkblob(
 			
 			switch (matAnim->type)
 			{
-				case 0: // AnimatedMat_DrawTexScroll
-				case 1: // AnimatedMat_DrawTwoTexScroll
+				case AnimatedMatType_DrawTexScroll:
+				case AnimatedMatType_DrawTwoTexScroll:
 				{
 					AnimatedMatTexScrollParams *p = matAnim->params;
 					
@@ -1104,14 +1208,32 @@ void AnimatedMaterialToWorkblob(
 					break;
 				}
 				
-				case 2: // AnimatedMat_DrawColor
-				case 3: // AnimatedMat_DrawColorLerp
-				case 4: // AnimatedMat_DrawColorNonLinearInterp
+				case AnimatedMatType_DrawColor:
+				case AnimatedMatType_DrawColorLerp:
+				case AnimatedMatType_DrawColorNonLinearInterp:
 				{
 					AnimatedMatColorParams *p = matAnim->params;
 					
 					WorkblobPut16(p->durationFrames);
-					WorkblobPut16(p->keyFrameCount);
+					if (matAnim->type == AnimatedMatType_DrawColor)
+						WorkblobPut16(0);
+					else
+						WorkblobPut16(p->keyFrameCount);
+					
+					// MM expects last frame to be a copy of the 1st frame,
+					// but with a duration of 1 (abstracted this to provide
+					// a better UX) (excuse the resulting mess)
+					if (USE_TEXANIM_MM_LOOP_HACK(matAnim))
+					{
+						#define EXTRA_LAST_FRAME(X) \
+							if (p->X) \
+								stb__sbn(p->X) += 1;
+						EXTRA_LAST_FRAME(primColors);
+						EXTRA_LAST_FRAME(envColors);
+						EXTRA_LAST_FRAME(keyFrames);
+						EXTRA_LAST_FRAME(durationEachKey);
+						#undef EXTRA_LAST_FRAME
+					}
 					
 					// primColors
 					WorkblobPush(4);
@@ -1136,13 +1258,25 @@ void AnimatedMaterialToWorkblob(
 					
 					// keyFrames
 					WorkblobPush(4);
-					sb_foreach(p->keyFrames, { WorkblobPut16(*each); });
+					if (matAnim->type != AnimatedMatType_DrawColor)
+						sb_foreach(p->keyFrames, { WorkblobPut16(*each); });
 					WorkblobPut32(WorkblobPop());
+					
+					// MM expects last frame to be a copy of the 1st frame,
+					// but with a duration of 1 (abstracted this to provide
+					// a better UX) (excuse the resulting mess)
+					if (USE_TEXANIM_MM_LOOP_HACK(matAnim))
+					{
+						sb_pop(p->primColors);
+						sb_pop(p->envColors);
+						sb_pop(p->keyFrames);
+						sb_pop(p->durationEachKey);
+					}
 					
 					break;
 				}
 				
-				case 5: // AnimatedMat_DrawTexCycle
+				case AnimatedMatType_DrawTexCycle:
 				{
 					AnimatedMatTexCycleParams *p = matAnim->params;
 					
@@ -1160,6 +1294,9 @@ void AnimatedMaterialToWorkblob(
 					
 					break;
 				}
+				
+				case AnimatedMatType_Count:
+					break;
 			}
 			
 			params = WorkblobPop();

@@ -45,6 +45,12 @@ struct CutsceneOot;
 	(((TYPE*)ADDR)[1]) ACTION, \
 	(((TYPE*)ADDR)[2]) ACTION
 
+#define UNFOLD_ARRAY_4_EXT(TYPE, ADDR, ACTION) \
+	(((TYPE*)ADDR)[0]) ACTION, \
+	(((TYPE*)ADDR)[1]) ACTION, \
+	(((TYPE*)ADDR)[2]) ACTION, \
+	(((TYPE*)ADDR)[3]) ACTION
+
 #define MAX(A, B) (((A) > (B)) ? (A) : (B))
 #define MAX3(A, B, C) MAX(A, MAX(B, C))
 

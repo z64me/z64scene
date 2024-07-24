@@ -21,6 +21,22 @@ typedef float texAnimStep_t;
 
 #if 1 // region: types
 
+#define USE_TEXANIM_MM_LOOP_HACK(STRUCTPTR) \
+	(STRUCTPTR)->type != AnimatedMatType_DrawColor
+
+typedef enum AnimatedMatType
+{
+	AnimatedMatType_DrawTexScroll,
+	AnimatedMatType_DrawTwoTexScroll,
+	AnimatedMatType_DrawColor,
+	AnimatedMatType_DrawColorLerp,
+	AnimatedMatType_DrawColorNonLinearInterp,
+	AnimatedMatType_DrawTexCycle,
+	AnimatedMatType_Count,
+} AnimatedMatType;
+
+#define ANIMATED_MAT_SEGMENT_OFFSET 7
+
 typedef struct {
 	uint32_t addr;
 	uint32_t addrBEU32;
@@ -47,6 +63,7 @@ typedef struct {
 	/* 0x4 */ sb_array(F3DPrimColor, primColors);
 	/* 0x8 */ sb_array(F3DEnvColor, envColors);
 	/* 0xC */ sb_array(uint16_t, keyFrames);
+	sb_array(uint16_t, durationEachKey);
 } AnimatedMatColorParams; // size = 0x10
 
 typedef struct {
@@ -62,9 +79,10 @@ typedef struct {
 	/* 0x8 */ sb_array(uint8_t, textureIndexList);
 } AnimatedMatTexCycleParams; // size = 0xC
 
-typedef struct {
+typedef struct AnimatedMaterial
+{
 	/* 0x0 */ int8_t segment;
-	/* 0x2 */ int16_t type;
+	/* 0x2 */ enum AnimatedMatType type;
 	/* 0x4 */ sb_array(void, params);
 } AnimatedMaterial; // size = 0x8
 
@@ -72,10 +90,14 @@ typedef struct {
 
 #if 1 // region: function prototypes
 
+const char **AnimatedMatType_Names(void);
+const char *AnimatedMatType_AsString(enum AnimatedMatType type);
 GbiGfx* Gfx_TexScroll(uint32_t x, uint32_t y, int32_t width, int32_t height);
 GbiGfx* Gfx_TwoTexScroll(int32_t tile1, uint32_t x1, uint32_t y1, int32_t width1, int32_t height1, int32_t tile2, uint32_t x2, uint32_t y2, int32_t width2, int32_t height2);
 AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr);
-void AnimatedMaterialFree(AnimatedMaterial *sbArr);
+AnimatedMaterial AnimatedMaterialNewFromDefault(AnimatedMatType type, int segment);
+void AnimatedMaterialFreeList(AnimatedMaterial *sbArr);
+void AnimatedMaterialFree(AnimatedMaterial *mat);
 void TexAnimSetGameplayFrames(float frames);
 
 void AnimatedMaterialToWorkblob(

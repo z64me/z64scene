@@ -213,6 +213,8 @@
 #define sb_last   stb_sb_last
 #define sb_clear  stb_sb_clear
 #define sb_new    stb_sb_new
+#define sb_swap   stb_sb_swap
+#define sb_swap_safe stb_sb_swap_safe
 #define sb_contains stb_sb_contains
 #define sb_contains_ref stb_sb_contains_ref
 #define sb_contains_copy stb_sb_contains_copy
@@ -233,6 +235,29 @@
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
 #define stb_sb_contains_copy(HAYSTACK, NEEDLE) (sb_find_copy(HAYSTACK, NEEDLE) >= 0)
+#ifdef __cplusplus
+	// C++ has no typeof, so work around it
+	#define stb_sb_swap(a,index0,index1) { \
+		sb_push(a, a[index1]); \
+		a[index1] = a[index0]; \
+		a[index0] = sb_last(a); \
+		--stb__sbn(a); \
+	}
+#else
+	#define stb_sb_swap(a,index0,index1) { \
+		(typeof(*(a))) tmp = a[index1]; \
+		a[index1] = a[index0]; \
+		a[index0] = tmp; \
+	}
+#endif
+#define stb_sb_swap_safe(a,index0,index1) { \
+	if (a \
+		&& index0 >= 0 && index0 < sb_count(a) \
+		&& index1 >= 0 && index1 < sb_count(a) \
+	) { \
+		stb_sb_swap(a, index0, index1) \
+	} \
+}
 
 #define stb_sb_find_decl(FUNCNAME, HAYSTACK_TYPE, NEEDLE_TYPE) \
 	HAYSTACK_TYPE *FUNCNAME(sb_array(HAYSTACK_TYPE, haystack), NEEDLE_TYPE needle)

@@ -14,6 +14,7 @@
 // C specific
 #ifdef __cplusplus
 extern "C" {
+#include "texanim.h"
 #define CPP_FUNC_PREFIX extern "C"
 #else
 #define CPP_FUNC_PREFIX
@@ -56,6 +57,8 @@ struct GuiInterop
 	
 	struct ObjectEntry *selectedObject;
 	sb_array(struct ObjectEntry, *objectList);
+	
+	sb_array(struct AnimatedMaterial, *texanimList);
 	
 	sb_array(struct ObjectEntry, missingObjects);
 	sb_array(struct ObjectEntry, unusedObjects);

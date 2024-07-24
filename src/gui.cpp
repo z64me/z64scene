@@ -40,6 +40,83 @@ extern "C" {
 	ImGui::SameLine(ImGui::CalcTextSize(TITLE).x + 32); \
 	HelpMarker(HELPTEXT);
 
+#define GENERIC_REORDERING_BUTTONS_DEFAULT_ADD(LIST, DEFAULT_STRUCT) \
+	sb_push(LIST, (DEFAULT_STRUCT)); \
+	current = &sb_last(LIST);
+
+#define GENERIC_REORDERING_BUTTONS(\
+	NAMESPACE \
+	, TYPE \
+	, TYPENAME \
+	, LIST \
+	, CURRENT_INDEX_LVALUE \
+	, ON_ADD \
+	, ON_DELETE \
+	, ON_RAISE_LOWER \
+) \
+{ \
+	TYPE *current = (LIST) ? &LIST[CURRENT_INDEX_LVALUE] : 0; \
+	\
+	if (ImGui::ArrowButton("Raise##" NAMESPACE, ImGuiDir_Up) \
+		&& LIST \
+		&& current > LIST \
+		&& current <= &sb_last(LIST) \
+	) \
+	{ \
+		TYPE tmp = current[-1]; \
+		current[-1] = current[0]; \
+		current[0] = tmp; \
+		current -= 1; \
+		int SWAPDIR = -1; (void)SWAPDIR; \
+		ON_RAISE_LOWER \
+	} \
+	\
+	ImGui::SameLine(); \
+	if (ImGui::ArrowButton("Lower##" NAMESPACE, ImGuiDir_Down) \
+		&& LIST \
+		&& current >= LIST \
+		&& current < &sb_last(LIST) \
+	) \
+	{ \
+		TYPE tmp = current[1]; \
+		current[1] = current[0]; \
+		current[0] = tmp; \
+		current += 1; \
+		int SWAPDIR = 1; (void)SWAPDIR; \
+		ON_RAISE_LOWER \
+	} \
+	\
+	ImGui::SameLine(); \
+	if (ImGui::Button("Add " TYPENAME "##" NAMESPACE)) \
+	{ \
+		ON_ADD \
+	} \
+	\
+	ImGui::SameLine(); \
+	if (ImGui::Button("Delete##" NAMESPACE) \
+		&& LIST \
+		&& current >= LIST \
+		&& current <= &sb_last(LIST) \
+	) \
+	{ \
+		int DELIDX = CURRENT_INDEX_LVALUE; (void)DELIDX; \
+		ON_DELETE \
+		\
+		sb_remove(LIST, current - LIST); \
+		\
+		if (current > &sb_last(LIST)) \
+			current -= 1; \
+		\
+		if (sb_count(LIST) == 0) \
+			current = 0; \
+	} \
+	\
+	if (!current) \
+		CURRENT_INDEX_LVALUE = -1; \
+	else \
+		CURRENT_INDEX_LVALUE = current - LIST; \
+}
+
 #endif
 
 #if 1 // region: misc decls
@@ -398,7 +475,7 @@ static void MultiLineTabBar(const char *uniqueName, char const *arr[], const int
 	);
 }
 
-static void PickIntValue(const char *uniqueName, int *v, int min = INT_MIN, int max = INT_MAX)
+static void PickIntValue(const char *uniqueName, int *v, int min = INT_MIN, int max = INT_MAX, const char *fmt = "0x%04x")
 {
 	ImGuiIO &io = ImGui::GetIO();
 	bool isSingleClick = false;
@@ -410,12 +487,20 @@ static void PickIntValue(const char *uniqueName, int *v, int min = INT_MIN, int 
 		isSingleClick = true;
 	}
 	
-	ImGui::DragInt(uniqueName, v, 0.00001f, 0, 0xffff, "0x%04x", ImGuiSliderFlags_None);
+	ImGui::DragInt(uniqueName, v, 0.00001f, min, max, fmt, ImGuiSliderFlags_None);
 	
 	if (isSingleClick)
 		io.MouseClickedCount[0] = 1;
 	
 	*v = CLAMP(*v, min, max);
+}
+
+// get the best contrasting font color against a background color
+uint32_t BestFontContrast(uint8_t red, uint8_t green, uint8_t blue)
+{
+	double y = (800.0 * red + 587.0 * green + 114.0 * blue) / 1000.0;
+	
+	return y > 127 ? 0xff000000 : 0xffffffff;
 }
 
 static void PickHexValueU16(const char *uniqueName, uint16_t *v, uint16_t min = 0, uint16_t max = 0xffff)
@@ -446,6 +531,30 @@ static bool PickColor3U8(const char* label, ZeldaRGB *rgb, ImGuiColorEditFlags f
 static bool PickColor3U8(const char* label, ZeldaVecS8 *rgb, ImGuiColorEditFlags flags = 0)
 {
 	return PickColor3U8(label, (uint8_t*)rgb, flags);
+}
+
+#define PickColorGeneric4U8(LABEL, RGBA) PickColor4U8(LABEL, (uint8_t*)(RGBA))
+static bool PickColor4U8(const char* label, uint8_t *rgba, ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaPreviewHalf)
+{
+	float col[4] = { UNFOLD_ARRAY_4_EXT(uint8_t, rgba, / 255.0f) };
+	bool result = ImGui::ColorEdit4(label, col, flags);
+	
+	for (int i = 0; i < 4; ++i)
+		rgba[i] = col[i] * 255;
+	
+	return result;
+}
+
+#define NudgeDecimalValue(UNIQUE_STRING, VAR, STEP) { \
+	int CONCAT(tmp, __LINE__) = VAR; \
+	ImGui::InputInt(UNIQUE_STRING, &CONCAT(tmp, __LINE__), STEP, 0); \
+	VAR = CONCAT(tmp, __LINE__); \
+}
+
+#define PickDecimalValue(UNIQUE_STRING, VAR) { \
+	int CONCAT(tmp, __LINE__) = VAR; \
+	PickIntValue(UNIQUE_STRING, &CONCAT(tmp, __LINE__), INT_MIN, INT_MAX, "%d"); \
+	VAR = CONCAT(tmp, __LINE__); \
 }
 
 // determine which objects are missing, and which are potentially unused
@@ -1392,6 +1501,322 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
+		"Segments"
+		, [](){
+			static int indexOfSelection = -1;
+			struct AnimatedMaterial *list = *gGui->texanimList;
+			
+			if (ImGui::BeginListBox("##EditWhichSegment", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				sb_foreach(list,
+				{
+					char tmp[256];
+					snprintf(tmp, sizeof(tmp), "%d: Seg 0x%02X, %s"
+						, eachIndex
+						, ABS_ALT(each->segment) + ANIMATED_MAT_SEGMENT_OFFSET
+						, AnimatedMatType_AsString(each->type)
+					);
+					const bool is_selected = (indexOfSelection == eachIndex);
+					if (ImGui::Selectable(tmp, is_selected))
+						indexOfSelection = eachIndex;
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				})
+				ImGui::EndListBox();
+			}
+			bool orderChanged = false;
+			GENERIC_REORDERING_BUTTONS(
+				"SegmentList"
+				, AnimatedMaterial
+				, "Segment"
+				, list
+				, indexOfSelection
+				, { // onAdd
+					ImGui::OpenPopup("SegmentListAddPopup");
+				}
+				, { // onDelete
+					orderChanged = true;
+					AnimatedMaterialFree(current);
+				}
+				, { // onRaiseLower
+					orderChanged = true;
+				}
+			)
+			if (ImGui::BeginPopup("SegmentListAddPopup"))
+			{
+				static int useType = 0;
+				static int useSegment = 1;
+				int changeSegment = useSegment;
+				
+				if (ImGui::Combo(
+					"Segment##SegmentListAddPopup"
+					, &changeSegment
+					, [](void* data, int n) {
+						static char test[256];
+						sprintf(test, "0x%02X", n + ANIMATED_MAT_SEGMENT_OFFSET);
+						if (n == 0) sprintf(test, "cancel");
+						return (const char*)test;
+					}
+					, 0
+					, 0x0F - ANIMATED_MAT_SEGMENT_OFFSET
+				) && changeSegment)
+					useSegment = changeSegment;
+				
+				ImGui::Combo("Type##SegmentListAddPopup", &useType, AnimatedMatType_Names(), AnimatedMatType_Count);
+				
+				if (ImGui::Button("OK"))
+				{
+					orderChanged = true;
+					sb_push(list, AnimatedMaterialNewFromDefault(AnimatedMatType(useType), useSegment));
+					ImGui::CloseCurrentPopup();
+				}
+				
+				ImGui::SameLine();
+				if (ImGui::Button("Cancel"))
+					ImGui::CloseCurrentPopup();
+				
+				ImGui::EndPopup();
+			}
+			if (orderChanged)
+				sb_foreach(list, {
+					each->segment = ABS_ALT(each->segment);
+					if (each == &sb_last(list))
+						each->segment *= -1;
+				})
+			
+			if (indexOfSelection < 0 || indexOfSelection >= sb_count(list))
+			{
+				*gGui->texanimList = list;
+				return;
+			}
+			
+			struct AnimatedMaterial *my = &list[indexOfSelection];
+			ImGui::Text("%s", AnimatedMatType_AsString(my->type));
+			int changeSegment = ABS_ALT(my->segment);
+			if (ImGui::Combo(
+				"Segment##ChangeSegment"
+				, &changeSegment
+				, [](void* data, int n) {
+					static char test[256];
+					sprintf(test, "0x%02X", n + ANIMATED_MAT_SEGMENT_OFFSET);
+					if (n == 0) sprintf(test, "cancel");
+					return (const char*)test;
+				}
+				, 0
+				, 0x0F - ANIMATED_MAT_SEGMENT_OFFSET
+			) && changeSegment) {
+				LogDebug("change segment to %02x", changeSegment + ANIMATED_MAT_SEGMENT_OFFSET);
+				if (my->segment < 0)
+					changeSegment *= -1;
+				my->segment = changeSegment;
+			}
+			switch (my->type)
+			{
+				case AnimatedMatType_DrawTexScroll:
+				case AnimatedMatType_DrawTwoTexScroll:
+				{
+					AnimatedMatTexScrollParams *params = (AnimatedMatTexScrollParams*)my->params;
+					
+					for (int i = AnimatedMatType_DrawTexScroll; i <= my->type; ++i, ++params)
+					{
+						ImGui::Text("Layer %d", i - AnimatedMatType_DrawTexScroll);
+						
+						// imgui hack:
+						// \r is a non-printing character, and +i guarantees unique
+						// name for each layer layer (0 and 1), so roll with it
+						PickDecimalValue("\r""Width##DrawTexScroll" + i, params->width);
+						PickDecimalValue("\r""Height##DrawTexScroll" + i, params->height);
+						NudgeDecimalValue("\r""X Speed##DrawTexScroll" + i, params->xStep, 1);
+						NudgeDecimalValue("\r""Y Speed##DrawTexScroll" + i, params->yStep, 1);
+					}
+					break;
+				}
+				
+				case AnimatedMatType_DrawColor:
+				case AnimatedMatType_DrawColorLerp:
+				case AnimatedMatType_DrawColorNonLinearInterp:
+				{
+					static int colorIndex = -1;
+					AnimatedMatColorParams *params = (AnimatedMatColorParams*)my->params;
+					
+					bool hasEnv = params->envColors != 0;
+					if (ImGui::Checkbox("Segment Has Env Colors", &hasEnv))
+					{
+						if (!hasEnv)
+						{
+							sb_free(params->envColors);
+							params->envColors = 0;
+						}
+						else
+						{
+							while (sb_count(params->envColors) < sb_count(params->primColors))
+								sb_push(params->envColors, ((F3DEnvColor){0xff, 0xff, 0xff, 0xff}));
+						}
+					}
+					
+					if (ImGui::BeginListBox("##EditWhichColor", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+					{
+						sb_foreach(params->primColors,
+						{
+							const bool is_selected = (colorIndex == eachIndex);
+							char tmp[256]; sprintf(tmp, "##%d", eachIndex);
+							
+							if (ImGui::Selectable(tmp, is_selected, 0))
+								colorIndex = eachIndex;
+							
+							if (is_selected)
+								ImGui::SetItemDefaultFocus();
+							
+							ImVec2 ul = ImGui::GetItemRectMin();
+							ImVec2 lr = ImGui::GetItemRectMax();
+							ImVec2 dim = ImGui::GetItemRectSize();
+							dim.x /= 2;
+							
+							// prim/env on left/right sides
+							// imgui uses abgr
+							uint32_t opaque = 0xff000000;
+							uint32_t left = (each->r << 0) | (each->g << 8) | (each->b << 16);
+							uint32_t right = left;
+							if (params->envColors) {
+								F3DEnvColor *env = &params->envColors[eachIndex];
+								right = (env->r << 0) | (env->g << 8) | (env->b << 16);
+							}
+							ImGui::GetWindowDrawList()->AddRectFilled(ul, ImVec2(ul.x + dim.x, lr.y), opaque | left);
+							ImGui::GetWindowDrawList()->AddRectFilled(ImVec2(ul.x + dim.x, ul.y), lr, opaque | right);
+							
+							if (ImGui::IsItemHovered())
+								ImGui::GetWindowDrawList()->AddRectFilled(ul, lr, 0x30ffffff);
+							
+							static char work[32]; int len; int off = 2;
+							strcpy(work, is_selected ? " **********" : "      ");
+							if ((len = sprintf(work + off, " %d ", eachIndex)) && is_selected)
+								work[len + off] = '*';
+							ImGui::GetWindowDrawList()->AddText(ul, BestFontContrast(each->r, each->g, each->b), work, 0);
+						})
+						
+						ImGui::EndListBox();
+					}
+					GENERIC_REORDERING_BUTTONS(
+						"ColorList"
+						, F3DPrimColor
+						, "Color"
+						, params->primColors
+						, colorIndex
+						, { // onAdd
+							GENERIC_REORDERING_BUTTONS_DEFAULT_ADD(
+								params->primColors,
+								((F3DPrimColor){ 0xff, 0xff, 0xff, 0xff, 0x80 })
+							)
+							if (params->envColors)
+								while (sb_count(params->envColors) < sb_count(params->primColors))
+									sb_push(params->envColors, ((F3DEnvColor){0xff, 0xff, 0xff, 0xff}));
+							while (sb_count(params->durationEachKey) < sb_count(params->primColors))
+								sb_push(params->durationEachKey, 100);
+							while (sb_count(params->keyFrames) < sb_count(params->primColors))
+								sb_push(params->keyFrames, 0);
+						}
+						, { // onDelete
+							if (params->envColors) sb_remove(params->envColors, DELIDX);
+							if (params->durationEachKey) sb_remove(params->durationEachKey, DELIDX);
+							if (params->keyFrames) sb_remove(params->keyFrames, DELIDX);
+						}
+						, { // onRaiseLower
+							sb_swap_safe(params->envColors, colorIndex, colorIndex + SWAPDIR)
+							sb_swap_safe(params->durationEachKey, colorIndex, colorIndex + SWAPDIR)
+						}
+					)
+					
+					if (colorIndex < 0 || colorIndex >= sb_count(params->primColors))
+						break;
+					
+					F3DPrimColor *prim = &params->primColors[colorIndex];
+					F3DEnvColor *env = 0;
+					uint16_t *durationThisKey = 0;
+					
+					if (params->envColors)
+						env = &params->envColors[colorIndex];
+					
+					if (params->durationEachKey)
+						durationThisKey = &params->durationEachKey[colorIndex];
+					
+					PickColorGeneric4U8("Prim Color##DrawColor", &prim->r);
+					NudgeDecimalValue("PrimLodFrac##DrawColor", prim->lodFrac, 1);
+					
+					if (env)
+						PickColorGeneric4U8("Env Color##DrawColor", &env->r);
+					
+					// AnimatedMatType_DrawColor does not have keyframe duration
+					if (durationThisKey && my->type != AnimatedMatType_DrawColor)
+					{
+						NudgeDecimalValue("Duration##DrawColor", *durationThisKey, 1);
+						*durationThisKey = CLAMP(*durationThisKey, 1, 9999);
+					}
+					
+					// MM expects last frame to be a copy of the 1st frame,
+					// but with a duration of 1 (abstracted this to provide
+					// a better UX) (excuse the resulting mess)
+					if (USE_TEXANIM_MM_LOOP_HACK(my))
+					{
+						#define EXTRA_LAST_FRAME(X) \
+							if (params->X) { \
+								sb_push(params->X, params->X[0]); \
+							}
+						EXTRA_LAST_FRAME(primColors)
+						EXTRA_LAST_FRAME(envColors)
+						EXTRA_LAST_FRAME(keyFrames)
+						EXTRA_LAST_FRAME(durationEachKey)
+						if (params->durationEachKey)
+							sb_last(params->durationEachKey) = 1;
+						#undef EXTRA_LAST_FRAME
+					}
+					
+					// derive durationFrames and keyFrames from durationEachKey
+					params->durationFrames = 0;
+					params->keyFrameCount = 0;
+					if (params->keyFrames)
+						sb_foreach(params->keyFrames, {
+							// AnimatedMatType_DrawColor no keyframes, set each = 1
+							if (my->type == AnimatedMatType_DrawColor)
+								params->durationEachKey[eachIndex] = 1;
+							*each = params->durationFrames;
+							params->durationFrames += params->durationEachKey[eachIndex];
+							params->keyFrameCount += 1;
+						})
+					if (!params->durationFrames)
+						params->durationFrames = sb_count(params->primColors);
+					
+					// MM expects last frame to be a copy of the 1st frame,
+					// but with a duration of 1 (abstracted this to provide
+					// a better UX) (excuse the resulting mess)
+					if (USE_TEXANIM_MM_LOOP_HACK(my))
+					{
+						sb_pop(params->primColors);
+						sb_pop(params->envColors);
+						sb_pop(params->keyFrames);
+						sb_pop(params->durationEachKey);
+					}
+					
+				#ifndef NDEBUG
+					ImGui::Text("cycle durationFrames = %d", params->durationFrames);
+					ImGui::Text("cycle keyFrameCount = %d", params->keyFrameCount);
+					ImGui::Text("this keyFrame = %d", params->keyFrames[colorIndex]);
+				#endif
+					break;
+				}
+				
+				case AnimatedMatType_DrawTexCycle:
+					ImGui::TextWrapped("TODO preview animated texture here, play/pause button");
+					ImGui::TextWrapped("TODO allow importing new ones from animated gif/webp");
+					break;
+				
+				case AnimatedMatType_Count:
+					break;
+			}
+			
+			*gGui->texanimList = list;
+		}
+	},
+	new LinkedStringFunc{
 		"Project"
 		, []() {
 			Project *project = gGuiSettings.project;
@@ -1928,6 +2353,7 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		gGui->spawnList = &(sceneHeader->spawns);
 		gGui->actorList = &(roomHeader->instances);
 		gGui->objectList = &(roomHeader->objects);
+		gGui->texanimList = &(sceneHeader->mm.sceneSetupData);
 		
 		// now that door/spawn/actor/object lists are non-zero, watch for changes
 		bool refreshObjects = false;

@@ -888,7 +888,7 @@ void SceneHeaderFree(struct SceneHeader *header)
 	CutsceneOotFree(header->cutsceneOot);
 	CutsceneListMmFree(header->cutsceneListMm);
 	
-	AnimatedMaterialFree(header->mm.sceneSetupData);
+	AnimatedMaterialFreeList(header->mm.sceneSetupData);
 	
 	sb_free(header->exits);
 }
