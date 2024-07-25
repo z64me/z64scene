@@ -2379,6 +2379,8 @@ void WindowMainLoop(const char *sceneFn)
 			sGameplayFrames += gInput.delta_time_sec * (20.0);
 			
 			TexAnimSetGameplayFrames(sGameplayFrames);
+			
+			gGui->deltaTimeSec = gInput.delta_time_sec;
 		}
 		
 		//ZeldaLight *light = &scene->headers[0].refLights[1]; // 1 = daytime

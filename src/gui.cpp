@@ -368,6 +368,111 @@ static void HelpMarker(const char *desc)
 	}
 }
 
+// copied from 'textures' tab, may consolidate that to use this function later
+static int DataBlobToTexture(struct DataBlob *blob, GLuint *glResult)
+{
+	static uint8_t *imageData = 0;
+	struct DataBlob *palBlob = blob->data.texture.pal;
+	int imageWidth = blob->data.texture.w;
+	int imageHeight = blob->data.texture.h;
+	int imageFmt = blob->data.texture.fmt;
+	int imageSiz = blob->data.texture.siz;
+	uint32_t segAddr = blob->originalSegmentAddress;
+	uint32_t palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
+	int sizeBytesClamped = blob->data.texture.sizeBytesClamped;
+	
+	// n64 tmem = 4kib, *4 for 32-bit color conversion
+	// and *2 b/c 4bit textures expand to *2*4x the bytes
+	if (!imageData)
+		imageData = (uint8_t*)calloc(4, 512 * 512); // for prerenders
+		//imageData = (uint8_t*)malloc(4096 * 4 * 2);
+	
+	//bool isBadTexture = false;
+	if (sizeBytesClamped > 4096
+		|| (((uint8_t*)blob->refData) + sizeBytesClamped) > blob->refDataFileEnd
+		// bounds checking for palette, if applicable:
+		|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
+	)
+	{
+		LogDebug("warning: width height %d x %d", imageWidth, imageHeight);
+		LogDebug("refData    = %p", blob->refData);
+		LogDebug("refDataEnd = %p", blob->refDataFileEnd);
+		LogDebug("sizeBytes  = %x", blob->sizeBytes);
+		//isBadTexture = true;
+		return -1;//goto L_textureError;
+	}
+	
+	if (blob->data.texture.isJfif)
+	{
+		int x, y, c;
+		void *test = stbi_load_from_memory(
+			(const stbi_uc*)blob->refData
+			, blob->sizeBytes
+			, &x, &y, &c, 4
+		);
+		//LogDebug("test = %p %d x %d x %d", test, x, y, c);
+		memcpy(imageData, test, x * y * 4);
+		stbi_image_free(test);
+	}
+	else
+	{
+		n64texconv_to_rgba8888(
+			imageData
+			, (unsigned char*)blob->refData // TODO const correctness
+			, (unsigned char*)(palBlob ? palBlob->refData : 0)
+			, (n64texconv_fmt)imageFmt
+			, (n64texconv_bpp)imageSiz
+			, imageWidth
+			, imageHeight
+			, blob->data.texture.lineSize
+		);
+	}
+	
+	// Create a OpenGL texture identifier
+	glGenTextures(1, glResult);
+	glBindTexture(GL_TEXTURE_2D, *glResult);
+	
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+	
+	// Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
+	
+	return 0;
+}
+
+static int GetFlipbookFrame(int loopPoint)
+{
+	static double along = 0;
+	static int isPlaying = false;
+	
+	if (loopPoint <= 0)
+		return (along = 0);
+	
+	if (ImGui::Button(isPlaying
+		? "Pause##FlipbookAnimationPreview"
+		: "Play##FlipbookAnimationPreview"
+	))
+		isPlaying = !isPlaying;
+	
+	along += gGui->deltaTimeSec * 20 * isPlaying;
+	along = fmod(along, loopPoint);
+	
+	if (isPlaying)
+	{
+		ImGui::SameLine();
+		ImGui::Text("progress: %.5f", along / loopPoint);
+	}
+	
+	return int(floor(along));
+}
+
 // imgui doesn't support this natively, so hack a custom one into it
 static void MultiLineTabBarGeneric(
 	const char *uniqueName
@@ -1805,9 +1910,63 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				}
 				
 				case AnimatedMatType_DrawTexCycle:
-					ImGui::TextWrapped("TODO preview animated texture here, play/pause button");
+				{
 					ImGui::TextWrapped("TODO allow importing new ones from animated gif/webp");
+					
+					AnimatedMatTexCycleParams *params = (AnimatedMatTexCycleParams*)my->params;
+					
+					// load every texture
+					sb_foreach(params->textureList, {
+						DataBlob *blob = (DataBlob*)each->datablob;
+						if (!blob) continue;
+						
+						if (blob->data.texture.glTexture == 0)
+						{
+							LogDebug("alloc texture");
+							GLuint glResult = 0;
+							
+							if (DataBlobToTexture(blob, &glResult) == 0)
+								blob->data.texture.glTexture = glResult;
+						}
+						
+						// draws every texture
+						if (false && blob->data.texture.glTexture)
+						{
+							DataBlob *pal = blob->data.texture.pal;
+							int scale = 2;
+							ImGui::TextWrapped("%08x %08x"
+								, blob->originalSegmentAddress
+								, pal ? pal->originalSegmentAddress : 0
+							);
+							ImGui::Text("glTexture = %d", blob->data.texture.glTexture);
+							ImGui::Image(
+								(void*)(intptr_t)blob->data.texture.glTexture
+								, ImVec2(blob->data.texture.w * (scale + 1)
+									, blob->data.texture.h * (scale + 1)
+								)
+							);
+						}
+					})
+					
+					// preview with button
+					DataBlob *blob = (DataBlob*)params->textureList[
+						params->textureIndexList[
+							GetFlipbookFrame(sb_count(params->textureIndexList))
+						]
+					].datablob;
+					if (blob && blob->data.texture.glTexture)
+					{
+						int scale = 2;
+						ImGui::Image(
+							(void*)(intptr_t)blob->data.texture.glTexture
+							, ImVec2(blob->data.texture.w * (scale + 1)
+								, blob->data.texture.h * (scale + 1)
+							)
+						);
+					}
+					
 					break;
+				}
 				
 				case AnimatedMatType_Count:
 					break;

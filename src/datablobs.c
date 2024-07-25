@@ -67,7 +67,7 @@ struct DataBlob *DataBlobNew(
 	, void *ref
 )
 {
-	struct DataBlob *blob = malloc(sizeof(*blob));
+	struct DataBlob *blob = calloc(1, sizeof(*blob));
 	
 	*blob = (struct DataBlob) {
 		.next = next

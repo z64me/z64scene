@@ -58,6 +58,7 @@ struct DataBlob
 			int sizeBytesClamped;
 			struct DataBlob *pal;
 			bool isJfif;
+			uintptr_t glTexture;
 		} texture;
 	} data;
 };

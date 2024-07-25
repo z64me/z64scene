@@ -566,6 +566,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 					continue;
 				sb_foreach(params->textureList, {
 					uint32_t addr = each->addr;
+					struct DataBlob *blob =
 					scene->blobs = DataBlobPush(
 						scene->blobs
 						, ((uint8_t*)scene->file->data) + (addr & 0x00ffffff)
@@ -577,6 +578,8 @@ void SceneReadyDataBlobs(struct Scene *scene)
 						//                reallocs, so switch to an id system later
 					);
 					scene->blobs->data = match->data; // texture dimensions
+					blob->refDataFileEnd = scene->file->dataEnd;
+					each->datablob = blob;
 				})
 			}
 		})

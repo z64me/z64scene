@@ -40,6 +40,7 @@ typedef enum AnimatedMatType
 typedef struct {
 	uint32_t addr;
 	uint32_t addrBEU32;
+	void *datablob;
 } TexturePtr; // segment address
 
 typedef struct {

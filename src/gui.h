@@ -76,6 +76,8 @@ struct GuiInterop
 	struct Instance clipboardInstance;
 	
 	int subkeepChildren; // how many children the current subkeep object has
+	
+	double deltaTimeSec;
 };
 
 #ifdef __cplusplus
