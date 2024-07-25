@@ -6,7 +6,7 @@
 
 if you're producing a linux build on a debian machine, try:
 ```
-sudo apt install gcc g++ make libglfw3-dev libgtk-3-dev
+sudo apt install gcc g++ make libglfw3-dev libwebp-dev libgif-dev libgtk-3-dev
 (as well as libgtk2.0-dev if you want to build for gtk2)
 ```
 
@@ -17,7 +17,7 @@ inside linux (tested on arch, and on debian running in wsl2).
 
 when you go to set up mxe, don't build all the packages; you only need this:
 ```
-make gcc glfw3
+make gcc glfw3 libwebp giflib
 ```
 
 ### and then clone and build z64scene
