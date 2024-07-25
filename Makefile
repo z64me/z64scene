@@ -2,13 +2,15 @@ CC=gcc
 CXX=g++
 MINGW=i686-w64-mingw32.static-
 WREN_INCLUDES=-Iwren/src/vm -Iwren/src/include -Iwren/src/optional
+LIBWEBP_CFLAGS=-DWEBP_NODISCARD="" -DWEBP_HAVE_GIF -DWebPFree=free -DWebPMalloc=malloc -Ilibwebp/src -Ilibwebp
+LIBWEBP_SRC=libwebp/examples/anim_util.c libwebp/examples/gifdec.c $(wildcard libwebp/src/demux/*.c) libwebp/imageio/imageio_util.c
 Z64CONVERT_CFLAGS=-DGBI_PREFIX=F3DEX2 -DVFILE_VISIBILITY=static -DWOW_OVERLOAD_FILE -Iz64convert/gfxasm/src -Iz64convert/wowlib -Iz64convert/src
 Z64CONVERT_SRC=$(wildcard z64convert/src/*.c) $(wildcard z64convert/gfxasm/src/*.c)
 Z64CONVERT_SRC:=$(filter-out z64convert/src/stb_image.c z64convert/src/cli.c z64convert/src/n64texconv.c, $(Z64CONVERT_SRC))
-CFLAGS_COMMON=-I z64viewer/include -I z64viewer/src -Istb $(WREN_INCLUDES) $(Z64CONVERT_CFLAGS) -Wall -Wno-unused-function -Wno-scalar-storage-order
-CXXFLAGS_COMMON=-Iimgui -Iimgui/backends -Iz64viewer/include -Ijson/include -Itoml11 -Istb $(WREN_INCLUDES)
-LDFLAGS_COMMON=`$(MINGW)pkg-config --libs glfw3` -Wall -Wno-unused-function -Wno-scalar-storage-order
-SRC_C=$(wildcard src/*.c) $(wildcard z64viewer/src/*.c) $(wildcard wren/src/vm/*.c) $(wildcard wren/src/optional/*.c) $(Z64CONVERT_SRC)
+CFLAGS_COMMON=-I z64viewer/include -I z64viewer/src -Istb $(WREN_INCLUDES) $(Z64CONVERT_CFLAGS) $(LIBWEBP_CFLAGS) -Wall -Wno-unused-function -Wno-scalar-storage-order
+CXXFLAGS_COMMON=-Iimgui -Iimgui/backends -Iz64viewer/include -Ijson/include -Itoml11 -Istb -Ilibwebp -DWEBP_NODISCARD="" $(WREN_INCLUDES)
+LDFLAGS_COMMON=`$(MINGW)pkg-config --libs glfw3 libwebp` -lgif -Wall -Wno-unused-function -Wno-scalar-storage-order
+SRC_C=$(wildcard src/*.c) $(wildcard z64viewer/src/*.c) $(wildcard wren/src/vm/*.c) $(wildcard wren/src/optional/*.c) $(Z64CONVERT_SRC) $(LIBWEBP_SRC)
 SRC_CXX=$(wildcard src/*.cpp)
 OBJ_C=$(patsubst %.c,bin/o/$(FOLDER)/%.o,$(SRC_C))
 OBJ_CXX=$(patsubst %.cpp,bin/o/$(FOLDER)/%.o,$(SRC_CXX))

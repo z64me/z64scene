@@ -19,3 +19,6 @@
 [submodule "z64convert"]
 	path = z64convert
 	url = https://github.com/z64utils/z64convert
+[submodule "libwebp"]
+	path = libwebp
+	url = https://chromium.googlesource.com/webm/libwebp
