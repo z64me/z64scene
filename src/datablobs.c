@@ -75,6 +75,7 @@ struct DataBlob *DataBlobNew(
 		, .originalSegmentAddress = segmentAddr
 		, .sizeBytes = sizeBytes
 		, .type = type
+		, .alignBytes = 8
 	};
 	
 	if (ref)
@@ -100,6 +101,19 @@ void DatablobFreeList(struct DataBlob *listHead)
 		
 		DatablobFree(listHead);
 	}
+}
+
+void DataBlobRemoveRef(struct DataBlob *blob, void *ref)
+{
+	if (!blob)
+		return;
+	
+	sb_foreach_backwards(blob->refs, {
+		if (*each == ref)
+			sb_remove(blob->refs, eachIndex);
+	})
+	
+	LogDebug("removed references to %08x, leaves %d", blob->originalSegmentAddress, sb_count(blob->refs));
 }
 
 void DataBlobListRemoveBlankEntries(struct DataBlob **listHead)

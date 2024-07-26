@@ -80,6 +80,18 @@ static uint32_t sMatAnimFlags;
 static float sMatAnimAlphaRatio;
 static AnimatedMaterial *sSceneMaterialAnims;
 
+static void *InterpretTexturePtrAddress(TexturePtr tex)
+{
+	if (tex.addr)
+		return n64_segment_get(tex.addr);
+	
+	// TODO avoids an #include for datablobs.h, but is cursed (refactor later)
+	if (tex.datablob)
+		return *((void**)tex.datablob);
+	
+	return 0;
+}
+
 /**
  * Returns a pointer to a single layer texture scroll displaylist.
  */
@@ -404,7 +416,7 @@ static void AnimatedMat_DrawTexCycle(int32_t segment, void* params) {
 	uint8_t* texId = Lib_SegmentedToVirtual(texAnimParams->textureIndexList);
 	if (!sb_count(texList) || !sb_count(texId)) return;
 	int32_t curFrame = (uint32_t)sMatAnimStep % texAnimParams->durationFrames;
-	void* tex = ParseSegmentAddress(texList[texId[curFrame]].addr);
+	void* tex = InterpretTexturePtrAddress(texList[texId[curFrame]]);
 	
 	OPEN_DISPS();
 	

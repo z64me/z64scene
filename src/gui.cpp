@@ -19,6 +19,12 @@ extern "C" {
 #include "project.h"
 #include "logging.h"
 #include "window.h"
+
+#include "examples/anim_util.h"
+#include "src/webp/decode.h"
+#include "imageio/image_enc.h"
+#include "examples/unicode.h"
+
 }
 
 #if 1 // region: helper macros
@@ -472,6 +478,223 @@ static int GetFlipbookFrame(int loopPoint)
 	
 	return int(floor(along));
 }
+
+void FlipbookCleanup(sb_array(TexturePtr*, textureListP), sb_array(uint8_t*, textureIndexListP))
+{
+	LogDebug("FlipbookCleanup() start");
+	
+	if (textureListP)
+	{
+		sb_array(TexturePtr, textureList) = *textureListP;
+		
+		// free all the existing ones
+		sb_foreach(textureList, {
+			DataBlob *blob = (DataBlob*)each->datablob;
+			if (!blob)
+				continue;
+			if (blob->data.texture.glTexture != 0) {
+				GLuint imageTexture = blob->data.texture.glTexture;
+				glDeleteTextures(1, &imageTexture);
+				blob->data.texture.glTexture = 0;
+			}
+			DataBlobRemoveRef(blob, &each->addrBEU32);
+		})
+		
+		sb_free(textureList);
+		*textureListP = 0;
+	}
+	
+	if (textureIndexListP)
+	{
+		sb_free(*textureIndexListP);
+		*textureIndexListP = 0;
+	}
+	
+	LogDebug("FlipbookCleanup() end");
+}
+
+void AnimatedImageToFlipbook(DataBlob *blob, AnimatedImage *anim, sb_array(TexturePtr*, textureListP), sb_array(uint8_t*, textureIndexListP))
+{
+	const void *pal = 0;
+	int palColors = 0;
+	int numFrames = anim->num_frames;
+	int frameWidth = anim->canvas_width;
+	int frameHeight = anim->canvas_height;
+	int gameStepMs = 1000 / 20;
+	
+	sb_array(TexturePtr, textureList) = 0;
+	sb_array(uint8_t, textureIndexList) = 0;
+	
+	// guarantee no reallocations will occur
+	sb_new_size(textureList, numFrames);
+	sb_new_size(textureIndexList, numFrames);
+	
+	// use palette found in scene instead of generating a new one
+	if (blob->data.texture.fmt == N64TEXCONV_CI && blob->data.texture.pal)
+	{
+		DataBlob *palBlob = blob->data.texture.pal;
+		
+		pal = palBlob->refData;
+		palColors = palBlob->sizeBytes / 2;
+	}
+	// unlike the above method, the block below generates a new palette
+	//
+	// be mindful that because the palette is referenced by the map mesh
+	// and not by the animation data, the palette pointer will become
+	// stale once the level is reimported from blender; one alternative is
+	// to use whatever palette was generated during the model conversion
+	// step, which should contain sufficient colors for texture conversion
+	// (see above)
+	//
+	// TODO this method also breaks the viewport preview, because the color
+	// palette now exists outside the scene, and so updating its references
+	// is not simple (would be easier to overwrite the original palette with
+	// with the new one, at the cost of a potentially lower color limit)
+	//
+	// (a workaround for the color limit would be allocating more space at
+	// the end of the scene, in anticipation of needing it for this purpose)
+	//
+	// also this is still WIP and not working as expected
+	else if (blob->data.texture.fmt == N64TEXCONV_CI && blob->data.texture.pal)
+	{
+		// simplify colors to improve palette generation
+		for (int i = 0; i < numFrames; ++i)
+			n64texconv_to_n64_and_back(
+				anim->frames[i].rgba
+				, 0
+				, 0
+				, N64TEXCONV_RGBA
+				, N64TEXCONV_16
+				, frameWidth
+				, frameHeight
+			);
+		
+		// generate a palette, weighted against all animation frames
+		static void *palBuf = 0; if (!palBuf) palBuf = calloc(256, 4);
+		int maxColors = blob->data.texture.siz == N64TEXCONV_4 ? 16 : 256;
+		//maxColors = blob->data.texture.pal->sizeBytes / 2; // will overwrite old palette
+		struct n64texconv_palctx *palCtx = n64texconv_palette_new(
+			maxColors, palBuf, calloc, realloc, free
+		);
+		for (int i = 0; i < numFrames; ++i)
+			n64texconv_palette_queue(palCtx, anim->frames[i].rgba, frameWidth, frameHeight, 0);
+		palColors = n64texconv_palette_exec(palCtx);
+		n64texconv_palette_free(palCtx);
+		pal = palBuf;
+		
+		// overwrite the palette datablob with the new palette (if applicable)
+		DataBlob *palBlob = blob->data.texture.pal;
+		size_t palBlobSize = palColors * 2;
+		uint8_t *newRefData = (uint8_t*)calloc(1, palBlobSize);
+		unsigned int palBlobSize64;
+		
+		if (palBlob->ownsRefData)
+			free((void*)palBlob->refData);
+		
+		/*
+		n64texconv_to_n64(
+			newRefData
+			, (unsigned char*)pal
+			, 0
+			, 0
+			, N64TEXCONV_RGBA
+			, N64TEXCONV_16
+			, palColors
+			, 0
+			, &palBlobSize64
+		);
+		*/
+		memcpy(newRefData, pal, palBlobSize);
+		palBlob->refData = newRefData;
+		palBlob->refDataFileEnd = newRefData + palBlobSize;
+		palBlob->sizeBytes = palBlobSize;
+		palBlob->ownsRefData = true;
+	}
+	
+	// convert all frames to n64 image formats
+	for (int i = 0; i < numFrames; ++i)
+	{
+		DecodedFrame *frame = &anim->frames[i];
+		LogDebug("AnimatedImageToFlipbook: frame %d", i);
+		unsigned int sizeBytes = 0;
+		
+		n64texconv_to_n64(
+			frame->rgba
+			, frame->rgba
+			, (unsigned char*)pal
+			, palColors
+			, n64texconv_fmt(blob->data.texture.fmt)
+			, n64texconv_bpp(blob->data.texture.siz)
+			, frameWidth
+			, frameHeight
+			, &sizeBytes
+		);
+		
+		TexturePtr *matched = 0;
+		sb_foreach(textureList, {
+			DataBlob *myBlob = (DataBlob*)each->datablob;
+			if (!memcmp(myBlob->refData, frame->rgba, sizeBytes)) {
+				matched = each;
+				break;
+			}
+		})
+		
+		// no match found, so allocate a new one
+		if (!matched)
+		{
+			// flipbooks always store their textures in scene
+			// files (segment 0x02), so this is acceptable
+			DataBlob *head = gScene->blobs;
+			matched = &sb_push(textureList, (TexturePtr){});
+			void *refData = malloc(sizeBytes);
+			memcpy(refData, frame->rgba, sizeBytes);
+			DataBlob *newBlob = DataBlobNew(
+				refData
+				, sizeBytes
+				, 0x02000000
+				, DATA_BLOB_TYPE_TEXTURE
+				, head->next
+				, &matched->addrBEU32
+			);
+			newBlob->data = blob->data; // texture format and palette
+			newBlob->refDataFileEnd = ((uint8_t*)refData) + sizeBytes;
+			newBlob->ownsRefData = true;
+			head->next = newBlob;
+			matched->datablob = newBlob;
+		}
+		
+		// timing, this is so a slow gif appears slow in-game
+		int index = matched - textureList;
+		int repetitions = floor(frame->duration / gameStepMs);
+		if (repetitions < 1)
+			repetitions = 1;
+		for (int i = 0; i < repetitions; ++i)
+			sb_push(textureIndexList, index);
+	}
+	
+	if (textureListP)
+		*textureListP = textureList;
+	if (textureIndexListP)
+		*textureIndexListP = textureIndexList;
+}
+
+static AnimatedImage *AnimatedImageNewFromPath(const char *path)
+{
+	AnimatedImage *anim = (AnimatedImage*)Calloc(1, sizeof(*anim));
+	
+	if (ReadAnimatedImage(path, anim, 0, NULL))
+		return anim;
+	
+	LogError("error decoding file: %s", path);
+	return 0;
+}
+
+void AnimatedImageFree(AnimatedImage *anim)
+{
+	ClearAnimatedImage(anim);
+	free(anim);
+}
+
 
 // imgui doesn't support this natively, so hack a custom one into it
 static void MultiLineTabBarGeneric(
@@ -1672,7 +1895,13 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				if (ImGui::Button("OK"))
 				{
 					orderChanged = true;
-					sb_push(list, AnimatedMaterialNewFromDefault(AnimatedMatType(useType), useSegment));
+					int segment = useSegment + ANIMATED_MAT_SEGMENT_OFFSET;
+					AnimatedMaterial tmp = AnimatedMaterialNewFromDefault(AnimatedMatType(useType), useSegment);
+					tmp.datablob = DataBlobListFindBlobWithOriginalSegmentAddress(
+						DataBlobSegmentGetHead(segment)
+						, segment << 24
+					);
+					sb_push(list, tmp);
 					ImGui::CloseCurrentPopup();
 				}
 				
@@ -1710,11 +1939,19 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				, 0
 				, 0x0F - ANIMATED_MAT_SEGMENT_OFFSET
 			) && changeSegment) {
-				LogDebug("change segment to %02x", changeSegment + ANIMATED_MAT_SEGMENT_OFFSET);
+				int segment = changeSegment + ANIMATED_MAT_SEGMENT_OFFSET;
+				LogDebug("change segment to %02x", segment);
+				my->datablob = DataBlobListFindBlobWithOriginalSegmentAddress(
+					DataBlobSegmentGetHead(segment)
+					, segment << 24
+				);
 				if (my->segment < 0)
 					changeSegment *= -1;
 				my->segment = changeSegment;
 			}
+			
+			DataBlob *myDataBlob = (DataBlob*)my->datablob;
+			
 			switch (my->type)
 			{
 				case AnimatedMatType_DrawTexScroll:
@@ -1911,9 +2148,48 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				
 				case AnimatedMatType_DrawTexCycle:
 				{
-					ImGui::TextWrapped("TODO allow importing new ones from animated gif/webp");
-					
 					AnimatedMatTexCycleParams *params = (AnimatedMatTexCycleParams*)my->params;
+					
+					if (!myDataBlob || myDataBlob->type != DATA_BLOB_TYPE_TEXTURE)
+					{
+						ImGui::TextWrapped("Error: No meshes reference this texture segment.");
+						break;
+					}
+					
+					const char *fmt[] = { "rgba", "yuv", "ci", "ia", "i" };
+					const char *bpp[] = { "4", "8", "16", "32" };
+					ImGui::TextWrapped(
+						"Expects: %dx%d %s-%s"
+						, myDataBlob->data.texture.w
+						, myDataBlob->data.texture.h
+						, fmt[myDataBlob->data.texture.fmt]
+						, bpp[myDataBlob->data.texture.siz]
+					);
+					
+					// generate new flipbook from animated gif/webp
+					if (ImGui::Button("Import Animated GIF/WEBP"))
+					{
+						const char *fn;
+						AnimatedImage *anim = 0;
+						
+						fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "gif/webp images\0*.gif;*.webp\0", NULL, NULL);
+						
+						if (fn)
+							anim = AnimatedImageNewFromPath(fn);
+						
+						if (anim)
+						{
+							FlipbookCleanup(&params->textureList, &params->textureIndexList);
+							AnimatedImageToFlipbook((DataBlob*)my->datablob, anim, &params->textureList, &params->textureIndexList);
+							AnimatedImageFree(anim);
+							params->durationFrames = sb_count(params->textureIndexList);
+						}
+					}
+					
+					if (!sb_count(params->textureList)
+						|| !sb_count(params->textureIndexList)
+					)
+						break;
 					
 					// load every texture
 					sb_foreach(params->textureList, {
@@ -1954,6 +2230,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 							GetFlipbookFrame(sb_count(params->textureIndexList))
 						]
 					].datablob;
+					ImGui::TextWrapped("Flipbook contains %d unique images, %d indices"
+						, sb_count(params->textureList)
+						, sb_count(params->textureIndexList)
+					);
 					if (blob && blob->data.texture.glTexture)
 					{
 						int scale = 2;

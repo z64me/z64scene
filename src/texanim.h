@@ -85,6 +85,7 @@ typedef struct AnimatedMaterial
 	/* 0x0 */ int8_t segment;
 	/* 0x2 */ enum AnimatedMatType type;
 	/* 0x4 */ sb_array(void, params);
+	void *datablob; // datablob associated with segment
 } AnimatedMaterial; // size = 0x8
 
 #endif // endregion

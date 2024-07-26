@@ -462,6 +462,8 @@ void SceneReadyDataBlobs(struct Scene *scene)
 {
 	static uint32_t eofRef = 0; // used so eof blobs have one ref each
 	
+	FOR_EXTERNAL_SEGMENTS { DatablobFreeList(DataBlobSegmentGetHead(i)); }
+	
 	DataBlobSegmentSetup(2, scene->file->data, scene->file->dataEnd, scene->blobs);
 	
 	// allows texture data blobs from unpopulated external segments, for flipbooks
@@ -555,15 +557,16 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	sb_foreach_named(scene->headers, sceneHeader, {
 		sb_foreach_named(sceneHeader->mm.sceneSetupData, material, {
 			int segment = ABS_ALT(material->segment) + 7;
+			struct DataBlob *match = DataBlobListFindBlobWithOriginalSegmentAddress(
+				DataBlobSegmentGetHead(segment)
+				, segment << 24
+			);
+			if (!match)
+				continue;
+			material->datablob = match;
 			if (material->type == 5) {
 				AnimatedMatTexCycleParams *params = material->params;
 				//LogDebug("textureList containing %d textures", sb_count(params->textureList));
-				struct DataBlob *match = DataBlobListFindBlobWithOriginalSegmentAddress(
-					DataBlobSegmentGetHead(segment)
-					, segment << 24
-				);
-				if (!match)
-					continue;
 				sb_foreach(params->textureList, {
 					uint32_t addr = each->addr;
 					struct DataBlob *blob =
@@ -584,10 +587,6 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			}
 		})
 	})
-	FOR_EXTERNAL_SEGMENTS { DatablobFreeList(DataBlobSegmentGetHead(i)); }
-	
-	// test
-	//DataBlobListRemoveBlankEntries(&scene->blobs);
 	
 	LogDebug("'%s' data blobs:", scene->file->filename);
 	DataBlobPrintAll(scene->blobs);

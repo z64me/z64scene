@@ -37,15 +37,17 @@ enum DataBlobType
 
 struct DataBlob
 {
+	// TODO XXX refData as first member prevents an #include in texanim.c, refactor later
+	const void *refData; // is a reference, do not free
 	void *udata;
 	struct DataBlob *next;
-	const void *refData; // is a reference, do not free
 	const void *refDataFileEnd;
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;
 	uint32_t sizeBytes;
 	uint8_t alignBytes;
 	enum DataBlobType type;
+	bool ownsRefData;
 	sb_array(void*, refs); // references to this datablob
 	
 	union {
@@ -78,6 +80,14 @@ struct TextureBlob
 #define TextureBlobStack(DATA, FILE) (struct TextureBlob){ DATA, FILE }
 
 // functions
+struct DataBlob *DataBlobNew(
+	const void *refData
+	, uint32_t sizeBytes
+	, uint32_t segmentAddr
+	, enum DataBlobType type
+	, struct DataBlob *next
+	, void *ref
+);
 struct DataBlob *DataBlobPush(
 	struct DataBlob *listHead
 	, const void *refData
@@ -92,6 +102,7 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 	, const void *seg2
 	, const void *seg3
 );
+void DataBlobRemoveRef(struct DataBlob *blob, void *ref);
 void DatablobFree(struct DataBlob *blob);
 void DatablobFreeList(struct DataBlob *listHead);
 void DataBlobListRemoveBlankEntries(struct DataBlob **listHead);
