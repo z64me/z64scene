@@ -1069,6 +1069,11 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			sb_push(result->bgCamList, cam);
 		}
 	}
+	else
+	{
+		// guarantee a blank camera exists, for MM compatibility
+		sb_push(result->bgCamList, (BgCamInfo){0});
+	}
 	result->numWaterBoxes = u16r(data + 36);
 	if ((nest = ParseSegmentAddress(u32r(data + 40))))
 	{
