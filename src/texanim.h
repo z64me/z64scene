@@ -16,6 +16,10 @@ typedef void GbiGfx;
 #endif
 
 typedef float texAnimStep_t;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef int8_t s8;
 
 #include "stretchy_buffer.h"
 
@@ -32,6 +36,18 @@ typedef enum AnimatedMatType
 	AnimatedMatType_DrawColorLerp,
 	AnimatedMatType_DrawColorNonLinearInterp,
 	AnimatedMatType_DrawTexCycle,
+	AnimatedMatType_DoNothing,
+	// extended functionality
+	AnimatedMatType_SceneAnim_Pointer_Flag,
+	AnimatedMatType_SceneAnim_TexScroll_Flag,
+	AnimatedMatType_SceneAnim_Color_Loop,
+	AnimatedMatType_SceneAnim_Color_LoopFlag,
+	AnimatedMatType_SceneAnim_Pointer_Loop,
+	AnimatedMatType_SceneAnim_Pointer_LoopFlag,
+	AnimatedMatType_SceneAnim_Pointer_Timeloop,
+	AnimatedMatType_SceneAnim_Pointer_TimeloopFlag,
+	AnimatedMatType_SceneAnim_CameraEffect,
+	AnimatedMatType_SceneAnim_DrawCondition,
 	AnimatedMatType_Count,
 } AnimatedMatType;
 
@@ -79,6 +95,159 @@ typedef struct {
 	/* 0x4 */ sb_array(TexturePtr, textureList); // segmet addresses
 	/* 0x8 */ sb_array(uint8_t, textureIndexList);
 } AnimatedMatTexCycleParams; // size = 0xC
+
+#if 1 // region: extended functionality
+
+typedef enum
+{
+	SCENE_ANIM_FLAG_TYPE_ROOMCLEAR = 0,
+	SCENE_ANIM_FLAG_TYPE_TREASURE,
+	SCENE_ANIM_FLAG_TYPE_USCENE,
+	SCENE_ANIM_FLAG_TYPE_TEMP,
+	SCENE_ANIM_FLAG_TYPE_SCENECOLLECT,
+	SCENE_ANIM_FLAG_TYPE_SWITCH,
+	SCENE_ANIM_FLAG_TYPE_EVENTCHKINF,
+	SCENE_ANIM_FLAG_TYPE_INFTABLE,
+	SCENE_ANIM_FLAG_TYPE_IS_NIGHT,
+	
+	// NOTE: for the following types, flag must be 4-byte-aligned
+	
+	SCENE_ANIM_FLAG_TYPE_SAVE,    // flag = word(save_ctx[flag]) & bits
+	SCENE_ANIM_FLAG_TYPE_GLOBAL,  // flag = word(global_ctx[flag]) & bits
+	SCENE_ANIM_FLAG_TYPE_RAM      // flag = word(flag) & bits
+} SceneAnimFlagType;
+
+typedef struct
+{
+	u32 flag;                   // flag or offset
+	u32 bits;                   // bit selection
+	u8  type;                   // flag type (SceneAnimFlagType)
+	u8  eq;                     // if (flag() == eq)
+	u16 xfade;                  // crossfade (color)
+	u16 freeze;                 // tells if command should be freeze or not written
+	u16 frames;                 // frames flag is on
+} SceneAnimFlag;
+
+// data processed by SceneAnim_Pointer_Flag functions
+typedef struct
+{
+	u32 ptr[2];                 // pointer pointers
+	SceneAnimFlag flag;         // flag structure
+	u32 ptrBEU32[2];
+} SceneAnimPointerFlag;
+
+// data processed by SceneAnim_TexScroll_One functions
+typedef struct
+{
+	s8 u;                       // u speed
+	s8 v;                       // v speed
+	u8 w;                       // texture w
+	u8 h;                       // texture h
+} SceneAnimTexScroll;
+
+// data processed by SceneAnim_TexScroll_Flag functions
+typedef struct
+{
+	SceneAnimTexScroll sc[2];   // SceneAnim_TexScroll_One contents
+	SceneAnimFlag      flag;
+} SceneAnimTexScrollFlag;
+
+typedef enum
+{
+	SCENE_ANIM_COLORKEY_PRIM     = 1 << 0,
+	SCENE_ANIM_COLORKEY_ENV      = 1 << 1,
+	SCENE_ANIM_COLORKEY_LODFRAC  = 1 << 2,
+	SCENE_ANIM_COLORKEY_MINLEVEL = 1 << 3,
+} SceneAnimColorKeyTypes;
+
+typedef enum
+{
+	SCENE_ANIM_EASE_LINEAR = 0,
+	SCENE_ANIM_EASE_SIN_IN,
+	SCENE_ANIM_EASE_SIN_OUT,
+} SceneAnimEaseMethod;
+
+// substructure used to describe color keyframe
+typedef struct
+{
+	u32 prim;                 // primcolor (rgba)
+	u32 env;                  // envcolor  (rgba)
+	u8  lfrac;                // lodfrac   (prim)
+	u8  mlevel;               // minlevel  (prim)
+	u16 next;                 // frames til next; 0 = last frame
+} SceneAnimColorKey;
+
+// data processed by color functions
+typedef struct
+{
+	u8   which;                // units to compute (SceneAnimColorKey)
+	u8   ease;                 // ease function (SceneAnimEaseMethod)
+	u16  dur;                  // duration
+	sb_array(SceneAnimColorKey, key);  // keyframe storage
+} SceneAnimColorList;
+
+typedef struct
+{
+	SceneAnimFlag      flag;   // flag structure
+	SceneAnimColorList list;   // color structure
+} SceneAnimColorListFlag;
+
+typedef struct
+{
+	u16 dur;                   // duration of full cycle (frames)
+	u16 time;                  // frames elapsed (internal use)
+	u16 each;                  // frames to display each item
+	u16 pad;                   // unused; padding
+	sb_array(u32, ptr);        // list: (dur/each) elements long
+	sb_array(u32, ptrBEU32);   // same as above, but encoded for export
+} SceneAnimPointerLoop;
+
+typedef struct
+{
+	SceneAnimFlag flag;        // flag structure
+	SceneAnimPointerLoop list; // list structure
+} SceneAnimPointerLoopFlag;
+
+// each frame can have its own time
+typedef struct
+{
+	u16 prev;                  // item selected (previous frame)
+	u16 time;                  // frames elapsed (internal use)
+	u16 num;                   // number of pointers in list
+	sb_array(u16, each);       // first frame of each pointer
+	sb_array(u32, ptr);        // see notes on alignment and size
+	
+	/* NOTE: each[1] can be any length; now imagine immediately   *
+	*        after it, there is a ptr[1], containing one pointer  *
+	*        for each item; ptr[1] must be aligned by 4 bytes;    *
+	*        so to get a pointer to it, do the following:         *
+	*        u32 *ptr = (void*)(each + num + !(num & 1));         *
+	*        see the functions that process this structure if     *
+	*        you're having trouble                                */
+	
+	/* NOTE: each[] contains num items (the last indicating the   *
+	*        end frame), and ptr[] contains num-1 items           */
+} SceneAnimPointerTimeloop;
+
+typedef struct
+{
+	SceneAnimFlag flag;             // flag structure
+	SceneAnimPointerTimeloop list;  // list structure
+} SceneAnimPointerTimeloopFlag;
+
+typedef struct
+{
+	SceneAnimFlag flag;       // flag structure
+	u8 cameraType;            // camera type
+	u8 set;                   // used ingame to tell that the camera is set
+} SceneAnimCameraEffect;
+
+typedef struct
+{
+	SceneAnimFlag flag;       // flag structure
+} SceneAnimDrawCondition;
+
+#endif // end region: extended functionality
 
 typedef struct AnimatedMaterial
 {
