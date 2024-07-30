@@ -1071,9 +1071,71 @@ static void SceneAnimToAnimatedMaterial(AnimatedMaterial *mat)
 			sb_push(out->textureList, (TexturePtr){ *each });
 		})
 	}
+	// convert color list to internal color list format
+	else if (oldType == AnimatedMatType_SceneAnim_Color_Loop
+		|| oldType == AnimatedMatType_SceneAnim_Color_LoopFlag
+	)
+	{
+		AnimatedMatColorParams *out = calloc(1, sizeof(*out));
+		SceneAnimColorList *in = oldParams;
+		newParams = out;
+		newType = AnimatedMatType_DrawColorLerp;
+		
+		if (oldType == AnimatedMatType_SceneAnim_Color_LoopFlag)
+			DO_FLAG(0, SceneAnimColorListFlag, list)
+		
+		uint16_t sum = 0;
+		int count = sb_count(in->key);
+		sb_new_size(out->primColors, count)
+		sb_new_size(out->envColors, count)
+		sb_new_size(out->keyFrames, count);
+		sb_new_size(out->durationEachKey, count);
+		sb_foreach(in->key, {
+			sb_push(out->primColors, ((F3DPrimColor){
+				each->prim >> 24,
+				each->prim >> 16,
+				each->prim >>  8,
+				each->prim >>  0,
+				each->lfrac,
+				//each->mlevel, // TODO
+			}));
+			sb_push(out->envColors, ((F3DEnvColor){
+				each->env >> 24,
+				each->env >> 16,
+				each->env >>  8,
+				each->env >>  0
+			}));
+			sb_push(out->durationEachKey, each->next);
+			sb_push(out->keyFrames, sum);
+			sum += each->next;
+		})
+		out->durationFrames = sum + 1;
+		out->keyFrameCount = count;
+		
+		// MM expects last frame to be a copy of the 1st frame,
+		// but with a duration of 1 (abstracted this to provide
+		// a better UX) (excuse the resulting mess)
+		if (USE_TEXANIM_MM_LOOP_HACK(mat))
+		{
+			#define EXTRA_LAST_FRAME(X, V) \
+				if (out->X) { \
+					sb_push(out->X, V); \
+					sb_pop(out->X); \
+				}
+			EXTRA_LAST_FRAME(primColors, out->primColors[0]);
+			EXTRA_LAST_FRAME(envColors, out->envColors[0]);
+			EXTRA_LAST_FRAME(keyFrames, sum);
+			EXTRA_LAST_FRAME(durationEachKey, 1);
+			#undef EXTRA_LAST_FRAME
+		}
+	}
 	
 	if (newParams)
 	{
+		LogDebug("convert type '%s' -> '%s'"
+			, AnimatedMatType_AsString(oldType)
+			, AnimatedMatType_AsString(newType)
+		);
 		AnimatedMaterialFree(mat);
 		mat->params = newParams;
 	}
@@ -1356,6 +1418,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 							.mlevel = u8r(bytes + 9),
 							.next = u16r(bytes + 10)
 						}));
+					// conversion to unified color list format
+					SceneAnimToAnimatedMaterial(&mat);
 					break;
 				}
 				

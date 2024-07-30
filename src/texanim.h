@@ -65,6 +65,7 @@ typedef struct {
 	/* 0x2 */ uint8_t b;
 	/* 0x3 */ uint8_t a;
 	/* 0x4 */ uint8_t lodFrac;
+	//uint8_t minLevel; // TODO
 } F3DPrimColor; // size = 0x5
 
 typedef struct {
