@@ -989,6 +989,101 @@ void TexAnimSetGameplayFrames(float frames)
 	sGameplayFrames = frames;
 }
 
+// converts SceneAnim types to their AnimatedMaterial equivalents
+// so that different editors for each type are not necessary
+// (also makes them previewable in the viewport)
+static void SceneAnimToAnimatedMaterial(AnimatedMaterial *mat)
+{
+	void *newParams = 0;
+	void *oldParams = mat->params;
+	uint8_t *oldParamsBytes = oldParams;
+	AnimatedMatType newType = mat->type;
+	AnimatedMatType oldType = mat->type;
+	
+	#define DO_FLAG(BYTE_OFFSET, TYPE, NEXT) { \
+		mat->flag = *(SceneAnimFlag*)(oldParamsBytes + BYTE_OFFSET); \
+		mat->flag.isEnabled = true; \
+		in = &((TYPE*)in)->NEXT; \
+	}
+	
+	// convert texture pointer toggles into flipbooks
+	if (oldType == AnimatedMatType_SceneAnim_Pointer_Flag)
+	{
+		AnimatedMatTexCycleParams *out = calloc(1, sizeof(*out));
+		SceneAnimPointerFlag *in = oldParams;
+		newParams = out;
+		newType = AnimatedMatType_DrawTexCycle;
+		
+		int durEachFrame = 30; // 1.5 seconds
+		out->durationFrames = durEachFrame * 2;
+		sb_new_size(out->textureIndexList, out->durationFrames);
+		for (int i = 0; i < out->durationFrames; ++i)
+			sb_push(out->textureIndexList, i / durEachFrame);
+		for (int i = 0; i < 2; ++i)
+			sb_push(out->textureList, (TexturePtr){ in->ptr[i] });
+	}
+	// convert texture pointer lists to internal flipbook format
+	else if (oldType == AnimatedMatType_SceneAnim_Pointer_Loop
+		|| oldType == AnimatedMatType_SceneAnim_Pointer_LoopFlag
+	)
+	{
+		AnimatedMatTexCycleParams *out = calloc(1, sizeof(*out));
+		SceneAnimPointerLoop *in = oldParams;
+		newParams = out;
+		newType = AnimatedMatType_DrawTexCycle;
+		
+		if (oldType == AnimatedMatType_SceneAnim_Pointer_LoopFlag)
+			DO_FLAG(0, SceneAnimPointerLoopFlag, list)
+		mat->flag.isAvailable = true;
+		if (!in->each) in->each = 1; // prevent divide-by-zero
+		sb_new_size(out->textureIndexList, in->dur);
+		sb_new_size(out->textureList, in->dur / in->each);
+		out->durationFrames = in->dur;
+		for (int i = 0; i < in->dur; ++i)
+			sb_push(out->textureIndexList, i / in->each);
+		for (int i = 0; i < in->dur / in->each; ++i)
+			sb_push(out->textureList, (TexturePtr){ in->ptr[i] });
+	}
+	// convert timed texture pointer lists to internal flipbook format
+	else if (oldType == AnimatedMatType_SceneAnim_Pointer_Timeloop
+		|| oldType == AnimatedMatType_SceneAnim_Pointer_TimeloopFlag
+	)
+	{
+		AnimatedMatTexCycleParams *out = calloc(1, sizeof(*out));
+		SceneAnimPointerTimeloop *in = oldParams;
+		newParams = out;
+		newType = AnimatedMatType_DrawTexCycle;
+		
+		if (oldType == AnimatedMatType_SceneAnim_Pointer_TimeloopFlag)
+			DO_FLAG(0, SceneAnimPointerTimeloopFlag, list)
+		mat->flag.isAvailable = true;
+		if (!in->each) sb_push(in->each, 1); // safety
+		out->durationFrames = sb_last(in->each);
+		sb_new_size(out->textureIndexList, out->durationFrames);
+		sb_new_size(out->textureList, sb_count(in->ptr));
+		sb_foreach(in->each, {
+			if (each == &sb_last(in->each))
+				break;
+			for (int i = 0; i < each[1] - each[0]; ++i)
+				sb_push(out->textureIndexList, eachIndex);
+		})
+		sb_foreach(in->ptr, {
+			sb_push(out->textureList, (TexturePtr){ *each });
+		})
+	}
+	
+	if (newParams)
+	{
+		AnimatedMaterialFree(mat);
+		mat->params = newParams;
+	}
+	
+	mat->type = newType;
+	mat->saveAsType = oldType;
+	
+	#undef DO_FLAG
+}
+
 AnimatedMaterial AnimatedMaterialNewFromDefault(AnimatedMatType type, int segment)
 {
 	AnimatedMaterial result = {0};
@@ -1028,17 +1123,44 @@ AnimatedMaterial AnimatedMaterialNewFromDefault(AnimatedMatType type, int segmen
 		case AnimatedMatType_DoNothing:
 			break;
 		
-		// TODO
 		case AnimatedMatType_SceneAnim_Pointer_Flag:
+			params = calloc(1, sizeof(SceneAnimPointerFlag));
+			break;
+		
 		case AnimatedMatType_SceneAnim_TexScroll_Flag:
+			params = calloc(1, sizeof(SceneAnimTexScrollFlag));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Color_Loop:
+			params = calloc(1, sizeof(SceneAnimColorList));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Color_LoopFlag:
+			params = calloc(1, sizeof(SceneAnimColorListFlag));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Pointer_Loop:
+			params = calloc(1, sizeof(SceneAnimPointerLoop));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Pointer_LoopFlag:
+			params = calloc(1, sizeof(SceneAnimPointerLoopFlag));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Pointer_Timeloop:
+			params = calloc(1, sizeof(SceneAnimPointerTimeloop));
+			break;
+		
 		case AnimatedMatType_SceneAnim_Pointer_TimeloopFlag:
+			params = calloc(1, sizeof(SceneAnimPointerTimeloopFlag));
+			break;
+		
 		case AnimatedMatType_SceneAnim_CameraEffect:
+			params = calloc(1, sizeof(SceneAnimCameraEffect));
+			break;
+		
 		case AnimatedMatType_SceneAnim_DrawCondition:
+			params = calloc(1, sizeof(SceneAnimDrawCondition));
 			break;
 		
 		case AnimatedMatType_Count:
@@ -1046,6 +1168,9 @@ AnimatedMaterial AnimatedMaterialNewFromDefault(AnimatedMatType type, int segmen
 	}
 	
 	result.params = params;
+	
+	SceneAnimToAnimatedMaterial(&result);
+	
 	return result;
 }
 
@@ -1184,7 +1309,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					out->ptr[0] = u32r(bytes + 0);
 					out->ptr[1] = u32r(bytes + 4);
 					out->flag = SceneAnimFlagFromBytes(bytes + 8);
-					// TODO conversion to unified flipbook format
+					// conversion to unified flipbook format
+					SceneAnimToAnimatedMaterial(&mat);
 					break;
 				}
 				
@@ -1255,7 +1381,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					int num = o->dur / o->each;
 					for (int i = 0; i < num; ++i, bytes += 4)
 						sb_push(o->ptr, u32r(bytes));
-					// TODO conversion to unified flipbook format
+					// conversion to unified flipbook format
+					SceneAnimToAnimatedMaterial(&mat);
 					break;
 				}
 				
@@ -1283,7 +1410,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 						bytes += 2;
 					for (int i = 0; i < o->num - 1; ++i, bytes += 4)
 						sb_push(o->ptr, u32r(bytes));
-					// TODO conversion to unified flipbook format
+					// conversion to unified flipbook format
+					SceneAnimToAnimatedMaterial(&mat);
 					break;
 				}
 				
@@ -1323,11 +1451,12 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 
 void AnimatedMaterialFree(AnimatedMaterial *each)
 {
+	LogDebug("free type '%s'", AnimatedMatType_AsString(each->type));
+	
 	switch (each->type)
 	{
 		case AnimatedMatType_DrawTexScroll:
 		case AnimatedMatType_DrawTwoTexScroll:
-			free(each->params);
 			break;
 		
 		case AnimatedMatType_DrawColor:
@@ -1341,7 +1470,6 @@ void AnimatedMaterialFree(AnimatedMaterial *each)
 			sb_free(params->keyFrames);
 			sb_free(params->durationEachKey);
 			
-			free(params);
 			break;
 		}
 		
@@ -1352,28 +1480,62 @@ void AnimatedMaterialFree(AnimatedMaterial *each)
 			sb_free(params->textureList);
 			sb_free(params->textureIndexList);
 			
-			free(params);
 			break;
 		}
 		
 		case AnimatedMatType_DoNothing:
 			break;
 		
-		// TODO
 		case AnimatedMatType_SceneAnim_Pointer_Flag:
+			break;
+		
 		case AnimatedMatType_SceneAnim_TexScroll_Flag:
+			break;
+		
 		case AnimatedMatType_SceneAnim_Color_Loop:
 		case AnimatedMatType_SceneAnim_Color_LoopFlag:
+		{
+			SceneAnimColorList *list = each->params;
+			if (each->type == AnimatedMatType_SceneAnim_Color_LoopFlag)
+				list = &((SceneAnimColorListFlag*)each->params)->list;
+			sb_free(list->key);
+			break;
+		}
+		
 		case AnimatedMatType_SceneAnim_Pointer_Loop:
 		case AnimatedMatType_SceneAnim_Pointer_LoopFlag:
+		{
+			SceneAnimPointerLoop *list = each->params;
+			if (each->type == AnimatedMatType_SceneAnim_Pointer_LoopFlag)
+				list = &((SceneAnimPointerLoopFlag*)each->params)->list;
+			sb_free(list->ptr);
+			sb_free(list->ptrBEU32);
+			break;
+		}
+		
 		case AnimatedMatType_SceneAnim_Pointer_Timeloop:
 		case AnimatedMatType_SceneAnim_Pointer_TimeloopFlag:
+		{
+			SceneAnimPointerTimeloop *list = each->params;
+			if (each->type == AnimatedMatType_SceneAnim_Pointer_TimeloopFlag)
+				list = &((SceneAnimPointerTimeloopFlag*)each->params)->list;
+			sb_free(list->each);
+			sb_free(list->ptr);
+			break;
+		}
+		
 		case AnimatedMatType_SceneAnim_CameraEffect:
 		case AnimatedMatType_SceneAnim_DrawCondition:
 			break;
 		
 		case AnimatedMatType_Count:
 			break;
+	}
+	
+	if (each->params)
+	{
+		free(each->params);
+		each->params = 0;
 	}
 }
 

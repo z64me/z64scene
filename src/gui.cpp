@@ -1842,7 +1842,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					snprintf(tmp, sizeof(tmp), "%d: Seg 0x%02X, %s"
 						, eachIndex
 						, ABS_ALT(each->segment) + ANIMATED_MAT_SEGMENT_OFFSET
-						, AnimatedMatType_AsString(each->type)
+						, AnimatedMatType_AsString(each->saveAsType)
 					);
 					const bool is_selected = (indexOfSelection == eachIndex);
 					if (ImGui::Selectable(tmp, is_selected))
@@ -1925,7 +1925,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			}
 			
 			struct AnimatedMaterial *my = &list[indexOfSelection];
-			ImGui::Text("%s", AnimatedMatType_AsString(my->type));
+			ImGui::Text("%s", AnimatedMatType_AsString(my->saveAsType));
 			int changeSegment = ABS_ALT(my->segment);
 			if (ImGui::Combo(
 				"Segment##ChangeSegment"

@@ -126,6 +126,9 @@ typedef struct
 	u16 xfade;                  // crossfade (color)
 	u16 freeze;                 // tells if command should be freeze or not written
 	u16 frames;                 // frames flag is on
+	bool isEnabled;
+	bool isAvailable;
+	bool isPreviewing;
 } SceneAnimFlag;
 
 // data processed by SceneAnim_Pointer_Flag functions
@@ -216,6 +219,7 @@ typedef struct
 	u16 num;                   // number of pointers in list
 	sb_array(u16, each);       // first frame of each pointer
 	sb_array(u32, ptr);        // see notes on alignment and size
+	sb_array(u32, ptrBEU32);   // abstracted, but left for reference
 	
 	/* NOTE: each[1] can be any length; now imagine immediately   *
 	*        after it, there is a ptr[1], containing one pointer  *
@@ -254,6 +258,8 @@ typedef struct AnimatedMaterial
 	/* 0x0 */ int8_t segment;
 	/* 0x2 */ enum AnimatedMatType type;
 	/* 0x4 */ sb_array(void, params);
+	enum AnimatedMatType saveAsType; // for type conversions
+	SceneAnimFlag flag; // for types that use flags
 	void *datablob; // datablob associated with segment
 } AnimatedMaterial; // size = 0x8
 
