@@ -233,7 +233,7 @@
 //#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
 #define stb_sb_clear(a)        { if (a) stb__sbn(a) = 0; } // c++
 #define stb_sb_new(a)          { (void)stb_sb_add(a, 1); stb_sb_clear(a); }
-#define stb_sb_new_size(a,n)   { (void)stb_sb_add(a, n); stb_sb_clear(a); }
+#define stb_sb_new_size(a,n)   { (void)stb_sb_add(a, (n+1)); stb_sb_clear(a); }
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
 #define stb_sb_contains_copy(HAYSTACK, NEEDLE) (sb_find_copy(HAYSTACK, NEEDLE) >= 0)

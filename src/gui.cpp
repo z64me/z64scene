@@ -513,7 +513,7 @@ void FlipbookCleanup(sb_array(TexturePtr*, textureListP), sb_array(uint8_t*, tex
 	LogDebug("FlipbookCleanup() end");
 }
 
-void AnimatedImageToFlipbook(DataBlob *blob, AnimatedImage *anim, sb_array(TexturePtr*, textureListP), sb_array(uint8_t*, textureIndexListP))
+void AnimatedImageToFlipbook(DataBlob *blob, AnimatedImage *anim, sb_array(TexturePtr*, textureListP), sb_array(uint8_t*, textureIndexListP), bool allowDuplicates)
 {
 	const void *pal = 0;
 	int palColors = 0;
@@ -639,6 +639,11 @@ void AnimatedImageToFlipbook(DataBlob *blob, AnimatedImage *anim, sb_array(Textu
 			}
 		})
 		
+		// allow duplicate frames
+		// (don't worry, these get optimized away during scene write)
+		if (allowDuplicates)
+			matched = 0;
+		
 		// no match found, so allocate a new one
 		if (!matched)
 		{
@@ -656,6 +661,7 @@ void AnimatedImageToFlipbook(DataBlob *blob, AnimatedImage *anim, sb_array(Textu
 				, head->next
 				, &matched->addrBEU32
 			);
+			//LogDebug("register frame addrBEU32 = %p, sizeBytes = 0x%X", &matched->addrBEU32, sizeBytes);
 			newBlob->data = blob->data; // texture format and palette
 			newBlob->refDataFileEnd = ((uint8_t*)refData) + sizeBytes;
 			newBlob->ownsRefData = true;
@@ -2180,7 +2186,9 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						if (anim)
 						{
 							FlipbookCleanup(&params->textureList, &params->textureIndexList);
-							AnimatedImageToFlipbook((DataBlob*)my->datablob, anim, &params->textureList, &params->textureIndexList);
+							AnimatedImageToFlipbook((DataBlob*)my->datablob, anim, &params->textureList, &params->textureIndexList
+								, my->type != my->saveAsType // implies oot formats
+							);
 							AnimatedImageFree(anim);
 							params->durationFrames = sb_count(params->textureIndexList);
 						}

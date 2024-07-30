@@ -102,6 +102,8 @@ static SceneAnimFlag SceneAnimFlagFromBytes(const void *bytes)
 		.type = u8r(b + 8),
 		.eq = u8r(b + 9),
 		.xfade = u16r(b + 10),
+		.freeze = u16r(b + 12),
+		.frames = u16r(b + 14),
 		.isAvailable = true,
 		.isEnabled = true,
 		.isPreviewing = true,
@@ -1484,7 +1486,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 						o = &out->list;
 					}
 					o->num = u16r(bytes + 4);
-					bytes += 4;
+					bytes += 4 + 2;
 					for (int i = 0; i < o->num; ++i, bytes += 2)
 						sb_push(o->each, u16r(bytes));
 					if (!(o->num & 1))
@@ -1502,6 +1504,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 					out->flag = SceneAnimFlagFromBytes(bytes);
 					bytes += 16;
 					out->cameraType = u8r(bytes + 0);
+					mat.flag = out->flag;
 					break;
 				}
 				
@@ -1509,6 +1512,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 				{
 					READY_GENERIC(SceneAnimDrawCondition)
 					out->flag = SceneAnimFlagFromBytes(bytes);
+					mat.flag = out->flag;
 					break;
 				}
 				
@@ -1639,6 +1643,16 @@ void AnimatedMaterialToWorkblob(
 {
 	WorkblobPush(4);
 	
+	#define PUT_FLAG { \
+		WorkblobPut32(matAnim->flag.flag); \
+		WorkblobPut32(matAnim->flag.bits); \
+		WorkblobPut8(matAnim->flag.type); \
+		WorkblobPut8(matAnim->flag.eq); \
+		WorkblobPut16(matAnim->flag.xfade); \
+		WorkblobPut16(matAnim->flag.freeze); \
+		WorkblobPut16(matAnim->flag.frames); /* zero */ \
+	}
+	
 	if (sb_count(matAnim) && (matAnim->segment != 0))
 	{
 		for (int segment = 0; segment >= 0; ++matAnim)
@@ -1649,7 +1663,7 @@ void AnimatedMaterialToWorkblob(
 			
 			segment = matAnim->segment;
 			
-			switch (matAnim->type)
+			switch (matAnim->saveAsType)
 			{
 				case AnimatedMatType_DrawTexScroll:
 				case AnimatedMatType_DrawTwoTexScroll:
@@ -1756,18 +1770,178 @@ void AnimatedMaterialToWorkblob(
 				case AnimatedMatType_DoNothing:
 					break;
 				
-				// TODO
 				case AnimatedMatType_SceneAnim_Pointer_Flag:
+				{
+					AnimatedMatTexCycleParams *p = matAnim->params;
+					
+					// guarantee exactly two pointers are written
+					sb_foreach(p->textureList, {
+						if (eachIndex >= 2) break;
+						WorkblobPut32(Swap32(each->addrBEU32));
+					});
+					for (int i = sb_count(p->textureList); i < 2; ++i)
+						WorkblobPut32(0);
+					
+					PUT_FLAG
+					break;
+				}
+				
 				case AnimatedMatType_SceneAnim_TexScroll_Flag:
+				{
+					AnimatedMatTexScrollParams *p = matAnim->params;
+					
+					for (int i = 0; i < 2; ++i, ++p)
+					{
+						WorkblobPut8(p->xStep);
+						WorkblobPut8(p->yStep);
+						WorkblobPut8(p->width);
+						WorkblobPut8(p->height);
+					}
+					
+					PUT_FLAG
+					break;
+				}
+				
 				case AnimatedMatType_SceneAnim_Color_Loop:
 				case AnimatedMatType_SceneAnim_Color_LoopFlag:
+				{
+					AnimatedMatColorParams *p = matAnim->params;
+					
+					if (matAnim->flag.isEnabled)
+						PUT_FLAG
+					
+					uint8_t which = 0;
+					if (p->primColors) which |=
+						SCENE_ANIM_COLORKEY_PRIM
+						| SCENE_ANIM_COLORKEY_LODFRAC
+						| SCENE_ANIM_COLORKEY_MINLEVEL
+					;
+					if (p->envColors) which |= SCENE_ANIM_COLORKEY_ENV;
+					
+					WorkblobPut8(which);
+					WorkblobPut8(SCENE_ANIM_EASE_LINEAR);
+					WorkblobPut16(p->durationFrames);
+					
+					int count = MAX(sb_count(p->primColors), sb_count(p->envColors));
+					for (int i = 0; i < count; ++i)
+					{
+						F3DPrimColor prim = {0};
+						F3DEnvColor env = {0};
+						uint16_t duration = 0;
+						
+						if (i < sb_count(p->primColors))
+							prim = p->primColors[i];
+						if (i < sb_count(p->envColors))
+							env = p->envColors[i];
+						if (i < sb_count(p->durationEachKey))
+							duration = p->durationEachKey[i];
+						
+						WorkblobPut8(prim.r);
+						WorkblobPut8(prim.g);
+						WorkblobPut8(prim.b);
+						WorkblobPut8(prim.a);
+						
+						WorkblobPut8(env.r);
+						WorkblobPut8(env.g);
+						WorkblobPut8(env.b);
+						WorkblobPut8(env.a);
+						
+						WorkblobPut8(prim.lodFrac);
+						WorkblobPut8(0); // TODO minLevel
+						
+						WorkblobPut16(duration);
+					}
+					
+					break;
+				}
+				
 				case AnimatedMatType_SceneAnim_Pointer_Loop:
 				case AnimatedMatType_SceneAnim_Pointer_LoopFlag:
 				case AnimatedMatType_SceneAnim_Pointer_Timeloop:
 				case AnimatedMatType_SceneAnim_Pointer_TimeloopFlag:
-				case AnimatedMatType_SceneAnim_CameraEffect:
-				case AnimatedMatType_SceneAnim_DrawCondition:
+				{
+					AnimatedMatTexCycleParams *p = matAnim->params;
+					
+					if (matAnim->flag.isEnabled)
+						PUT_FLAG
+					
+					bool allSameDuration = (sb_count(p->textureIndexList) % sb_count(p->textureList)) == 0;
+					if (allSameDuration)
+					{
+						int groupSize = sb_count(p->textureIndexList) / sb_count(p->textureList);
+						int groupCount = sb_count(p->textureIndexList) / groupSize;
+						
+						for (int i = 0; i < groupCount; ++i)
+							for (int k = 0; k < groupSize - 1; ++k)
+								if (p->textureIndexList[i * groupSize + k]
+									!= p->textureIndexList[i * groupSize + k + 1]
+								)
+									allSameDuration = false;
+					}
+					
+					// optimization: use PointerLoop
+					if (allSameDuration)
+					{
+						matAnim->saveAsType = AnimatedMatType_SceneAnim_Pointer_Loop + matAnim->flag.isEnabled;
+						WorkblobPut16(p->durationFrames);
+						WorkblobPut16(0);
+						WorkblobPut16(p->durationFrames / sb_count(p->textureList));
+						WorkblobPut16(0);
+						sb_foreach(p->textureList, { WorkblobPut32(Swap32(each->addrBEU32)); });
+						//sb_foreach(p->textureList, { LogDebug("%08x addrBEU32 = %p", each->addr, &(each->addrBEU32)); });
+					}
+					else
+					{
+						matAnim->saveAsType = AnimatedMatType_SceneAnim_Pointer_Timeloop + matAnim->flag.isEnabled;
+						int num = sb_count(p->textureList);
+						WorkblobPut16(0);
+						WorkblobPut16(0);
+						WorkblobPut16(num + 1);
+						
+						// keyframe list
+						int keyframe = 0;
+						for (int i = 0; i < num; ++i)
+						{
+							int consecutive = 1;
+							for (int k = keyframe
+								; k < sb_count(p->textureIndexList) - 1
+								; ++k, ++consecutive
+							)
+							{
+								if (p->textureIndexList[k] != p->textureIndexList[k + 1])
+									break;
+							}
+							WorkblobPut16(keyframe);
+							keyframe += consecutive;
+						}
+						WorkblobPut16(keyframe); // end of list
+						
+						sb_foreach(p->textureList, { WorkblobPut32(Swap32(each->addrBEU32)); });
+					}
+					
 					break;
+				}
+				
+				case AnimatedMatType_SceneAnim_CameraEffect:
+				{
+					SceneAnimCameraEffect *p = matAnim->params;
+					
+					PUT_FLAG
+					
+					WorkblobPut8(p->cameraType);
+					WorkblobPut8(p->set);
+					
+					break;
+				}
+				
+				case AnimatedMatType_SceneAnim_DrawCondition:
+				{
+					//SceneAnimDrawCondition *p = matAnim->params;
+					
+					PUT_FLAG
+					
+					break;
+				}
 				
 				case AnimatedMatType_Count:
 					break;
@@ -1776,7 +1950,7 @@ void AnimatedMaterialToWorkblob(
 			params = WorkblobPop();
 			
 			WorkblobPut8(matAnim->segment);
-			WorkblobPut16(matAnim->type);
+			WorkblobPut16(matAnim->saveAsType);
 			WorkblobPut32(params);
 		}
 	}
