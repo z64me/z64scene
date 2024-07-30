@@ -102,6 +102,9 @@ static SceneAnimFlag SceneAnimFlagFromBytes(const void *bytes)
 		.type = u8r(b + 8),
 		.eq = u8r(b + 9),
 		.xfade = u16r(b + 10),
+		.isAvailable = true,
+		.isEnabled = true,
+		.isPreviewing = true,
 	};
 }
 
@@ -1021,6 +1024,7 @@ static void SceneAnimToAnimatedMaterial(AnimatedMaterial *mat)
 			sb_push(out->textureIndexList, i / durEachFrame);
 		for (int i = 0; i < 2; ++i)
 			sb_push(out->textureList, (TexturePtr){ in->ptr[i] });
+		mat->flag = in->flag;
 	}
 	// convert texture pointer lists to internal flipbook format
 	else if (oldType == AnimatedMatType_SceneAnim_Pointer_Loop
@@ -1128,6 +1132,16 @@ static void SceneAnimToAnimatedMaterial(AnimatedMaterial *mat)
 			EXTRA_LAST_FRAME(durationEachKey, 1);
 			#undef EXTRA_LAST_FRAME
 		}
+	}
+	else if (oldType == AnimatedMatType_SceneAnim_TexScroll_Flag)
+	{
+		AnimatedMatTexScrollParams *out = calloc(2, sizeof(*out));
+		SceneAnimTexScroll *in = oldParams;
+		newParams = out;
+		newType = AnimatedMatType_DrawTwoTexScroll;
+		
+		DO_FLAG(offsetof(SceneAnimTexScrollFlag, flag), SceneAnimTexScrollFlag, sc[0])
+		memcpy(out, in, 2 * sizeof(*out));
 	}
 	
 	if (newParams)
@@ -1268,6 +1282,7 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 			
 			//LogDebug("push type %d seg %d", mat.type, mat.segment);
 			
+			mat.saveAsType = mat.type;
 			segment = mat.segment;
 			
 			switch (mat.type)
@@ -1387,6 +1402,8 @@ AnimatedMaterial *AnimatedMaterialNewFromSegment(uint32_t segAddr)
 							.h = bytes[i + 3]
 						};
 					out->flag = SceneAnimFlagFromBytes(bytes + 8);
+					// conversion to unified texscroll format
+					SceneAnimToAnimatedMaterial(&mat);
 					break;
 				}
 				
