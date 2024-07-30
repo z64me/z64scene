@@ -51,6 +51,22 @@ int main(int argc, char *argv[])
 			TestSaveLoadCycles(which);
 			return 0; // exit immediately after test
 		}
+		// test: opens and optionally exports a single scene (argv[2] -> argv[3])
+		else if (!strcmp(which, "TestLoadSaveScene"))
+		{
+			if (!(which = argv[2]))
+				Die("TestLoadSaveScene: not enough args: in.zscene [out.zscene]");
+			scene = SceneFromFilenamePredictRooms(argv[2]);
+			if (argc == 4)
+				SceneToFilename(scene, argv[3]);
+			SceneFree(scene);
+			if (argc == 4)
+				LogDebug("successfully wrote test scene");
+			else
+				LogDebug("successfully processed input scene");
+			SceneWriterCleanup();
+			return 0; // exit immediately after test
+		}
 		else
 			result = which;
 		
