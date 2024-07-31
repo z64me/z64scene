@@ -666,6 +666,14 @@ void SceneReadyDataBlobs(struct Scene *scene)
 				continue;
 			}
 			
+			// don't trim overlapping vertex data (extremely uncommon)
+			// (this was encountered in one scene where
+			// trimming resulted in geometry corruption)
+			if (a->type == DATA_BLOB_TYPE_VERTEX
+				&& b->type == DATA_BLOB_TYPE_VERTEX
+			)
+				continue;
+			
 			if (((uint8_t*)a->refData) + a->sizeBytes > ((uint8_t*)b->refData))
 			{
 				a->sizeBytes =
