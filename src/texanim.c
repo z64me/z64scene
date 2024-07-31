@@ -1820,9 +1820,10 @@ void AnimatedMaterialToWorkblob(
 					
 					WorkblobPut8(which);
 					WorkblobPut8(SCENE_ANIM_EASE_LINEAR);
-					WorkblobPut16(p->durationFrames);
+					WorkblobPut16(p->durationFrames - 1);
 					
-					int count = MAX(sb_count(p->primColors), sb_count(p->envColors));
+					// count + 1 is used so a blank entry is written last
+					int count = MAX(sb_count(p->primColors), sb_count(p->envColors)) + 1;
 					for (int i = 0; i < count; ++i)
 					{
 						F3DPrimColor prim = {0};
