@@ -171,6 +171,40 @@ char *Strdup(const char *str)
 	return result;
 }
 
+void *Memdup(const void *data, size_t size)
+{
+	void *result = malloc(size);
+	
+	if (result)
+		memcpy(result, data, size);
+	
+	return result;
+}
+
+// use the Swap(a, b) macro
+void (Swap)(void *a, void *b, size_t aSize, size_t bSize)
+{
+	static void *work = 0;
+	static size_t workSize = 1024; // 1 KiB is a generous start
+	size_t size = aSize;
+	
+	assert(aSize == bSize);
+	assert(size != 0);
+	
+	if (size > workSize)
+	{
+		workSize = size * 2;
+		work = realloc(work, workSize);
+	}
+	else if (!work)
+		work = malloc(workSize);
+	
+	//LogDebug("a b = %p %p, size = %d", a, b, (uint32_t)size);
+	memcpy(work, a, size);
+	memcpy(a, b, size);
+	memcpy(b, work, size);
+}
+
 char *StrToLower(char *str)
 {
 	if (!str)
@@ -564,6 +598,7 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			if (!match)
 				continue;
 			material->datablob = match;
+			LogDebug("set material segment 0x%02x -> %p, type %d", segment, match, match->type);
 			if (material->type == 5) {
 				AnimatedMatTexCycleParams *params = material->params;
 				//LogDebug("textureList containing %d textures", sb_count(params->textureList));
@@ -580,6 +615,8 @@ void SceneReadyDataBlobs(struct Scene *scene)
 						// IMPORTANT TODO addrBEU32 refs will break on textureList
 						//                reallocs, so switch to an id system later
 					);
+					match->data.texture.flipbookSegment = segment;
+					blob->subtype = DATA_BLOB_SUBTYPE_FLIPBOOK;
 					scene->blobs->data = match->data; // texture dimensions
 					blob->refDataFileEnd = scene->file->dataEnd;
 					each->datablob = blob;
@@ -934,6 +971,158 @@ void SceneAddRoom(struct Scene *scene, struct Room *room)
 	free(room);
 }
 
+const char *SceneMigrateVisualAndCollisionData(struct Scene *dst, struct Scene *src)
+{
+	// safety
+	if (sb_count(dst->rooms) > sb_count(src->rooms))
+		return
+			"cannot migrate data from scene with fewer"
+			" rooms into scene with more rooms; if this"
+			" is your intent, please delete the appropriate"
+			" rooms from the currently loaded scene first"
+			" before trying again (Tools -> Delete Room X)"
+		;
+	
+	// ensure flipbook data will not be lost
+	datablob_foreach(dst->blobs, {
+		if (each->subtype == DATA_BLOB_SUBTYPE_FLIPBOOK
+			&& each->ownsRefData == false
+		) {
+			each->refData = Memdup(each->refData, each->sizeBytes);
+			each->refDataFileEnd = ((const uint8_t*)each->refData) + each->sizeBytes;
+			each->ownsRefData = true;
+		}
+	})
+	
+	// migrate persistent data blobs from old scene to new scene
+	{
+		struct DataBlob **prev = &dst->blobs;
+		struct DataBlob *next = 0;
+		for (struct DataBlob *blob = *prev; blob; blob = next) {
+			next = blob->next;
+			if (blob->ownsRefData) {
+				// link into new list:
+				blob->next = src->blobs;
+				src->blobs = blob;
+				// unlink from old list:
+				*prev = next;
+				// mark stale:
+				if (blob->type == DATA_BLOB_TYPE_TEXTURE) {
+					blob->data.texture.pal = 0;
+					if (blob->data.texture.glTexture) {
+						// TODO glDeleteTextures
+						blob->data.texture.glTexture = 0;
+					}
+				}
+			} else {
+				prev = &blob->next;
+			}
+		}
+	}
+	/*
+	// no longer using this method, but keeping it for reference
+	datablob_foreach(dst->blobs, {
+		if (each->ownsRefData) {
+			struct DataBlob *copy = Memdup(each, sizeof(*each));
+			copy->next = src->blobs;
+			src->blobs = copy;
+			// hand ownership of these to the copy:
+			each->ownsRefData = false;
+			each->refs = 0;
+		}
+	})
+	*/
+	
+	// update flipbook blobs so they reflect the new mesh
+	// and point to the new palettes (when applicable)
+	sb_foreach_named(dst->headers, sceneHeader, {
+		sb_foreach_named(sceneHeader->mm.sceneSetupData, material, {
+			int segment = ABS_ALT(material->segment) + 7;
+			struct DataBlob *match = DataBlobListFindBlobWithOriginalSegmentAddress(
+				DataBlobSegmentGetHead(segment)
+				, segment << 24
+			);
+			material->datablob = match;
+			if (!match) {
+				LogDebug("initialize material segment 0x%02x to 0", segment);
+				continue;
+			}
+			LogDebug("update material segment 0x%02x -> %p, type %d", segment, match, match->type);
+			//LogDebug("that segment contains:");
+			//DataBlobPrintAll(DataBlobSegmentGetHead(segment));
+			if (material->type == 5) {
+				datablob_foreach(src->blobs, {
+					if (each->subtype == DATA_BLOB_SUBTYPE_FLIPBOOK
+						&& each->data.texture.flipbookSegment == segment
+					) {
+						match->data.texture.flipbookSegment = segment;
+						each->data = match->data;
+					}
+				})
+			}
+		})
+	})
+	
+	// ensure any rooms that were added have at least as many
+	// headers as the scene currently loaded in the viewport
+	while (sb_count(src->headers) < sb_count(dst->headers))
+		SceneAddHeader(src, 0);
+	
+	// swap mesh data
+	sb_foreach_named(dst->rooms, dstRoom, {
+		// dst scene has more rooms than src scene
+		if (dstRoomIndex >= sb_count(src->rooms))
+			break;
+		struct Room *srcRoom = &src->rooms[dstRoomIndex];
+		for (int i = 0; i < sb_count(dstRoom->headers); ++i) {
+			struct RoomHeader *a = &dstRoom->headers[i];
+			struct RoomHeader *b = &srcRoom->headers[i];
+			
+			Swap(&a->displayLists, &b->displayLists);
+			Swap(&a->meshFormat, &b->meshFormat);
+			Swap(&a->image, &b->image);
+		}
+		Swap(&dstRoom->file, &srcRoom->file);
+		Swap(&dstRoom->blobs, &srcRoom->blobs);
+		if (dstRoom->file && srcRoom->file) {
+			Swap(&dstRoom->file->filename, &srcRoom->file->filename);
+			Swap(&dstRoom->file->shortname, &srcRoom->file->shortname);
+		}
+	})
+	
+	// migrate any rooms that were added
+	int firstNewRoom = sb_count(dst->rooms);
+	for (int i = firstNewRoom; i < sb_count(src->rooms); ++i) {
+		struct Room *srcRoom = &src->rooms[i];
+		struct File *srcFile = srcRoom->file;
+		const char *first = dst->rooms[0].file->filename;
+		const char *extension = strrchr(first, '.');
+		if (srcFile->filename) free(srcFile->filename);
+		srcFile->filename = StrdupPad(first, 10);
+		sprintf(strrchr(srcFile->filename, '_'), "_%d%s", i, extension);
+		sb_push(dst->rooms, *srcRoom);
+		LogDebug("added room '%s' during migration", srcFile->filename);
+	}
+	while (sb_count(src->rooms) > firstNewRoom)
+		sb_pop(src->rooms);
+	sb_foreach(dst->headers, { each->numRooms = sb_count(dst->rooms); })
+	
+	// swap collision data and blobs
+	Swap(&dst->collisions, &src->collisions);
+	Swap(&dst->blobs, &src->blobs);
+	Swap(&dst->textureBlobs, &src->textureBlobs);
+	Swap(&dst->file, &src->file);
+	Swap(&dst->file->filename, &src->file->filename);
+	Swap(&dst->file->shortname, &src->file->shortname);
+	
+	//
+	//LogDebug("dst datablobs post migration:");
+	//DataBlobPrintAll(dst->blobs);
+	
+	// success
+	return 0;
+}
+
 struct Room *RoomFromFilename(const char *filename)
 {
 	struct Room *result = Calloc(1, sizeof(*result));
@@ -1129,6 +1318,9 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 
 void CollisionHeaderFree(CollisionHeader *header)
 {
+	if (!header)
+		return;
+	
 	free(header->vtxList);
 	free(header->polyList);
 	free(header->surfaceTypeList);

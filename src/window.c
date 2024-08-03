@@ -923,6 +923,11 @@ void WindowSaveSceneAs(void)
 	GuiPushModal("Saved scene and room files successfully.");
 }
 
+void WindowClearCache(void)
+{
+	n64_clear_cache();
+}
+
 struct Scene *WindowLoadSceneExt(const char *fn, struct File *romFile, uint32_t romStart, uint32_t romEnd)
 {
 	struct Scene *scene = 0;

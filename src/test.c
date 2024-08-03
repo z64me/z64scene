@@ -747,3 +747,32 @@ void Testz64convertObject(char **objectPath)
 	else if (objectPath)
 		*objectPath = "z64convert/bin/TPLink64Deluxe.zobj";
 }
+
+void TestSwapFunction(void)
+{
+	sb_array(int, a) = 0;
+	sb_array(int, b) = 0;
+	
+	for (int i = 0; i < 15; ++i)
+		if (i < 5)
+			sb_push(a, i);
+		else
+			sb_push(b, i);
+	
+	Swap(&a, &b);
+	
+	LogDebug("a:"); sb_foreach(a, { LogDebug("-> %d", *each); });
+	LogDebug("b:"); sb_foreach(b, { LogDebug("-> %d", *each); });
+}
+
+void TestSceneMigrate(const char *dstPath, const char *srcPath, const char *outPath)
+{
+	struct Scene *dst = SceneFromFilenamePredictRooms(dstPath);
+	struct Scene *src = SceneFromFilenamePredictRooms(srcPath);
+	
+	SceneMigrateVisualAndCollisionData(dst, src);
+	SceneToFilename(dst, outPath);
+	
+	SceneFree(dst);
+	SceneFree(src);
+}

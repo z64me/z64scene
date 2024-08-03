@@ -73,6 +73,7 @@ struct Input
 
 extern struct Input gInput;
 
+void WindowClearCache(void);
 RayLine WindowGetRayLine(Vec2f point);
 RayLine WindowGetCursorRayLine(void);
 void WindowClipPointIntoView(Vec3f* a, Vec3f normal);

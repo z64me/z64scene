@@ -510,6 +510,7 @@ struct Scene *SceneFromFilename(const char *filename);
 struct Scene *SceneFromFilenamePredictRooms(const char *filename);
 struct Scene *SceneFromRomOffset(struct File *rom, uint32_t romStart, uint32_t romEnd);
 void SceneToFilename(struct Scene *scene, const char *filename);
+const char *SceneMigrateVisualAndCollisionData(struct Scene *dst, struct Scene *src);
 struct Room *RoomFromFilename(const char *filename);
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 void SceneReadyDataBlobs(struct Scene *scene);
@@ -523,6 +524,9 @@ void SceneFree(struct Scene *scene);
 void RoomFree(struct Room *room);
 char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
+void *Memdup(const void *data, size_t size);
+#define Swap(A, B) Swap((void*)(A), (void*)B, sizeof(*(A)), sizeof(*(B)))
+void (Swap)(void *a, void *b, size_t aSize, size_t bSize);
 void StrcatCharLimit(char *dst, unsigned int codepoint, unsigned int dstByteSize);
 char *StrToLower(char *str);
 void StrRemoveChar(char *charAt);

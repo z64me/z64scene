@@ -701,6 +701,28 @@ void AnimatedImageFree(AnimatedImage *anim)
 	free(anim);
 }
 
+void TryMigrateVisualAndCollisionDataFrom(struct Scene *newScene)
+{
+	// swap visual/collision data between these two scenes
+	const char *err = SceneMigrateVisualAndCollisionData(gScene, newScene);
+	
+	// show error message if the operation failed
+	if (err)
+		GuiErrorPopup(err);
+	
+	// clear scene render cache
+	WindowClearCache();
+	
+	// fallback: save and reload amalgamated scene
+	// (consider this if stale pointers ever cause issues)
+	//const char *where = WHERE_TMP "amalgamated_scene.zscene";
+	//SceneToFilename(gScene, where);
+	//WindowLoadScene(where);
+	
+	// cleanup
+	SceneFree(newScene);
+}
+
 
 // imgui doesn't support this natively, so hack a custom one into it
 static void MultiLineTabBarGeneric(
@@ -2158,7 +2180,18 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					
 					if (!myDataBlob || myDataBlob->type != DATA_BLOB_TYPE_TEXTURE)
 					{
+					#ifndef NDEBUG
+						ImGui::TextWrapped("%p %d", myDataBlob, (myDataBlob) ? myDataBlob->type : 0);
+					#endif
 						ImGui::TextWrapped("Error: No meshes reference this texture segment.");
+						break;
+					}
+					
+					// require palette on color-indexed formats
+					if (myDataBlob->data.texture.fmt == N64TEXCONV_CI
+						&& myDataBlob->data.texture.pal == 0
+					) {
+						ImGui::TextWrapped("Error: Failed to locate palette for this texture segment.");
 						break;
 					}
 					
@@ -2594,6 +2627,29 @@ static void DrawMenuBar(void)
 				
 				if (fn)
 					GuiLoadProject(fn);
+			}
+			ImGui::EndMenu();
+		}
+		if (gScene && ImGui::BeginMenu("Tools"))
+		{
+			if (ImGui::MenuItem("Replace Visuals & Collision w/ OBJEX"))
+			{
+				struct Scene *newScene = 0;
+				
+				if (WindowNewSceneFromObjex(0, &newScene, true) == 0
+					&& newScene
+				)
+					TryMigrateVisualAndCollisionDataFrom(newScene);
+			}
+			if (gScene && ImGui::MenuItem("Replace Visuals & Collision w/ ZSCENE"))
+			{
+				const char *fn;
+				struct Scene *newScene = 0;
+				
+				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "zscene\0*.zscene\0", NULL, NULL);
+				
+				if (fn && (newScene = SceneFromFilenamePredictRooms(fn)))
+					TryMigrateVisualAndCollisionDataFrom(newScene);
 			}
 			ImGui::EndMenu();
 		}

@@ -67,6 +67,20 @@ int main(int argc, char *argv[])
 			SceneWriterCleanup();
 			return 0; // exit immediately after test
 		}
+		// test: tests the Swap() function
+		else if (!strcmp(which, "TestSwapFunction"))
+		{
+			TestSwapFunction();
+			return 0; // exit immediately after test
+		}
+		// test: tests scene visual/collision data migration functionality
+		else if (!strcmp(which, "TestSceneMigrate"))
+		{
+			if (argc != 5)
+				Die("not enough args: dst.zscene src.zscene out.zscene");
+			TestSceneMigrate(argv[2], argv[3], argv[4]);
+			return 0; // exit immediately after test
+		}
 		else
 			result = which;
 		

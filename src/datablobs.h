@@ -35,6 +35,13 @@ enum DataBlobType
 	DATA_BLOB_TYPE_COUNT,
 };
 
+enum DataBlobSubtype
+{
+	DATA_BLOB_SUBTYPE_UNSET,
+	DATA_BLOB_SUBTYPE_FLIPBOOK,
+	DATA_BLOB_SUBTYPE_COUNT,
+};
+
 struct DataBlob
 {
 	// TODO XXX refData as first member prevents an #include in texanim.c, refactor later
@@ -47,6 +54,7 @@ struct DataBlob
 	uint32_t sizeBytes;
 	uint8_t alignBytes;
 	enum DataBlobType type;
+	enum DataBlobSubtype subtype;
 	bool ownsRefData;
 	sb_array(void*, refs); // references to this datablob
 	
@@ -61,6 +69,7 @@ struct DataBlob
 			struct DataBlob *pal;
 			bool isJfif;
 			uintptr_t glTexture;
+			uint8_t flipbookSegment;
 		} texture;
 	} data;
 };
