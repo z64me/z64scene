@@ -424,8 +424,7 @@ struct Scene *SceneFromFilenamePredictRooms(const char *filename)
 			Die("could not find room_%d", i);
 	}
 	
-	// test this out
-	SceneReadyDataBlobs(scene);
+	SceneReady(scene);
 	
 	free(roomNameBuf);
 	return scene;
@@ -805,6 +804,25 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	sb_foreach(scene->rooms, {
 		LogDebug(" - %s: %d headers", each->file->shortname, sb_count(each->headers));
 	});
+}
+
+void SceneReady(struct Scene *scene)
+{
+	// determine which has the lowest headers
+	{
+		int lowest = MIN(INT_MAX, sb_count(scene->headers));
+		sb_foreach(scene->rooms, lowest = MIN(lowest, sb_count(each->headers));)
+		
+		// and ensure nothing has more headers than that
+		while (sb_count(scene->headers) > lowest)
+			sb_pop(scene->headers);
+		sb_foreach(scene->rooms, {
+			while (sb_count(each->headers) > lowest)
+				sb_pop(each->headers);
+		})
+	}
+	
+	SceneReadyDataBlobs(scene);
 }
 
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs)
