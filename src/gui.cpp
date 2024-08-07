@@ -1818,7 +1818,8 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			);
 			IMGUI_COMBO_HOVER(scale, scaleMax);
 			
-			ImGui::Text(textureBlob->file->shortname);
+			if (textureBlob->file->shortname)
+				ImGui::Text(textureBlob->file->shortname);
 			
 			if (isBadTexture)
 				ImGui::Text("Bad texture");

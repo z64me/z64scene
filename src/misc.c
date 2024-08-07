@@ -463,6 +463,8 @@ struct Scene *SceneFromRomOffset(struct File *rom, uint32_t romStart, uint32_t r
 		SceneAddRoom(scene, RoomFromRomOffset(rom, start, end));
 	}
 	
+	SceneReady(scene);
+	
 	return scene;
 }
 
