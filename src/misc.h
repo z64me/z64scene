@@ -528,6 +528,8 @@ void RoomAddHeader(struct Room *room, struct RoomHeader *header);
 void SceneAddRoom(struct Scene *scene, struct Room *room);
 void SceneFree(struct Scene *scene);
 void RoomFree(struct Room *room);
+void RoomHeaderFree(struct RoomHeader *header);
+void SceneHeaderFree(struct SceneHeader *header);
 char *Strdup(const char *str);
 char *StrdupPad(const char *str, int padding);
 void *Memdup(const void *data, size_t size);

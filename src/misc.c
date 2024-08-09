@@ -100,6 +100,7 @@ static void private_RoomParseAddHeader(struct Room *room, uint32_t addr);
 static struct Instance private_InstanceParse(const void *data, enum InstanceTab tab);
 static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes);
 static void ScenePostsortSquashExits(void *udata, uint32_t blobSizeBytes);
+static void ScenePostsortSquashHeaders(void *udata, uint32_t blobSizeBytes);
 
 #endif /* private function declarations */
 
@@ -855,6 +856,8 @@ void SceneReadyDataBlobs(struct Scene *scene)
 
 void SceneReady(struct Scene *scene)
 {
+	SceneReadyDataBlobs(scene);
+	
 	// determine which has the lowest headers
 	{
 		int lowest = MIN(INT_MAX, sb_count(scene->headers));
@@ -862,14 +865,18 @@ void SceneReady(struct Scene *scene)
 		
 		// and ensure nothing has more headers than that
 		while (sb_count(scene->headers) > lowest)
+		{
+			SceneHeaderFree(&sb_last(scene->headers));
 			sb_pop(scene->headers);
+		}
 		sb_foreach(scene->rooms, {
 			while (sb_count(each->headers) > lowest)
+			{
+				RoomHeaderFree(&sb_last(each->headers));
 				sb_pop(each->headers);
+			}
 		})
 	}
-	
-	SceneReadyDataBlobs(scene);
 }
 
 void TextureBlobSbArrayFromDataBlobs(struct File *file, struct DataBlob *head, struct TextureBlob **texBlobs)
@@ -1662,6 +1669,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	result->mm.sceneSetupType = -1;
 	int exitsCount = 0;
 	int altHeadersCount = 0;
+	uint32_t altHeadersSegAddr = 0;
 	uint32_t exitsSegAddr = 0;
 	
 	// unlikely a scene header
@@ -1735,6 +1743,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 			case 0x18: { // alternate headers
 				altHeadersArray = ParseSegmentAddress(w1);
 				altHeadersCount = walk[1];
+				altHeadersSegAddr = w1;
 				break;
 			}
 			
@@ -1958,6 +1967,8 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	
 	// handle alternate headers
 	TRY_ALTERNATE_HEADERS(private_SceneParseAddHeader, scene, 0x02, 0x15)
+	
+	HookSegmentAddressPostsort(altHeadersSegAddr, scene, ScenePostsortSquashHeaders);
 }
 
 static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes)
@@ -1991,6 +2002,29 @@ static void ScenePostsortSquashExits(void *udata, uint32_t blobSizeBytes)
 	{
 		LogDebug("squash exit count from %d -> %d", count, maxCapacity);
 		sb_trim(exits, maxCapacity);
+	}
+}
+
+static void ScenePostsortSquashHeaders(void *udata, uint32_t blobSizeBytes)
+{
+	struct Scene *scene = udata;
+	int maxCapacity = blobSizeBytes / sizeof(uint32_t);
+	int count = sb_count(scene->headers);
+	
+	// subtracting 1 accounts for header[0], which isn't an alternate header
+	count -= 1;
+	
+	if (count > maxCapacity)
+	{
+		LogDebug("squash alternate header count from %d -> %d", count, maxCapacity);
+		
+		while (count > maxCapacity)
+		{
+			LogDebug(" -> pop header %08x", sb_last(scene->headers).addr);
+			SceneHeaderFree(&sb_last(scene->headers));
+			sb_pop(scene->headers);
+			--count;
+		}
 	}
 }
 
