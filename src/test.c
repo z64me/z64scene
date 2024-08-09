@@ -652,6 +652,15 @@ void TestSaveLoadCycle(struct Scene *scene, uint32_t identifier)
 		FileToFilename(b, ExePath(wow));
 	}
 	
+	// report scenes that increased in size
+	else if (a->size > scene->file->size)
+		fprintf(logTo,
+			"scene %08x is %5.2f%% (0x%X bytes) larger\n",
+			identifier,
+			(((float)a->size / (float)scene->file->size) - 1.0) * 100,
+			(uint32_t)(a->size - scene->file->size)
+		);
+	
 	// cleanup
 	FileFree(a);
 	FileFree(b);
