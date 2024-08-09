@@ -99,6 +99,7 @@ static struct Room *private_RoomParseAfterLoad(struct Room *room);
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr);
 static struct Instance private_InstanceParse(const void *data, enum InstanceTab tab);
 static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes);
+static void ScenePostsortSquashExits(void *udata, uint32_t blobSizeBytes);
 
 #endif /* private function declarations */
 
@@ -1648,6 +1649,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	struct SceneHeader *result = Calloc(1, sizeof(*result));
 	struct File *file = scene->file;
 	uint8_t *data8 = file->data;
+	uint8_t *dataEnd8 = file->dataEnd;
 	uint8_t *walk = file->data;
 	struct {
 		uint8_t *positions;
@@ -1928,10 +1930,20 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 		const uint8_t *exitData = ParseSegmentAddress(exitsSegAddr);
 		
 		if (!exitsCount)
+		{
 			exitsCount = scene->collisions->numExits;
+			
+			// just in case there are exits not referenced by
+			// collision, such as those used by warp point actors
+			// (the postsort callback will trim any bytes that were
+			// read from subsequent blocks, so this is okay)
+			exitsCount = SCENE_MAX_EXITS;
+			sb_new_size(result->exits, SCENE_MAX_EXITS); // prevent realloc from breaking callback
+			HookSegmentAddressPostsort(exitsSegAddr, result->exits, ScenePostsortSquashExits);
+		}
 		
-		for (int i = 0; i < exitsCount; ++i)
-			sb_push(result->exits, u16r(exitData + i * 2));
+		for (int i = 0; i < exitsCount && exitData + 2 <= dataEnd8; ++i, exitData += 2)
+			sb_push(result->exits, u16r(exitData));
 		
 		LogDebug("exits:");
 		sb_foreach(result->exits, {
@@ -1967,6 +1979,19 @@ static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes)
 	
 	// update camera count, in case any were removed
 	header->numCameras = sb_count(header->bgCamList);
+}
+
+static void ScenePostsortSquashExits(void *udata, uint32_t blobSizeBytes)
+{
+	sb_array(uint16_t, exits) = udata;
+	int maxCapacity = blobSizeBytes / sizeof(uint16_t);
+	int count = sb_count(exits);
+	
+	if (count > maxCapacity)
+	{
+		LogDebug("squash exit count from %d -> %d", count, maxCapacity);
+		sb_trim(exits, maxCapacity);
+	}
 }
 
 static RoomShapeImage RoomShapeImageFromBytes(const void *data)

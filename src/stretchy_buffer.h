@@ -212,6 +212,7 @@
 #define sb_add    stb_sb_add
 #define sb_last   stb_sb_last
 #define sb_clear  stb_sb_clear
+#define sb_trim   stb_sb_trim
 #define sb_new    stb_sb_new
 #define sb_swap   stb_sb_swap
 #define sb_swap_safe stb_sb_swap_safe
@@ -232,8 +233,11 @@
 #define stb_sb_last(a)         ((a)[stb__sbn(a)-1])
 //#define stb_sb_clear(a)        ((a) ? stb__sbn(a) = 0 : (void)0)
 #define stb_sb_clear(a)        { if (a) stb__sbn(a) = 0; } // c++
+#define stb_sb_trim(a,newsize) { if (a && stb__sbn(a) > newsize) stb__sbn(a) = newsize; }
 #define stb_sb_new(a)          { (void)stb_sb_add(a, 1); stb_sb_clear(a); }
-#define stb_sb_new_size(a,n)   { (void)stb_sb_add(a, (n+1)); stb_sb_clear(a); }
+#define stb_sb_new_size(a,n)   { (void)stb_sb_add(a, ((n)+1)); stb_sb_clear(a); }
+//#define stb_sb_new_size(a,n)   { stb__sbgrow(a, ((n)+1)); stb_sb_clear(a); } // just experimenting
+//#define stb_sb_new_size(a,n)   { for (int i = 0; i < ((n) + 1); ++i) sb_push(a, (typeof(*(a))){0}); stb_sb_clear(a); }
 #define stb_sb_contains(HAYSTACK, NEEDLE) ((sb_find_index)(HAYSTACK, NEEDLE, sizeof(*(NEEDLE))) >= 0)
 #define stb_sb_contains_ref(HAYSTACK, NEEDLE) ((sb_find_ref)(HAYSTACK, NEEDLE, sizeof(&(NEEDLE))) >= 0)
 #define stb_sb_contains_copy(HAYSTACK, NEEDLE) (sb_find_copy(HAYSTACK, NEEDLE) >= 0)

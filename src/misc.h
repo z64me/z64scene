@@ -31,6 +31,8 @@ struct CutsceneOot;
 #define CAM_SET_MAX_OOT 0x42
 #define CAM_SET_MAX_MM 0x5B
 
+#define SCENE_MAX_EXITS 15 // 4-bit, 1-indexed value
+
 #if 1 /* region: macros */
 #define UNFOLD_RGB(v)   (v).r, (v).g, (v).b
 #define UNFOLD_RGBA(v)  (v).r, (v).g, (v).b, (v).a

@@ -62,7 +62,8 @@
 			"assert.h": "c",
 			"stdlib.h": "c",
 			"extmath.h": "c",
-			"list": "cpp"
+			"list": "cpp",
+			"file.h": "c"
 		}
 	}
 }
