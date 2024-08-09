@@ -27,10 +27,21 @@ static uint32_t gWorkFindAlignment = 0;
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
 static struct DataBlob *gBlobsWritten = 0;
+#define MAX_UNIQUE_BLOBS 4096 // oot and mm need 82 and 134 respectively, so this is sufficient
+static struct DataBlob *gUniqueBlobStack = 0;
+static struct DataBlob *gUniqueBlob = 0;
+static int gMostUniqueBlobs = 0;
 
 // invoke once on program exit for cleanup
 void SceneWriterCleanup(void)
 {
+	if (gUniqueBlobStack)
+	{
+		free(gUniqueBlobStack);
+		gUniqueBlobStack = 0;
+		LogDebug("produced a maximum of %d (decimal) unique data blobs", gMostUniqueBlobs);
+	}
+	
 	if (gWorkblobData)
 	{
 		free(gWorkblobData);
@@ -62,6 +73,19 @@ static uint32_t Swap32(const uint32_t b)
 	return result;
 }
 
+static struct DataBlob *NewUniqueBlob(const void *refData)
+{
+	struct DataBlob *blob = gUniqueBlob;
+	
+	gUniqueBlob += 1;
+	gMostUniqueBlobs = MAX(gMostUniqueBlobs, gUniqueBlob - gUniqueBlobStack);
+	
+	*blob = *gWorkblob;
+	blob->refData = refData;
+	
+	return blob;
+}
+
 static void WorkReady(void)
 {
 	// big alignment for meshes and textures etc
@@ -69,6 +93,7 @@ static void WorkReady(void)
 	
 	// no blobs written so far
 	gBlobsWritten = 0;
+	gUniqueBlob = gUniqueBlobStack;
 	
 	if (!gWork)
 		gWork = FileNew("work", WORKBUF_SIZE);
@@ -82,6 +107,12 @@ static void WorkReady(void)
 		// (there is error checking for whether it has push()'d)
 		gWorkblob = gWorkblobStack - 1;
 		#pragma GCC diagnostic pop
+	}
+	
+	if (!gUniqueBlobStack)
+	{
+		gUniqueBlobStack = malloc(MAX_UNIQUE_BLOBS * sizeof(*gUniqueBlobStack));
+		gUniqueBlob = gUniqueBlobStack;
 	}
 	
 	gWork->size = 0;
@@ -105,7 +136,9 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 	// of them on subsequent save/load cycles
 	// (changing the trim algorithm would be a simpler alternative,
 	// if this is ever revisited, but this seems more predictable)
-	if (blob->type != DATA_BLOB_TYPE_UNSET)
+	// (is now always used in favor of old method)
+	// (left the original if statement commented for reference)
+	//if (blob->type != DATA_BLOB_TYPE_UNSET)
 	{
 		for (struct DataBlob *walk = gBlobsWritten
 			; walk; walk = walk->udata
@@ -125,6 +158,14 @@ static uint32_t WorkFindDatablob(struct DataBlob *blob)
 		
 		return 0;
 	}
+	
+	// old matching method: no longer preferred because
+	// overlapping data breaks any logic that is dependent
+	// on block sizes, which are calculated using:
+	// my.size = next.addr - my.addr
+	// (coalescing 'next' into 'my' renders the size of
+	// 'my' indeterminate using the above algorithm)
+	assert(!"this code should never be reached");
 	
 	// find matches not in material/vertex/mesh/etc blobs
 	// (for the same reason as the above explanation: data
@@ -201,23 +242,29 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	if ((addr = WorkFindDatablob(blob)))
 		return addr;
 	
+	blob->updatedSegmentAddress =
+		(blob->originalSegmentAddress & 0xff000000)
+		| gWork->size
+	;
+	gWork->size += blob->sizeBytes;
+	
 	// link into list of known written datablobs
 	if (blob->type != DATA_BLOB_TYPE_UNSET)
 	{
 		blob->udata = gBlobsWritten;
 		gBlobsWritten = blob;
 	}
+	else if (blob == gWorkblob && blob->refData)
+	{
+		struct DataBlob *tmp = NewUniqueBlob(dest);
+		tmp->udata = gBlobsWritten;
+		gBlobsWritten = tmp;
+	}
 	
 	if (blob->refData)
 		memcpy(dest, blob->refData, blob->sizeBytes);
 	else if (blob->type == DATA_BLOB_TYPE_UNSET) // maybe DATA_BLOB_TYPE_BLANK sometime?
 		memset(dest, 0, blob->sizeBytes);
-	
-	blob->updatedSegmentAddress =
-		(blob->originalSegmentAddress & 0xff000000)
-		| gWork->size
-	;
-	gWork->size += blob->sizeBytes;
 	
 	/*
 	LogDebug("append blob type %d size %08x at %08x (formerly %08x)"

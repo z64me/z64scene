@@ -49,6 +49,7 @@ int main(int argc, char *argv[])
 		{
 			if (!(which = argv[2])) Die("TestSaveLoadCycles: not enough args");
 			TestSaveLoadCycles(which);
+			SceneWriterCleanup();
 			return 0; // exit immediately after test
 		}
 		// test: opens and optionally exports a single scene (argv[2] -> argv[3])
