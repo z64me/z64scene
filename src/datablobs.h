@@ -10,6 +10,8 @@
 #include <stdint.h>
 #include "stretchy_buffer.h"
 
+typedef void (*DataBlobCallback)(void *udata, uint32_t sizeBytes);
+
 #define datablob_foreach(BLOBS, CODE) \
 	for (struct DataBlob *each = BLOBS; each; each = each->next) { \
 		CODE \
@@ -42,12 +44,21 @@ enum DataBlobSubtype
 	DATA_BLOB_SUBTYPE_COUNT,
 };
 
+struct DataBlobPending
+{
+	uint32_t segAddr;
+	uint32_t sizeBytes;
+	DataBlobCallback postsort;
+	void *udata;
+};
+
 struct DataBlob
 {
 	// TODO XXX refData as first member prevents an #include in texanim.c, refactor later
 	const void *refData; // is a reference, do not free
 	void *udata;
 	struct DataBlob *next;
+	struct DataBlobPending callbacks;
 	const void *refDataFileEnd;
 	uint32_t originalSegmentAddress;
 	uint32_t updatedSegmentAddress;

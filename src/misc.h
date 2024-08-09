@@ -451,7 +451,7 @@ struct Room
 	struct File *file;
 	struct Scene *scene;
 	struct DataBlob *blobs;
-	sb_array(uint32_t, blobsPending);
+	sb_array(struct DataBlobPending, blobsPending);
 	sb_array(struct RoomHeader, headers);
 };
 
@@ -494,7 +494,7 @@ struct Scene
 {
 	struct File *file;
 	struct DataBlob *blobs;
-	sb_array(uint32_t, blobsPending);
+	sb_array(struct DataBlobPending, blobsPending);
 	sb_array(struct TextureBlob, textureBlobs);
 	sb_array(struct Room, rooms);
 	sb_array(struct SceneHeader, headers);

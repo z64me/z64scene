@@ -98,6 +98,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr);
 static struct Room *private_RoomParseAfterLoad(struct Room *room);
 static void private_RoomParseAddHeader(struct Room *room, uint32_t addr);
 static struct Instance private_InstanceParse(const void *data, enum InstanceTab tab);
+static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes);
 
 #endif /* private function declarations */
 
@@ -276,36 +277,58 @@ void *Memmem(const void *haystack, size_t haystackLen, const void *needle, size_
 static struct Scene *sParsingScene = 0;
 static struct Room *sParsingRoom = 0;
 #define ParseSegmentAddressNoPush n64_segment_get // XXX for testing, don't use this macro in production
+sb_array(struct DataBlobPending, *GetPendingSegmentAddressList)(uint32_t segAddr);
 void *ParseSegmentAddress(uint32_t segAddr)
 {
-	sb_array(uint32_t, *blobsPending) = 0;
-	
-	switch (segAddr >> 24)
-	{
-		case 0x02:
-			blobsPending = &sParsingScene->blobsPending;
-			break;
-		
-		case 0x03:
-			blobsPending = &sParsingRoom->blobsPending;
-			break;
-	}
+	sb_array(struct DataBlobPending, *blobsPending) = GetPendingSegmentAddressList(segAddr);
 	
 	if (blobsPending)
 	{
 		// omit duplicates, just to be safe
 		bool contains = false;
 		sb_foreach(*blobsPending, {
-			if (*each == segAddr) {
+			if (each->segAddr == segAddr) {
 				contains = true;
 				break;
 			}
 		})
 		if (contains == false)
-			sb_push(*blobsPending, segAddr);
+			sb_push(*blobsPending, (struct DataBlobPending) { .segAddr = segAddr });
 	}
 	
 	return n64_segment_get(segAddr);
+}
+void HookSegmentAddressPostsort(uint32_t segAddr, void *udata, DataBlobCallback callback)
+{
+	sb_array(struct DataBlobPending, *blobsPending) = 0;
+	
+	blobsPending = GetPendingSegmentAddressList(segAddr);
+	
+	if (blobsPending)
+	{
+		sb_foreach(*blobsPending, {
+			if (each->segAddr == segAddr) {
+				each->postsort = callback;
+				each->udata = udata;
+				return;
+			}
+		})
+	}
+}
+sb_array(struct DataBlobPending, *GetPendingSegmentAddressList) (uint32_t segAddr)
+{
+	switch (segAddr >> 24)
+	{
+		case 0x02:
+			return &sParsingScene->blobsPending;
+			break;
+		
+		case 0x03:
+			return &sParsingRoom->blobsPending;
+			break;
+	}
+	
+	return 0;
 }
 
 float f32r(const void *data)
@@ -551,15 +574,17 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		
 		// add pending blobs
 		sb_foreach_named(each->blobsPending, pending_, {
-			uint32_t pending = *pending_;
+			struct DataBlobPending pending = *pending_;
+			uint32_t segAddr = pending.segAddr;
 			each->blobs = DataBlobPush(
 				each->blobs
-				, ((uint8_t*)each->file->data) + (pending & 0x00ffffff)
+				, ((uint8_t*)each->file->data) + (segAddr & 0x00ffffff)
 				, 0
-				, pending
+				, segAddr
 				, DATA_BLOB_TYPE_GENERIC
 				, 0
 			);
+			each->blobs->callbacks = pending;
 		})
 		
 		LogDebug("'%s' data blobs:", each->file->filename);
@@ -573,15 +598,17 @@ void SceneReadyDataBlobs(struct Scene *scene)
 	
 	// add pending blobs
 	sb_foreach_named(scene->blobsPending, pending_, {
-		uint32_t pending = *pending_;
+		struct DataBlobPending pending = *pending_;
+		uint32_t segAddr = pending.segAddr;
 		scene->blobs = DataBlobPush(
 			scene->blobs
-			, ((uint8_t*)scene->file->data) + (pending & 0x00ffffff)
+			, ((uint8_t*)scene->file->data) + (segAddr & 0x00ffffff)
 			, 0
-			, pending
+			, segAddr
 			, DATA_BLOB_TYPE_GENERIC
 			, 0
 		);
+		scene->blobs->callbacks = pending;
 	})
 	
 	// determine the dimensions of flipbook textures
@@ -676,7 +703,13 @@ void SceneReadyDataBlobs(struct Scene *scene)
 			
 			// don't attempt to resize empty data blobs
 			if (!a->sizeBytes)
+			{
+				a->callbacks.sizeBytes =
+					((uintptr_t)(b->refData))
+					- ((uintptr_t)(a->refData))
+				;
 				continue;
+			}
 			
 			// don't trim overlapping meshes
 			// (aka the G_ENDDL command could get stripped off
@@ -737,6 +770,14 @@ void SceneReadyDataBlobs(struct Scene *scene)
 					, blob->sizeBytes
 				);
 		}
+		
+		// post-sort callbacks
+		sb_foreach(array, {
+			struct DataBlob *blob = *each;
+			struct DataBlobPending callback = blob->callbacks;
+			if (callback.postsort)
+				callback.postsort(callback.udata, callback.sizeBytes);
+		})
 		
 		sb_free(array);
 	}
