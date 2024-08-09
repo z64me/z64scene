@@ -10,7 +10,7 @@
 #include <stdint.h>
 #include "stretchy_buffer.h"
 
-typedef void (*DataBlobCallback)(void *udata, uint32_t sizeBytes);
+typedef void (*DataBlobCallbackFunc)(void *udata, uint32_t sizeBytes);
 
 #define datablob_foreach(BLOBS, CODE) \
 	for (struct DataBlob *each = BLOBS; each; each = each->next) { \
@@ -44,12 +44,17 @@ enum DataBlobSubtype
 	DATA_BLOB_SUBTYPE_COUNT,
 };
 
+struct DataBlobCallback
+{
+	DataBlobCallbackFunc func;
+	void *udata;
+};
+
 struct DataBlobPending
 {
 	uint32_t segAddr;
 	uint32_t sizeBytes;
-	DataBlobCallback postsort;
-	void *udata;
+	sb_array(struct DataBlobCallback, postsort);
 };
 
 struct DataBlob

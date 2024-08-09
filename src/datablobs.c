@@ -88,6 +88,8 @@ void DatablobFree(struct DataBlob *blob)
 {
 	sb_free(blob->refs);
 	
+	sb_free(blob->callbacks.postsort);
+	
 	if (blob->ownsRefData)
 		free((void*)blob->refData);
 	

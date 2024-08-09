@@ -298,7 +298,7 @@ void *ParseSegmentAddress(uint32_t segAddr)
 	
 	return n64_segment_get(segAddr);
 }
-void HookSegmentAddressPostsort(uint32_t segAddr, void *udata, DataBlobCallback callback)
+void HookSegmentAddressPostsort(uint32_t segAddr, void *udata, DataBlobCallbackFunc callback)
 {
 	sb_array(struct DataBlobPending, *blobsPending) = 0;
 	
@@ -308,8 +308,10 @@ void HookSegmentAddressPostsort(uint32_t segAddr, void *udata, DataBlobCallback 
 	{
 		sb_foreach(*blobsPending, {
 			if (each->segAddr == segAddr) {
-				each->postsort = callback;
-				each->udata = udata;
+				sb_push(each->postsort, ((struct DataBlobCallback) {
+					.func = callback,
+					.udata = udata,
+				}));
 				return;
 			}
 		})
@@ -775,8 +777,9 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		sb_foreach(array, {
 			struct DataBlob *blob = *each;
 			struct DataBlobPending callback = blob->callbacks;
-			if (callback.postsort)
-				callback.postsort(callback.udata, callback.sizeBytes);
+			sb_foreach(callback.postsort, {
+				each->func(each->udata, callback.sizeBytes);
+			})
 		})
 		
 		sb_free(array);
