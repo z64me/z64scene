@@ -1195,9 +1195,11 @@ struct Room *RoomFromFilename(const char *filename)
 
 void ScenePopulateRoom(struct Scene *scene, int index, struct Room *room);
 
-CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
+CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr, uint32_t fileSize)
 {
 	const uint8_t *data = ParseSegmentAddress(segAddr);
+	const uint8_t *dataStart = ParseSegmentAddress(segAddr & 0xff000000);
+	const uint8_t *dataEnd = (dataStart) ? dataStart + fileSize : 0;
 	const uint8_t *nest;
 	
 	if (!data) return 0;
@@ -1270,15 +1272,49 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	}
 	if ((nest = ParseSegmentAddress(u32r(data + 32))))
 	{
-		for (int i = 0; i < result->numCameras; ++i)
+		HookSegmentAddressPostsort(u32r(data + 32), result, ScenePostsortSquashCameras);
+		
+		for (int i = 0; ; ++i)
 		{
 			const uint8_t *elem = nest + i * 8; // 8 bytes per entry
+			
+			// don't read past the eof
+			if (dataEnd && elem + 8 > dataEnd)
+				break;
 			
 			BgCamInfo cam = {
 				.setting = u16r(elem + 0),
 				.count = u16r(elem + 2),
 				.dataAddr = u32r(elem + 4)
 			};
+			
+			// get info about all oot/mm scenes so can look for patterns
+			/*
+			static BgCamInfo test;
+			static FILE *log;
+			if (!log) log = fopen("bin/info.txt", "wb");
+			if (cam.setting > test.setting) fprintf(log, "setting = 0x%04x\n", (test.setting = cam.setting));
+			if (cam.count > test.count) fprintf(log, "count = 0x%04x\n", (test.count = cam.count));
+			if (cam.count % 3) Die("cam.count %% 3");
+			if (cam.count == 0 && cam.dataAddr) Die("cam.count == 0");
+			*/
+			
+			// sanity check for possible cameras not referenced by collision surface types
+			if (i >= result->numCameras)
+			{
+				if (cam.setting >= MAX(CAM_SET_MAX_OOT, CAM_SET_MAX_MM)
+					|| (cam.dataAddr && !cam.count) // count is always non-zero if address is given
+					|| (cam.count && !cam.dataAddr) // count is always 0 if no address is given
+					|| (cam.count % 3) // count is always multiple of 3
+					|| (cam.count > 9) // always == 3 in mm, oot uses 6 and 9 for crawlspaces
+					|| (cam.dataAddr & 1) // not 2-byte aligned
+					|| (cam.dataAddr && (cam.dataAddr >> 24) != (segAddr >> 24)) // should ref input segment
+					|| ((cam.dataAddr & 0x00ffffff) + cam.count * 6) > fileSize // data runs past eof
+				)
+					break;
+				
+				LogDebug("adding unreferenced camera %04x %04x %08x", cam.setting, cam.count, cam.dataAddr);
+			}
 			
 			elem = ParseSegmentAddress(cam.dataAddr); // bgCamFuncData
 			if (!(cam.dataAddrResolved = elem))
@@ -1326,6 +1362,9 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 			
 			sb_push(result->bgCamList, cam);
 		}
+		
+		// update camera count, in case any were added
+		result->numCameras = sb_count(result->bgCamList);
 	}
 	else
 	{
@@ -1377,6 +1416,12 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr)
 	return result;
 }
 
+void CollisionHeaderFreeCamera(BgCamInfo cam)
+{
+	if (cam.data)
+		free(cam.data);
+}
+
 void CollisionHeaderFree(CollisionHeader *header)
 {
 	if (!header)
@@ -1390,8 +1435,7 @@ void CollisionHeaderFree(CollisionHeader *header)
 		free(header->triListMasked);
 	
 	sb_foreach(header->bgCamList, {
-		if (each->data)
-			free(each->data);
+		CollisionHeaderFreeCamera(*each);
 	})
 	sb_free(header->bgCamList);
 	
@@ -1704,7 +1748,7 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 				if (scene->collisions && scene->collisions->originalSegmentAddress != w1)
 					Die("multiple collision headers with different segment addresses");
 				else if (!scene->collisions)
-					scene->collisions = CollisionHeaderNewFromSegment(w1);
+					scene->collisions = CollisionHeaderNewFromSegment(w1, file->size);
 				break;
 			}
 			
@@ -1899,6 +1943,27 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 	
 	// handle alternate headers
 	TRY_ALTERNATE_HEADERS(private_SceneParseAddHeader, scene, 0x02, 0x15)
+}
+
+static void ScenePostsortSquashCameras(void *udata, uint32_t blobSizeBytes)
+{
+	CollisionHeader *header = udata;
+	int maxCapacity = blobSizeBytes / 8;
+	
+	while (sb_count(header->bgCamList) > maxCapacity)
+		CollisionHeaderFreeCamera(sb_pop(header->bgCamList));
+	
+	// collecting info
+	if (header->numCameras != sb_count(header->bgCamList)) {
+		BgCamInfo *try = &header->bgCamList[sb_count(header->bgCamList)];
+		LogDebug("resized from %d to %d, %d bytes, info = %d %d %08x\n"
+			, header->numCameras, sb_count(header->bgCamList), blobSizeBytes
+			, try->setting, try->count, try->dataAddr
+		);
+	}
+	
+	// update camera count, in case any were removed
+	header->numCameras = sb_count(header->bgCamList);
 }
 
 static RoomShapeImage RoomShapeImageFromBytes(const void *data)

@@ -28,6 +28,9 @@ struct CutsceneOot;
 // where tmp files live
 #define WHERE_TMP "tmp/"
 
+#define CAM_SET_MAX_OOT 0x42
+#define CAM_SET_MAX_MM 0x5B
+
 #if 1 /* region: macros */
 #define UNFOLD_RGB(v)   (v).r, (v).g, (v).b
 #define UNFOLD_RGBA(v)  (v).r, (v).g, (v).b, (v).a
@@ -227,7 +230,7 @@ typedef struct {
 
 typedef struct {
 	uint16_t setting; // camera setting described by CameraSettingType enum
-	int16_t count; // only used when `bgCamFuncData` is a list of points used for crawlspaces
+	uint16_t count; // only used when `bgCamFuncData` is a list of points used for crawlspaces
 	BgCamFuncData *data; // if crawlspace, is array of Vec3s
 	uint32_t dataAddr;
 	const void *dataAddrResolved;
@@ -551,7 +554,8 @@ struct Scene *WindowLoadSceneExt(const char *fn, struct File *romFile, uint32_t 
 void WindowSaveScene(void);
 void WindowSaveSceneAs(void);
 
-CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr);
+CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr, uint32_t fileSize);
+void CollisionHeaderFreeCamera(BgCamInfo cam);
 void CollisionHeaderFree(CollisionHeader *header);
 
 void *ParseSegmentAddress(uint32_t segAddr);
