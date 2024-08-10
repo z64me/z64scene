@@ -17,12 +17,13 @@ static uint32_t gWorkblobAddrEnd = 0;
 static uint32_t gWorkblobSegment = 0;
 static uint8_t *gWorkblobData = 0;
 static bool gWorkblobAllowDuplicates = false;
+static bool gWorkblobIsDryRun = false;
 static uint32_t gWorkblobExactlyThisSize = 0;
 static uint32_t gWorkblobExactlyThisSizeStartSize = 0;
 static uint32_t gWorkFindAlignment = 0;
 #define WORKBUF_SIZE (1024 * 1024 * 4) // 4mib is generous
 #define WORKBLOB_STACK_SIZE 32
-#define FIRST_HEADER_SIZE 0x100 // sizeBytes of first header in file
+static uint32_t FIRST_HEADER_SIZE = 0; // sizeBytes of first header in file
 #define FIRST_HEADER &(struct DataBlob){ .sizeBytes = FIRST_HEADER_SIZE }
 static struct DataBlob gWorkblobStack[WORKBLOB_STACK_SIZE];
 void CollisionHeaderToWorkblob(CollisionHeader *header);
@@ -31,6 +32,12 @@ static struct DataBlob *gBlobsWritten = 0;
 static struct DataBlob *gUniqueBlobStack = 0;
 static struct DataBlob *gUniqueBlob = 0;
 static int gMostUniqueBlobs = 0;
+#define ALLOCATE_FIRST_HEADER_BLOCK(X, FUNC) \
+	WorkblobSetDryRun(true); \
+	FUNC(X, &X->headers[0], sb_count(X->headers) > 1, sb_count(X->headers) > 1); \
+	FIRST_HEADER_SIZE = gWorkblobAddrEnd - gWorkblobAddr; \
+	WorkblobSetDryRun(false); \
+	WorkAppendDatablob(FIRST_HEADER);
 
 // invoke once on program exit for cleanup
 void SceneWriterCleanup(void)
@@ -226,6 +233,9 @@ static uint32_t WorkAppendDatablob(struct DataBlob *blob)
 	uint8_t *dest = ((uint8_t*)gWork->data) + gWork->size;
 	uint32_t addr;
 	
+	if (gWorkblobIsDryRun)
+		return 0;
+	
 	if (!blob->sizeBytes)
 		return 0;
 	
@@ -363,6 +373,11 @@ static void WorkblobAllowDuplicates(bool allow)
 	gWorkblobAllowDuplicates = allow;
 }
 
+static void WorkblobSetDryRun(bool isDryRun)
+{
+	gWorkblobIsDryRun = isDryRun;
+}
+
 static void WorkblobThisExactlyBegin(uint32_t wantThisSize)
 {
 	gWorkblobExactlyThisSize = wantThisSize;
@@ -403,15 +418,17 @@ static void WorkAppendRoomShapeImage(RoomShapeImage image)
 	WorkblobPut16(image.tlutCount);
 }
 
-static uint32_t WorkAppendRoomHeader(struct RoomHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
+static uint32_t WorkAppendRoomHeader(struct Room *room, struct RoomHeader *header, uint32_t alternateHeaders, int alternateHeadersNum)
 {
+	(void)room;
+	
 	if (header->isBlank)
 		return 0;
 	
 	WorkblobSegment(0x03);
 	
 	// the header
-	WorkblobPush(16);
+	WorkblobPush(8);
 	
 	// alternate headers command
 	if (alternateHeaders)
@@ -587,7 +604,7 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 	WorkblobSegment(0x02);
 	
 	// the header
-	WorkblobPush(16);
+	WorkblobPush(8);
 	
 	// alternate headers command
 	if (alternateHeaders)
@@ -880,7 +897,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 	
 	// prepare fresh work buffer
 	WorkReady();
-	WorkAppendDatablob(FIRST_HEADER);
+	ALLOCATE_FIRST_HEADER_BLOCK(room, WorkAppendRoomHeader)
 	
 	// write output file
 	FileToFilename(gWork, filename);
@@ -910,7 +927,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 		sb_array(uint32_t, alternateHeaders) = 0;
 		sb_foreach(room->headers, {
 			if (eachIndex)
-				sb_push(alternateHeaders, WorkAppendRoomHeader(each, 0, 0));
+				sb_push(alternateHeaders, WorkAppendRoomHeader(room, each, 0, 0));
 		});
 		if (sb_count(alternateHeaders))
 		{
@@ -921,7 +938,7 @@ void RoomToFilename(struct Room *room, const char *filename)
 		}
 		
 		// main header
-		WorkAppendRoomHeader(&room->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
+		WorkAppendRoomHeader(room, &room->headers[0], alternateHeadersAddr, sb_count(alternateHeaders));
 		WorkFirstHeader();
 		sb_free(alternateHeaders);
 	}
@@ -975,7 +992,7 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	
 	// prepare fresh work buffer
 	WorkReady();
-	WorkAppendDatablob(FIRST_HEADER);
+	ALLOCATE_FIRST_HEADER_BLOCK(scene, WorkAppendSceneHeader)
 	
 	// clear udata
 	datablob_foreach(scene->blobs, { each->udata = 0; })

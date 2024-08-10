@@ -632,7 +632,6 @@ void TestSaveLoadCycle(struct Scene *scene, uint32_t identifier)
 	// load scene A and write as scene B
 	struct Scene *sceneB = SceneFromFilenamePredictRooms(tmpname);
 	SceneToFilename(sceneB, tmpname);
-	SceneFree(sceneB);
 	
 	// load scene B
 	struct File *b = FileFromFilename(tmpname);
@@ -651,19 +650,53 @@ void TestSaveLoadCycle(struct Scene *scene, uint32_t identifier)
 		strcat(wow, "_b");
 		FileToFilename(b, ExePath(wow));
 	}
-	
 	// report scenes that increased in size
 	else if (a->size > scene->file->size)
+	{
 		fprintf(logTo,
 			"scene %08x is %5.2f%% (0x%X bytes) larger\n",
 			identifier,
 			(((float)a->size / (float)scene->file->size) - 1.0) * 100,
 			(uint32_t)(a->size - scene->file->size)
 		);
+		
+		wroteLog = true;
+	}
+	// report scenes that decreased in size
+	else if (false && a->size < scene->file->size)
+	{
+		fprintf(logTo,
+			"scene %08x is %5.2f%% (0x%X bytes) smaller\n",
+			identifier,
+			(((float)scene->file->size / (float)a->size) - 1.0) * 100,
+			(uint32_t)(scene->file->size - a->size)
+		);
+		
+		wroteLog = true;
+	}
+	
+	sb_foreach(scene->rooms, {
+		struct File *old = each->file;
+		struct File *new = sceneB->rooms[eachIndex].file;
+		
+		if (new->size > old->size)
+		{
+			fprintf(logTo,
+				"scene %08x room %d is %5.2f%% (0x%X bytes) larger\n",
+				identifier,
+				eachIndex,
+				(((float)new->size / (float)old->size) - 1.0) * 100,
+				(uint32_t)(new->size - old->size)
+			);
+			
+			wroteLog = true;
+		}
+	})
 	
 	// cleanup
 	FileFree(a);
 	FileFree(b);
+	SceneFree(sceneB);
 }
 
 void TestSaveLoadCycles(const char *filename)
