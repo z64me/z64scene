@@ -1339,7 +1339,6 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr, uint32_t fileSi
 			*/
 			
 			// sanity check for possible cameras not referenced by collision surface types
-			if (i >= result->numCameras)
 			{
 				if (cam.setting >= MAX(CAM_SET_MAX_OOT, CAM_SET_MAX_MM)
 					|| (cam.dataAddr && !cam.count) // count is always non-zero if address is given
@@ -1350,9 +1349,14 @@ CollisionHeader *CollisionHeaderNewFromSegment(uint32_t segAddr, uint32_t fileSi
 					|| (cam.dataAddr && (cam.dataAddr >> 24) != (segAddr >> 24)) // should ref input segment
 					|| ((cam.dataAddr & 0x00ffffff) + cam.count * 6) > fileSize // data runs past eof
 				)
+				{
+					if (i < result->numCameras)
+						LogDebug("camera list ended earlier than expected");
 					break;
+				}
 				
-				LogDebug("adding unreferenced camera %04x %04x %08x", cam.setting, cam.count, cam.dataAddr);
+				if (i >= result->numCameras)
+					LogDebug("adding unreferenced camera %04x %04x %08x", cam.setting, cam.count, cam.dataAddr);
 			}
 			
 			elem = ParseSegmentAddress(cam.dataAddr); // bgCamFuncData

@@ -1118,6 +1118,18 @@ void CollisionHeaderToWorkblob(CollisionHeader *header)
 	WorkblobPush(4);
 	for (int i = 0; i < header->numSurfaceTypes; ++i) {
 		SurfaceType type = header->surfaceTypeList[i];
+		// don't allow references to nonexistent cameras
+		{
+			int cameraIndex = type.w0 & 0xff;
+			if (cameraIndex >= header->numCameras) {
+				type.w0 &= 0xffffff00;
+				LogDebug(
+					"trimming reference to camera %d in list containing cameras[0..%d]"
+					, cameraIndex
+					, header->numCameras - 1
+				);
+			}
+		}
 		WorkblobPut32(type.w0);
 		WorkblobPut32(type.w1);
 	} WorkblobPut32(WorkblobPop());
