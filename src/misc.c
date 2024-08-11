@@ -699,6 +699,33 @@ void SceneReadyDataBlobs(struct Scene *scene)
 		// print
 		//sb_foreach(array, { LogDebug("%p", (*each)->refData); });
 		
+		// raise all vertex data blocks to beginning of list, arranged by address
+		// (this accounts for coalesced (overlapping) vertex data blocks)
+		sb_foreach_backwards(array, {
+			struct DataBlob *blob = *each;
+			
+			if (blob->type == DATA_BLOB_TYPE_VERTEX)
+			{
+				switch (blob->originalSegmentAddress >> 24)
+				{
+					case 0x02:
+						DataBlobListTouchBlob(&scene->blobs, blob);
+						break;
+					
+					case 0x03:
+						sb_foreach_named(scene->rooms, room, {
+							if (blob->refData >= room->file->data
+								&& blob->refData < room->file->dataEnd
+							) {
+								DataBlobListTouchBlob(&room->blobs, blob);
+								break;
+							}
+						})
+						break;
+				}
+			}
+		})
+		
 		// trim
 		for (int i = 0; i < sb_count(array) - 1; ++i)
 		{
@@ -741,20 +768,21 @@ void SceneReadyDataBlobs(struct Scene *scene)
 				continue;
 			}
 			
-			// don't trim overlapping vertex data (extremely uncommon)
-			// (this was encountered in one scene where
-			// trimming resulted in geometry corruption)
-			if (a->type == DATA_BLOB_TYPE_VERTEX
-				&& b->type == DATA_BLOB_TYPE_VERTEX
-			)
-				continue;
-			
 			if (((uint8_t*)a->refData) + a->sizeBytes > ((uint8_t*)b->refData))
 			{
+				uint32_t oldSize = a->sizeBytes;
+				uint32_t newSize =
 				a->sizeBytes =
 					((uintptr_t)(b->refData))
 					- ((uintptr_t)(a->refData))
 				;
+				
+				// overlapping vertex data
+				if (a->type == DATA_BLOB_TYPE_VERTEX
+					&& b->type == DATA_BLOB_TYPE_VERTEX
+				)
+					// just in case 'b' is completely encapsulated by 'a'
+					b->sizeBytes = MAX(b->sizeBytes, oldSize - newSize);
 				
 				LogDebug("trimmed blob %08x size to %08x"
 					, a->originalSegmentAddress, a->sizeBytes

@@ -127,6 +127,7 @@ void DataBlobSegmentsPopulateFromRoomMesh(
 	, const void *seg2
 	, const void *seg3
 );
+void DataBlobListTouchBlob(struct DataBlob **listHead, struct DataBlob *blob);
 void DataBlobRemoveRef(struct DataBlob *blob, void *ref);
 void DatablobFree(struct DataBlob *blob);
 void DatablobFreeList(struct DataBlob *listHead);

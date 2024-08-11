@@ -212,6 +212,34 @@ struct DataBlob *DataBlobFindBySegAddr(struct DataBlob *listHead, uint32_t segAd
 	return 0;
 }
 
+// promote blob to beginning of list
+void DataBlobListTouchBlob(struct DataBlob **listHead, struct DataBlob *blob)
+{
+	struct DataBlob *prev = *listHead;
+	
+	// already at beginning of list
+	if (blob == *listHead)
+		return;
+	
+	// find in list
+	for (struct DataBlob *each = *listHead; each; each = each->next)
+	{
+		// move to beginning of list
+		if (each == blob)
+		{
+			if (prev)
+				prev->next = each->next;
+			
+			each->next = *listHead;
+			*listHead = each;
+			
+			return;
+		}
+		
+		prev = each;
+	}
+}
+
 void DataBlobSegmentClearAll(void)
 {
 	memset(gSegments, 0, sizeof(gSegments));
