@@ -2658,6 +2658,7 @@ void WindowMainLoop(const char *sceneFn)
 			&& (gInput.mouse.vel.x
 				|| gInput.mouse.vel.y
 				|| gInput.key.lctrl != gInput.keyOld.lctrl
+				|| gInput.key.lshift != gInput.keyOld.lshift
 			))
 			|| gInput.mouse.clicked.right
 			|| gState.deferredInstancePaste
@@ -2672,6 +2673,72 @@ void WindowMainLoop(const char *sceneFn)
 		}
 		
 		n64_buffer_flush(true);
+		
+		// hold ctrl-shift to snap to vertices and midpoints
+		if (gGui->selectedInstance
+			&& gInput.key.lshift
+			&& gInput.key.lctrl
+			&& GizmoHasFocus(gizmo)
+		)
+		{
+			Triangle tri = worldRayData.snapAngleTri;
+			Vec3f a = { UNFOLD_VEC3(tri.v[0]) };
+			Vec3f b = { UNFOLD_VEC3(tri.v[1]) };
+			Vec3f c = { UNFOLD_VEC3(tri.v[2]) };
+			Vec3f points[] = {
+				// corners
+				a,
+				b,
+				c,
+				// midpoints
+				Vec3f_Median(a, b),
+				Vec3f_Median(b, c),
+				Vec3f_Median(c, a),
+			};
+			
+			// determine nearest point
+			Vec2f cursor2D = { UNFOLD_VEC2(gState.input->mouse.pos) };
+			uint32_t nearest = UINT32_MAX;
+			const int detectionRadius = 16;
+			int nearestIndex = -1;
+			for (int i = 0; i < N64_ARRAY_COUNT(points); ++i)
+			{
+				Vec2f point2D = WindowGetLocalScreenPos(points[i]);
+				uint32_t distance = Vec2f_DistXZ(point2D, cursor2D);
+				
+				if (distance < detectionRadius && distance < nearest)
+				{
+					nearest = distance;
+					nearestIndex = i;
+				}
+			}
+			
+			// triangle edges
+			/*
+			uint32_t wireColor = 0xffffff40;
+			Vec2f aO = WindowGetLocalScreenPos(a);
+			Vec2f bO = WindowGetLocalScreenPos(b);
+			Vec2f cO = WindowGetLocalScreenPos(c);
+			GuiPushLine(UNFOLD_VEC2(aO), UNFOLD_VEC2(bO), wireColor, 2.0f);
+			GuiPushLine(UNFOLD_VEC2(bO), UNFOLD_VEC2(cO), wireColor, 2.0f);
+			GuiPushLine(UNFOLD_VEC2(cO), UNFOLD_VEC2(aO), wireColor, 2.0f);
+			*/
+			
+			// points
+			for (int i = 0; i < N64_ARRAY_COUNT(points); ++i)
+			{
+				Vec3f point = points[i];
+				Vec2f point2D = WindowGetLocalScreenPos(point);
+				uint32_t innerColor = 0xffffffff;
+				if (i == nearestIndex)
+				{
+					innerColor = 0x00ff00ff;
+					worldRayData.pos = point;
+				}
+				GuiPushPointX(point2D.x, point2D.y, 0x00000080, 6, 6); // outline
+				GuiPushPointX(point2D.x, point2D.y, innerColor, 2, 5);
+			}
+		}
 		
 		// snap rotation
 		if (worldRayData.useSnapAngle

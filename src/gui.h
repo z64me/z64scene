@@ -92,6 +92,7 @@ CPP_FUNC_PREFIX int GuiHasFocus(void);
 CPP_FUNC_PREFIX int GuiHasFocusMouse(void);
 CPP_FUNC_PREFIX int GuiHasFocusKeyboard(void);
 CPP_FUNC_PREFIX void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, float thickness);
+CPP_FUNC_PREFIX void GuiPushPointX(int x, int y, uint32_t color, float thickness, int radius);
 CPP_FUNC_PREFIX void GuiPushModal(const char *message);
 CPP_FUNC_PREFIX struct ActorRenderCode *GuiGetActorRenderCode(uint16_t id);
 CPP_FUNC_PREFIX void GuiCreateActorRenderCodeHandles(uint16_t id);

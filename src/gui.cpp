@@ -2945,6 +2945,18 @@ extern "C" void GuiPushLine(int x1, int y1, int x2, int y2, uint32_t color, floa
 	gGuiSettings.PushLine(x1, y1, x2, y2, newcolor, thickness);
 }
 
+extern "C" void GuiPushPointX(int x, int y, uint32_t color, float thickness, int radius)
+{
+	// byteswap
+	uint32_t newcolor = 0;
+	newcolor |= ((color >> 0) & 0xff) << 24;
+	newcolor |= ((color >> 8) & 0xff) << 16;
+	newcolor |= ((color >> 16) & 0xff) << 8;
+	newcolor |= ((color >> 24) & 0xff) << 0;
+	gGuiSettings.PushLine(x - radius, y - radius, x + radius, y + radius, newcolor, thickness);
+	gGuiSettings.PushLine(x + radius, y - radius, x - radius, y + radius, newcolor, thickness);
+}
+
 extern "C" void GuiPushModal(const char *message)
 {
 	gGuiSettings.PushModal(message);
