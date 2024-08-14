@@ -233,6 +233,43 @@
 	Category = "11"
 	Notes = "+0x0FE0 = Contents\n-0000 Invalid\n-0020 Bombs (5)\n-0040 Deku Nuts\n-0060 Bombchu (10)\n-0080 Fairy Bow\n-00A0 Fairy Slingshot //Triggers chest opening cutscene\n-00C0 Boomerang\n-00E0 Deku Stick (1)\n-0100 Hookshot\n-0120 Longshot //Triggers chest opening cutscene\n-0140 Lens of Truth\n-0160 Zelda’s Letter //Triggers chest opening cutscene\n-0180 Ocarina of Time //Triggers chest opening cutscene\n-01A0 Megaton Hammer\n-01C0 Cojiro //Triggers chest opening cutscene\n-01E0 Empty Bottle //Triggers chest opening cutscene\n-0200 Red Potion //Triggers chest opening cutscene\n-0220 Green Potion //Triggers chest opening cutscene\n-0240 Blue Potion //Triggers chest opening cutscene\n-0260 Bottled Fairy //Triggers chest opening cutscene\n-0280 Lon Lon Milk\n-02A0 Ruto's Letter\n-02C0 Magic Bean\n-02E0 Skull Mask //Triggers chest opening cutscene\n-0300 Spooky Mask //Triggers chest opening cutscene\n-0320 Chicken //Triggers chest opening cutscene. Uses Magic Bean message ID\n-0340 Keaton Mask //Triggers chest opening cutscene\n-0360 Bunny Hood //Triggers chest opening cutscene\n-0380 Mask of Truth //Triggers chest opening cutscene\n-03A0 Pocket Egg //Triggers chest opening cutscene\n-03C0 Pocket Cucco //Triggers chest opening cutscene, uses Magic Bean message ID\n-03E0 Odd Mushroom //Triggers chest opening cutscene\n-0400 Odd Potion //Triggers chest opening cutscene\n-0420 Poacher’s Saw //Triggers chest opening cutscene\n-0440 Broken Goron’s Sword //Triggers chest opening cutscene\n-0460 Prescription //Triggers chest opening cutscene\n-0480 Eyeball Frog //Triggers chest opening cutscene\n-04A0 World’s Finest Eye Drops //Triggers chest opening cutscene\n-04C0 Claim Check //Triggers chest opening cutscene\n-04E0 Kokiri’s Sword\n-0500 Giant’s Knife //Triggers chest opening cutscene\n-0520 Deku Shield or blue (5) rupee\n-0540 Hylian Shield or blue (5) rupee\n-0560 Mirror Shield\n-0580 Goron Tunic or blue (5) rupee\n-05A0 Zora Tunic or blue (5) rupee\n-05C0 Iron Boots\n-05E0 Hover Boots\n-0600 Big Quiver //Triggers chest opening cutscene\n-0620 Biggest Quiver //Triggers chest opening cutscene\n-0640 Bomb Bag\n-0660 Big Bomb Bag //Triggers chest opening cutscene\n-0680 Biggest Bomb Bag //Triggers chest opening cutscene\n-06A0 Silver Gauntlets //Triggers chest opening cutscene\n-06C0 Golden Gauntlets //Triggers chest opening cutscene\n-06E0 Silver Scale //Triggers chest opening cutscene\n-0700 Golden Scale //Triggers chest opening cutscene\n-0720 Stone of Agony //Triggers chest opening cutscene\n-0740 Gerudo Membership Card //Triggers chest opening cutscene\n-0760 Fairy Ocarina //Triggers chest opening cutscene. Uses Ocarina of Time message ID\n-0780 Blue (5) rupee\n-07A0 Heart Container //Triggers chest opening cutscene\n-07C0 Piece of Heart //Triggers chest opening cutscene\n-07E0 Boss Key //Triggers chest opening cutscene\n-0800 Compass //Triggers chest opening cutscene\n-0820 Map //Triggers chest opening cutscene\n-0840 Small Key\n-0860 Small Magic Container or Blue (5) Rupee //Untested\n-0880 Large Magic Container or Blue (5) Rupee //Untested\n-08A0 Adult Wallet //Triggers chest opening cutscene\n-08C0 Giant Wallet //Triggers chest opening cutscene\n-08E0 Weird Egg //Triggers chest opening cutscene\n-0900 Recovery Heart\n-0920 Arrows (5)\n-0940 Arrows (10)\n-0960 Arrows (30)\n-0980 Green (1) Rupee\n-09A0 Blue (5) Rupee\n-09C0 Red (20) Rupee\n-09E0 Heart Container //Triggers chest opening cutscene\n-0A00 Lon Lon Milk //Triggers chest opening cutscene\n-0A20 Goron Mask //Triggers chest opening cutscene\n-0A40 Zora Mask //Triggers chest opening cutscene\n-0A60 Gerudo Mask //Triggers chest opening cutscene\n-0A80 Goron Bracelet //Triggers chest opening cutscene\n-0AA0 Purple (50) Rupee\n-0AC0 Huge/Yellow (200) Rupee\n-0AE0 Giant's Knife or Biggoron’s Sword //Triggers chest opening cutscene, Biggoron's Sword is only given when the relevant flags are set\n-0B00 Fire Arrow\n-0B20 Ice Arrow\n-0B40 Light Arrow\n-0B60 Gold Skulltula Token\n-0B80 Din’s Fire\n-0BA0 Farore’s Wind\n-0BC0 Nayru’s Love\n-0BE0 Deku Seeds Bullet Bag (40)\n-0C00 Deku Seeds Bullet Bag (40) //Triggers chest opening cutscene\n-0C20 Deku Stick\n-0C40 Deku Stick\n-0C60 Deku Nuts\n-0C80 Deku Nuts\n-0CA0 Bombs (1)\n-0CC0 Bombs (10)\n-0CE0 Bombs (20)\n-0D00 Bombs (30)\n-0D20 Deku Seeds (30) or blue (5) rupee\n-0D40 Bombchu (5)\n-0D60 Bombchu (20)\n-0D80 Bottled Fish //Triggers chest opening cutscene\n-0DA0 Bottled Bug //Triggers chest opening cutscene\n-0DC0 Blue Fire //Triggers chest opening cutscene\n-0DE0 Bottled Poe //Triggers chest opening cutscene\n-0E00 Bottled Big Poe //Triggers chest opening cutscene\n-0E20 Door Key (Treasure Box Shop)\n-0E40 Loser Green Rupee (Treasure Box Shop)\n-0E60 Loser Blue Rupee (Treasure Box Shop)\n-0E80 Loser Red Rupee (Treasure Box Shop)\n-0EA0 Winner Purple Rupee (Treasure Box Shop)\n-0EC0 Winner Piece of Heart (Treasure Box Shop) //Triggers chest opening cutscene\n-0EE0 Deku Stick Upgrade (20)\n-0F00 Deku Stick Upgrade (30)\n-0F20 Deku Nut Upgrade (30)\n-0F40 Deku Nut Upgrade (40)\n-0F60 Deku Seeds Bullet Bag (50) //Triggers chest opening cutscene\n-0F80 Ice Trap //Freezes Link when opened\n-0FA0 Pocket Egg (Invalid) //No model appears over Link\n-0FC0 Invalid //Game crashes when opened\n-0FE0 Invalid //Game crashes when opened\n+0x1F = Chest Flag //If multiple chests share the same chest flag in a room, opening one will open the others with the same flag.\nZ ROTATION 0x3F = Switch Flag to spawn chest."
 	Objects = [14]
+	RenderCode = """
+		if (Inst.PropertyChanged)
+		{
+			//#!enum EnBoxType {
+			// only values 1-11 are used explicitly, other values (such as 0) default to another separate behavior
+				var TYPE_BIG_DEFAULT = 0
+				var TYPE_ROOM_CLEAR_BIG = 1        // appear on room clear, store temp clear as permanent clear
+				var TYPE_DECORATED_BIG = 2         // boss key chest, different look, same as TYPE_BIG_DEFAULT otherwise
+				var TYPE_SWITCH_FLAG_FALL_BIG = 3  // falling, appear on switch flag set
+				var TYPE_4 = 4                     // big, drawn differently
+				var TYPE_SMALL = 5                 // same as TYPE_BIG_DEFAULT but small
+				var TYPE_6 = 6                     // small, drawn differently
+				var TYPE_ROOM_CLEAR_SMALL = 7      // use room clear, store temp clear as perm clear
+				var TYPE_SWITCH_FLAG_FALL_SMALL=8  // falling, appear on switch flag set
+				var TYPE_9 = 9                     // big, has something more to do with player and message context?
+				var TYPE_10 = 10                   // like 9
+				var TYPE_SWITCH_FLAG_BIG = 11      // big, appear on switch flag set
+			//#!end }
+			var which = [
+				[ 0x060006f0, 0x060010c0 ], // FrontDL, SideAndLidDL
+				[ 0x06000ae8, 0x06001678 ], // BossKeyFrontDL, BossKeySideAndLidDL
+			][Props.Type == TYPE_DECORATED_BIG ? 1 : 0]
+			Inst.ClearLimbOverrides()
+			Inst.PushLimbOverride(1, which[0])
+			Inst.PushLimbOverride(3, which[1])
+			Udata.Mesh = which[0]
+			Udata.Scale = [
+				TYPE_SMALL,
+				TYPE_6,
+				TYPE_ROOM_CLEAR_SMALL,
+				TYPE_SWITCH_FLAG_FALL_SMALL,
+			].contains(Props.Type) ? 0.005 : 0.01
+		}
+		Draw.SetScale(Udata.Scale)
+		Draw.Mesh(Udata.Mesh)
+		Draw.Skeleton(0, 0, -0) // freeze on last frame (so it appears in 'opened' state)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -247,7 +284,7 @@
 		Target = "Var"
 	[[Actor.Property]]
 		Mask = 61440
-		Name = "Presets"
+		Name = "Type"
 		Target = "Var"
 		Dropdown = [
 			[0,"Large"],
