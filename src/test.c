@@ -699,7 +699,27 @@ void TestSaveLoadCycle(struct Scene *scene, uint32_t identifier)
 	SceneFree(sceneB);
 }
 
-void TestSaveLoadCycles(const char *filename)
+void TestForEachActorInScene(struct Scene *scene, uint32_t identifier)
+{
+	if (!scene)
+		return;
+	
+	sb_foreach_named(scene->rooms, room, {
+		sb_foreach_named(room->headers, header, {
+			sb_foreach_named(header->instances, inst, {
+				// example filter
+				if ((inst->id == 0x000A || inst->id == 0x0202)
+					&& ((inst->params >> 5) & 0x7F) == 0x2F
+				)
+					fprintf(stdout, "scene %08x, room %d, header %d, instance %d : %04x %04x\n",
+						identifier, roomIndex, headerIndex, instIndex, inst->id, inst->params
+					);
+			})
+		})
+	})
+}
+
+void TestEveryScene(const char *filename, void func(struct Scene *scene, uint32_t identifier))
 {
 	const char *extension = strrchr(filename, '.');
 	
@@ -727,7 +747,7 @@ void TestSaveLoadCycles(const char *filename)
 			if (!scene)
 				Die("failed to load scene");
 			
-			TestSaveLoadCycle(scene, each->startAddress);
+			func(scene, each->startAddress);
 			SceneFree(scene);
 		})
 		
@@ -736,12 +756,22 @@ void TestSaveLoadCycles(const char *filename)
 	else if (!strcmp(extension, "zscene"))
 	{
 		struct Scene *scene = SceneFromFilenamePredictRooms(filename);
-		TestSaveLoadCycle(scene, 0);
+		func(scene, 0);
 		SceneFree(scene);
 	}
 	
 	// display test results
-	TestSaveLoadCycle(0, 0);
+	func(0, 0);
+}
+
+void TestSaveLoadCycles(const char *filename)
+{
+	TestEveryScene(filename, TestSaveLoadCycle);
+}
+
+void TestForEachActor(const char *filename)
+{
+	TestEveryScene(filename, TestForEachActorInScene);
 }
 
 void Testz64convertScene(char **scenePath)
