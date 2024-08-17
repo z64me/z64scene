@@ -17,6 +17,7 @@ struct File
 	char *shortname;
 	size_t size;
 	bool ownsData;
+	bool ownsHandle; // if true, FileFree(file) will free(file)
 };
 
 bool FileExists(const char *filename);

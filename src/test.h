@@ -14,3 +14,4 @@ void TestSaveLoadCycles(const char *filename);
 void TestForEachActor(const char *filename);
 void TestSwapFunction(void);
 void TestSceneMigrate(const char *dstPath, const char *srcPath, const char *outPath);
+void TestFast64toScene(const char *scenePath);

@@ -975,7 +975,8 @@ void FileFree(struct File *file)
 	if (file->shortname)
 		free(file->shortname);
 	
-	free(file);
+	if (file->ownsHandle)
+		free(file);
 }
 
 void RoomHeaderFree(struct RoomHeader *header)

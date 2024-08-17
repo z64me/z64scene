@@ -12,6 +12,7 @@
 
 #include "logging.h"
 #include "project.h"
+#include "fast64.h"
 #include "misc.h"
 
 // for reporting the correct line number in wren callbacks
@@ -847,4 +848,10 @@ void TestSceneMigrate(const char *dstPath, const char *srcPath, const char *outP
 	
 	SceneFree(dst);
 	SceneFree(src);
+}
+
+void TestFast64toScene(const char *scenePath)
+{
+	const char *error = Fast64_Compile(scenePath);
+	if (error) Die("error: %s", error);
 }

@@ -53,6 +53,7 @@ struct File *FileNew(const char *filename, size_t size)
 	result->data = Calloc(1, size);
 	result->dataEnd = ((uint8_t*)result->data) + result->size;
 	result->ownsData = true;
+	result->ownsHandle = true;
 	
 	return result;
 }
@@ -82,6 +83,7 @@ struct File *FileFromFilename(const char *filename)
 		, result->filename
 	));
 	result->ownsData = true;
+	result->ownsHandle = true;
 	
 	return result;
 }
@@ -94,6 +96,7 @@ struct File *FileFromData(void *data, size_t size, bool ownsData)
 	result->dataEnd = ((uint8_t*)data) + size;
 	result->size = size;
 	result->ownsData = ownsData;
+	result->ownsHandle = true;
 	
 	return result;
 }

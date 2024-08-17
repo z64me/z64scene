@@ -45,6 +45,12 @@ int main(int argc, char *argv[])
 			if (objectPath)
 				LogDebug("probably worked, obj at '%s'", objectPath);
 		}
+		else if (!strcmp(which, "TestFast64toScene"))
+		{
+			if (!(which = argv[2])) Die("TestFast64toScene: not enough args");
+			TestFast64toScene(which);
+			return 0; // exit immediately after test
+		}
 		else if (!strcmp(which, "TestSaveLoadCycles"))
 		{
 			if (!(which = argv[2])) Die("TestSaveLoadCycles: not enough args");
