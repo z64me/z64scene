@@ -2639,7 +2639,7 @@ static void DrawMenuBar(void)
 				{
 					WindowNewSceneFromObjex(0, 0, true);
 				}
-				if (ImGui::MenuItem("Scene from Fast64"))
+				if (gIni.path.mips64[0] && ImGui::MenuItem("Scene from Fast64"))
 				{
 					WindowNewSceneFromFast64(0, 0, true);
 				}
@@ -2714,7 +2714,7 @@ static void DrawMenuBar(void)
 				if (fn && (newScene = SceneFromFilenamePredictRooms(fn)))
 					TryMigrateVisualAndCollisionDataFrom(newScene);
 			}
-			if (gScene && ImGui::MenuItem("Replace Visuals & Collision w/ Fast64"))
+			if (gScene && gIni.path.mips64[0] && ImGui::MenuItem("Replace Visuals & Collision w/ Fast64"))
 			{
 				struct Scene *newScene = 0;
 				
