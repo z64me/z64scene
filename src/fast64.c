@@ -426,9 +426,11 @@ static const char *Fast64_CompileSource(const char *syms, const char *root, cons
 		" -fno-zero-initialized-in-bss"
 		" -fno-toplevel-reorder"
 		" -I\"%s/include\""
+		" -I\"%s/assets\""
+		" -I\"%s/src\""
 		" -I\"%s/.\""
 		" 2> \"%s\"",
-		MIPS64_BINUTILS_PATH, WHERE_TMP_O, source, root, root, WHERE_COMPILER_LOG
+		MIPS64_BINUTILS_PATH, WHERE_TMP_O, source, root, root, root, root, WHERE_COMPILER_LOG
 	);
 	if (system(command))
 		return ErrorCompilerLog(source);
