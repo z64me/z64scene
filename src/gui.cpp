@@ -2581,6 +2581,10 @@ static void DrawMenuBar(void)
 				{
 					WindowNewSceneFromObjex(0, 0, true);
 				}
+				if (ImGui::MenuItem("Scene from Fast64"))
+				{
+					WindowNewSceneFromFast64(0, 0, true);
+				}
 				ImGui::EndMenu();
 			}
 			if (ImGui::MenuItem("Open", "Ctrl+O"))
@@ -2650,6 +2654,15 @@ static void DrawMenuBar(void)
 				fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "zscene\0*.zscene\0", NULL, NULL);
 				
 				if (fn && (newScene = SceneFromFilenamePredictRooms(fn)))
+					TryMigrateVisualAndCollisionDataFrom(newScene);
+			}
+			if (gScene && ImGui::MenuItem("Replace Visuals & Collision w/ Fast64"))
+			{
+				struct Scene *newScene = 0;
+				
+				if (WindowNewSceneFromFast64(0, &newScene, true) == 0
+					&& newScene
+				)
 					TryMigrateVisualAndCollisionDataFrom(newScene);
 			}
 			ImGui::EndMenu();

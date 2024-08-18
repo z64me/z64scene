@@ -22,6 +22,7 @@
 #include "skelanime.h"
 #include "rendercode.h"
 #include "z64convert.h"
+#include "fast64.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -1037,6 +1038,32 @@ const char *WindowNewSceneFromObjex(const char *fn, struct Scene **dst, bool sho
 	}
 	
 	const char *resultPath = ExePath(WHERE_TMP"custom_scene.zscene");
+	if (dst)
+		*dst = SceneFromFilenamePredictRooms(resultPath);
+	else
+		WindowLoadScene(resultPath);
+	
+	return 0;
+}
+
+const char *WindowNewSceneFromFast64(const char *fn, struct Scene **dst, bool showError)
+{
+	if (!fn)
+	{
+		fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "Fast64 source files\0*.c\0", NULL, NULL);
+		
+		if (!fn)
+			return 0;
+	}
+	
+	const char *errstr = Fast64_Compile(fn);
+	if (errstr)
+	{
+		GuiErrorPopup(errstr);
+		return errstr;
+	}
+	
+	const char *resultPath = ExePath(WHERE_TMP "test_scene.zscene");
 	if (dst)
 		*dst = SceneFromFilenamePredictRooms(resultPath);
 	else

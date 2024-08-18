@@ -84,6 +84,7 @@ bool WindowTryInstanceCut(bool showModal);
 bool WindowTryInstancePaste(bool showModal, bool deferWithRaycast);
 bool WindowTryInstanceCopy(bool showModal);
 const char *WindowNewSceneFromObjex(const char *fn, struct Scene **dst, bool showError);
+const char *WindowNewSceneFromFast64(const char *fn, struct Scene **dst, bool showError);
 
 struct Object *WindowLoadObject(const char *fn);
 struct Object *WindowLoadAnimation(const char *fn);
