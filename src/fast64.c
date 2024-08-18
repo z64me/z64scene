@@ -19,7 +19,7 @@
 #include <n64texconv.h>
 #include <stb_image.h>
 
-#define MIPS64_BINUTILS_PATH "" // TODO expose to user in gui
+static char *MIPS64_BINUTILS_PATH = 0;
 
 #ifdef _WIN32
 	#define EXE_SUFFIX ".exe"
@@ -552,6 +552,18 @@ const char *Fast64_Compile(const char *path)
 	char *root = strdup(path);
 	char *tmp = MAX(strrchr(folder, '/'), strrchr(folder, '\\'));
 	const char *error = 0;
+	
+	// path
+	if (!MIPS64_BINUTILS_PATH)
+		MIPS64_BINUTILS_PATH = malloc(4096);
+	strcpy(MIPS64_BINUTILS_PATH, gIni.path.mips64);
+	for (char *w = MIPS64_BINUTILS_PATH; *w; ++w)
+		if (*w == '\\')
+			*w = '/';
+	if (!strchr(MIPS64_BINUTILS_PATH, '/'))
+		strcpy(MIPS64_BINUTILS_PATH, "");
+	else
+		strrchr(MIPS64_BINUTILS_PATH, '/')[1] = '\0';
 	
 	if (!tmp)
 		return Error("failed to determine directory of '%s'", path);
