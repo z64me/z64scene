@@ -14,17 +14,147 @@
 #include "logging.h"
 #include "fast64.h"
 #include "file.h"
+#include "misc.h"
 
 #include <n64texconv.h>
 #include <stb_image.h>
 
+#define MIPS64_BINUTILS_PATH "" // TODO expose to user in gui
+
+#ifdef _WIN32
+	#define EXE_SUFFIX ".exe"
+#else
+	#define EXE_SUFFIX ""
+#endif
+
+#undef MIN
+#undef MAX
+#undef MIN3
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
 #define MIN3(A, B, C) MIN(A, MIN(B, C))
 
+#define strcatf(X, ...) sprintf(X + strlen(X), __VA_ARGS__)
+
 #define ARRAY_COUNT(X) (sizeof(X) / sizeof(*(X)))
 #define N64TEXCONV_BPP_COUNT (N64TEXCONV_32 + 1)
+
+#define WHERE_COMPILER_LOG  ExePath(WHERE_TMP "compiler.log")
+#define WHERE_TMP_O         ExePath(WHERE_TMP "tmp.o")
+#define WHERE_TMP_LD        ExePath(WHERE_TMP "tmp.ld")
+#define WHERE_TMP_ELF       ExePath(WHERE_TMP "tmp.elf")
+
+#define STRTOK_LOOP(STRING, DELIM) \
+	for (char *next, *each = strtok(STRING, DELIM) \
+		; each && (next = strtok(0, DELIM)) \
+		; each = next \
+	)
+
+// z64ovl.ld
+#if 1
+static const char *z64ovlLd = R"(
+	/* Libaries here -- add your own if you need to */
+	SEARCH_DIR(/usr/mips/mips/lib)
+	SEARCH_DIR(/usr/mips/lib/gcc/mips/3.4.6/)
+	
+	/* This script is for MIPS */
+	OUTPUT_ARCH(mips)
+	OUTPUT_FORMAT("elf32-bigmips", "elf32-bigmips", "elf32-littlemips")
+	
+	/* Entrypoint is function `n64start` */
+	ENTRY(ENTRY_POINT)
+	
+	SECTIONS
+	{
+		/* Program run addressed defined in `entry.ld` */
+		. = ENTRY_POINT;
+		
+		/* Machine code */
+		.text ALIGN(4):
+		{
+			/* Pad with NULL */
+			FILL(0);
+			
+			/* Address to start of text section */
+			__text_start = . ;
+			
+			/* Data goes here */
+			*(.init);
+			*(.text);
+			*(.ctors);
+			*(.dtors);
+			*(.fini);
+			
+			/* Address to end of text section */
+			. = ALIGN(16);
+			__text_end = . ;
+		}
+		
+		/* Initialized data */
+		.data ALIGN(16):
+		{
+			/* Pad with NULL */
+			FILL(0);
+			
+			/* Address to start of data section */
+			__data_start = . ;
+			
+			/* Data goes here*/
+			*(.data);
+			*(.data.*);
+			
+			/* Data pointer */
+			. = ALIGN(8);
+			_gp = . ;
+			*(.sdata);
+			
+			/* Address to end of data section */
+			. = ALIGN(16);
+			__data_end = . ;
+		}
+		
+		/* Read-only data */
+		.rodata ALIGN(16):
+		{
+			/* Pad with NULL */
+			FILL(0);
+			
+			/* Address to start of rodata section */
+			__rodata_start = . ;
+			
+			/* Data goes here*/
+			*(.rodata);
+			*(.rodata.*);
+			*(.eh_frame);
+			
+			/* Address to end of rodata section */
+			. = ALIGN(16);
+			__rodata_end = . ;
+		}
+		
+		/* Memory initialized to zero */
+		.bss ALIGN(8):
+		{
+			/* Address to start of BSS section */
+			__bss_start = . ;
+			
+			/* BSS data */
+			*(.scommon);
+			*(.sbss);
+			*(.bss);
+			
+			/* Address to end of BSS section */
+			. = ALIGN(8);
+			__bss_end = . ;
+		}
+		
+		/* End of our memory use */
+		. = ALIGN(8);
+		end = . ;
+	}
+)";
+#endif
 
 // C sources for scene and each room within (no specific order)
 static sb_array(struct File, sCfiles) = 0;
@@ -45,6 +175,30 @@ static const char *Error(const char *fmt, ...)
 	va_end(args);
 	
 	return work;
+}
+
+static const char *ErrorCompilerLog(const char *source)
+{
+	const char *error;
+	struct File *tmp = FileFromFilename(WHERE_COMPILER_LOG);
+	if (tmp->size >= 1024 * 3) // TODO hardcoding, must be smaller than Error.workSize
+		((char*)tmp->data)[1024 * 3] = '\0';
+	error = Error("%s compilation error: %s", source, (char*)(tmp->data));
+	FileFree(tmp);
+	return error;
+}
+
+static bool IsSceneRoomSource(const char *path)
+{
+	if (strstr(path, ".inc") // skip .inc and .inc.c files
+		|| strlen(strrchr(path, '.')) != 2 // must end with '.c'
+		|| (!strstr(path, "_scene") // test_scene.c
+			&& !strstr(path, "_room_") // test_room_%d.c
+		)
+	)
+		return false;
+	
+	return true;
 }
 
 static const char *Fast64_CompileTexture(const char *imagePath)
@@ -252,17 +406,166 @@ static const char *Fast64_CompileTextures(sb_array(char *, imagePaths))
 	return 0;
 }
 
+static const char *Fast64_CompileSource(const char *syms, const char *root, const char *source, const char *out)
+{
+	const char *error = 0;
+	char command[4096];
+	
+	// generate linker script .ld
+	FILE *fp = fopen(WHERE_TMP_LD, "wb");
+	fprintf(fp, "%s\n", syms);
+	fprintf(fp, "%s\n", z64ovlLd);
+	fclose(fp);
+	
+	// compile .c -> .o
+	sprintf(command,
+		"%s""mips64-gcc" EXE_SUFFIX
+		" -G0"
+		" -o \"%s\""
+		" -c \"%s\""
+		" -fno-zero-initialized-in-bss"
+		" -fno-toplevel-reorder"
+		" -I\"%s/include\""
+		" -I\"%s/.\""
+		" 2> \"%s\"",
+		MIPS64_BINUTILS_PATH, WHERE_TMP_O, source, root, root, WHERE_COMPILER_LOG
+	);
+	if (system(command))
+		return ErrorCompilerLog(source);
+	
+	// link .o -> .elf
+	sprintf(command,
+		"%s""mips64-ld" EXE_SUFFIX " --emit-relocs -o \"%s\" \"%s\" -T \"%s\" 2> \"%s\"",
+		MIPS64_BINUTILS_PATH, WHERE_TMP_ELF, WHERE_TMP_O, WHERE_TMP_LD, WHERE_COMPILER_LOG
+	);
+	if (system(command))
+		return ErrorCompilerLog(source);
+	
+	// dump .elf -> .bin
+	sprintf(command,
+		"%s""mips64-objcopy" EXE_SUFFIX " -R .MIPS.abiflags -O binary \"%s\" \"%s\" 2> \"%s\"",
+		MIPS64_BINUTILS_PATH, WHERE_TMP_ELF, ExePath(out), WHERE_COMPILER_LOG
+	);
+	if (system(command))
+		return ErrorCompilerLog(source);
+	
+	return error;
+}
+
+const char *Fast64_CompileSceneAndRooms(const char *root, sb_array(char *, sourcePaths))
+{
+	const char *error = 0;
+	static char *syms = 0;
+	
+	if (!syms)
+		syms = malloc(16 * 1024); // 16 kib
+	
+	// find and compile the scene
+	const char *scenePath = 0;
+	sb_foreach(sourcePaths, {
+		const char *path = *each;
+		if (!IsSceneRoomSource(path))
+			continue;
+		if (strstr(path, "_scene.c"))
+			scenePath = path;
+	})
+	if (!scenePath && (error = "failed to find scene"))
+		goto L_earlyExit;
+	
+	// get symbols
+	struct File *file = FileFromFilename(scenePath);
+	char sym[256];
+	strcpy(syms, "ENTRY_POINT = 0x02000000;\n");
+	for (const char *tmp = file->data; tmp; )
+	{
+		tmp = strstr(tmp, "SegmentRom");
+		
+		if (!tmp)
+			break;
+		while (isalnum(*tmp) || (*tmp == '_'))
+			--tmp;
+		
+		// symbol
+		int i = 0;
+		for (i = 0, ++tmp; isalnum(*tmp) || *tmp == '_'; ++i, ++tmp)
+			sym[i] = *tmp;
+		sym[i] = '\0';
+		strcatf(syms, "%s = 0;\n", sym);
+	}
+	FileFree(file);
+	
+	if ((error = Fast64_CompileSource(syms, root, scenePath, WHERE_TMP "test_scene.zscene")))
+		goto L_earlyExit;
+	
+	// dump symbols
+	sprintf(syms,
+		"%s""mips64-objdump" EXE_SUFFIX " -t \"%s\" > \"%s\"",
+		MIPS64_BINUTILS_PATH, WHERE_TMP_ELF, WHERE_COMPILER_LOG
+	);
+	if (system(syms))
+		return ErrorCompilerLog(scenePath);
+	
+	// get symbols
+	strcpy(syms, "ENTRY_POINT = 0x03000000;\n");
+	file = FileFromFilename(WHERE_COMPILER_LOG);
+	STRTOK_LOOP((char*)file->data, "\r\n") {
+		unsigned int addr;
+		const char *name;
+		
+		if (!strstr(each, " O ")
+			|| !isdigit(*each)
+			|| sscanf(each, "%X", &addr) != 1
+			|| !(name = strrchr(each, ' '))
+		)
+			continue;
+		
+		strcatf(syms, "%s = 0x%08X;\n", name + 1, addr);
+	}
+	FileFree(file);
+	
+	// find and compile the rooms
+	char *fn = syms + strlen(syms) + 1;
+	sb_foreach(sourcePaths, {
+		const char *path = *each;
+		const char *room;
+		int idx;
+		if (!IsSceneRoomSource(path))
+			continue;
+		if ((room = strstr(path, "_room_"))) {
+			sscanf(room, "_room_%d", &idx);
+			sprintf(fn, "%s" "test_room_%d.zmap", WHERE_TMP, idx);
+			if ((error = Fast64_CompileSource(syms, root, path, fn)))
+				goto L_earlyExit;
+		}
+	})
+	
+L_earlyExit:
+	return error;
+}
+
 const char *Fast64_Compile(const char *path)
 {
 	sb_array(char *, filenames);
 	sb_array(char *, imagePaths);
 	sb_array(char *, sourcePaths);
 	char *folder = strdup(path);
+	char *root = strdup(path);
 	char *tmp = MAX(strrchr(folder, '/'), strrchr(folder, '\\'));
 	const char *error = 0;
 	
 	if (!tmp)
 		return Error("failed to determine directory of '%s'", path);
+	
+	// determine root
+	{
+		char *x = strstr(root, "/assets/");
+		if (!x)
+			return Error(
+				"could not find '/assets/' in '%s' (not a decomp directory?)"
+				, path
+			);
+		x[0] = '\0';
+	}
 	
 	*tmp = '\0';
 	filenames = FileListFromDirectory(folder, 0, true, false, false);
@@ -271,12 +574,7 @@ const char *Fast64_Compile(const char *path)
 	
 	sb_foreach(sourcePaths, {
 		const char *path = *each;
-		if (strstr(path, ".inc") // skip .inc and .inc.c files
-			|| strlen(strrchr(path, '.')) != 2 // must end with '.c'
-			|| (!strstr(path, "_scene") // test_scene.c
-				&& !strstr(path, "_room_") // test_room_%d.c
-			)
-		)
+		if (!IsSceneRoomSource(path))
 			continue;
 		
 		struct File *file = FileFromFilename(path);
@@ -289,13 +587,20 @@ const char *Fast64_Compile(const char *path)
 	FileListPrintAll(imagePaths);
 	
 	error = Fast64_CompileTextures(imagePaths);
+	if (error)
+		goto L_earlyExit;
 	
+	if ((error = Fast64_CompileSceneAndRooms(root, sourcePaths)))
+		goto L_earlyExit;
+	
+L_earlyExit:
 	sb_foreach(sCfiles, { FileFree(each); })
 	sb_clear(sCfiles);
 	FileListFree(sourcePaths);
 	FileListFree(imagePaths);
 	FileListFree(filenames);
 	free(folder);
+	free(root);
 	
 	return error;
 }

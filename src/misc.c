@@ -359,16 +359,20 @@ uint32_t f32tou32(float v)
 #endif
 const char *ExePath(const char *path)
 {
+	#define TIMES 8
 	static char *basePath = 0;
 	static char *appendTo;
+	static char *buf[TIMES];
 	
 	if (!basePath)
 	{
 	#ifdef _WIN32
 		basePath = malloc(MAX_PATH);
+		for (int i = 0; i < TIMES; ++i) buf[i] = malloc(MAX_PATH);
 		GetModuleFileName(NULL, basePath, MAX_PATH);
 	#elif __linux__
 		basePath = malloc(PATH_MAX);
+		for (int i = 0; i < TIMES; ++i) buf[i] = malloc(PATH_MAX);
 		ssize_t count = readlink("/proc/self/exe", basePath, PATH_MAX);
 		if (count == -1)
 			Die("readlink() fatal error");
@@ -398,7 +402,14 @@ const char *ExePath(const char *path)
 	else
 		strcpy(appendTo, path);
 	
-	return basePath;
+	// circular buffer logic
+	static int x = 0;
+	char *which = buf[x];
+	x += 1;
+	x %= TIMES;
+	strcpy(which, basePath);
+	return which;
+	#undef TIMES
 }
 
 struct Scene *SceneFromFilename(const char *filename)
