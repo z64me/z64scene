@@ -545,6 +545,11 @@ L_earlyExit:
 
 const char *Fast64_Compile(const char *path)
 {
+	// fix paths for win32
+	for (char *w = (char*)path; *w; ++w)
+		if (*w == '\\')
+			*w = '/';
+	
 	sb_array(char *, filenames);
 	sb_array(char *, imagePaths);
 	sb_array(char *, sourcePaths);
