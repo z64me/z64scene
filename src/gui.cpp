@@ -152,6 +152,7 @@ struct GuiSettings
 {
 	bool showSidebar = true;
 	bool showImGuiDemoWindow = false;
+	bool showSettings = false;
 	
 	ActorDatabase actorDatabase;
 	ObjectDatabase objectDatabase;
@@ -744,8 +745,9 @@ static void MultiLineTabBarGeneric(
 	ImVec4 oldTabActive = colors[ImGuiCol_TabActive];
 	ImVec4 oldTabHovered = colors[ImGuiCol_TabHovered];
 	ImVec4 oldTab = colors[ImGuiCol_Tab];
-	ImVec4 newTabHovered = ImVec4(0.7, 0, 0, 1.0); // TODO move elsewhere
-	ImVec4 newTabActive = ImVec4(0.5, 0, 0, 1.0);
+	float add = gIni.style.theme == STYLE_THEME_LIGHT ? 0.4 : 0.0;
+	ImVec4 newTabHovered = ImVec4(0.7 + add, add, add, 1.0); // TODO move elsewhere
+	ImVec4 newTabActive = ImVec4(0.5 + add, add, add, 1.0);
 	int flags = ImGuiTabBarFlags_NoTooltip | ImGuiTabBarFlags_FittingPolicyResizeDown;
 	
 	colors[ImGuiCol_TabHovered] = newTabHovered;
@@ -2366,7 +2368,7 @@ static void DrawSidebar(void)
 		
 		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
 		ImGui::SetNextWindowSizeConstraints(ImVec2(minWidth, work_size.y), ImVec2(maxWidth, work_size.y));
-		ImGui::SetNextWindowBgAlpha(0.35f); // translucent background
+		ImGui::SetNextWindowBgAlpha(0.95f/*0.35f*/); // translucent background
 	}
 	
 	if (ImGui::Begin("Sidebar", 0, window_flags))
@@ -2569,6 +2571,62 @@ static void DrawSidebar(void)
 	}
 }
 
+static void PickFile(const char *label, char *buf, int bufSize, const char *filter)
+{
+	ImGui::Text(label + 2);
+	ImGui::SameLine();
+	if (ImGui::Button("..."))
+	{
+		const char *fn;
+		
+		fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, filter, NULL, NULL);
+		
+		if (fn)
+			strcpy(buf, fn);
+	}
+	ImGui::SameLine();
+	ImGui::InputText(label, gIni.path.mips64, sizeof(gIni.path.mips64));
+}
+
+static void SetStyleTheme(void)
+{
+	if (gIni.style.theme < 0 || gIni.style.theme >= STYLE_THEME_COUNT)
+		gIni.style.theme = 0;
+	
+	switch (gIni.style.theme)
+	{
+		case STYLE_THEME_DARK: ImGui::StyleColorsDark(); break;
+		case STYLE_THEME_LIGHT: ImGui::StyleColorsLight(); break;
+		case STYLE_THEME_CLASSIC: ImGui::StyleColorsClassic(); break;
+	}
+}
+
+static void DrawSettings(void)
+{
+	ImGui::SetNextWindowSizeConstraints(ImVec2(300, 250), ImVec2(FLT_MAX, FLT_MAX));
+	ImGui::Begin("Settings", &gGuiSettings.showSettings);
+	
+	const char *filterExe;
+	#ifdef _WIN32
+		filterExe = "Executable Files\0*.exe\0";
+	#else
+		filterExe = "Executable Files\0*\0";
+	#endif
+	
+	if (ImGui::TreeNode("Paths"))
+	{
+		PickFile("##mips64-gcc", gIni.path.mips64, sizeof(gIni.path.mips64), filterExe);
+		ImGui::TreePop();
+	}
+	if (ImGui::TreeNode("Theme"))
+	{
+		if (ImGui::Combo("##Theme", &gIni.style.theme, "Dark\0""Light\0""Classic\0"))
+			SetStyleTheme();
+	}
+	
+	ImGui::End();
+}
+
 static void DrawMenuBar(void)
 {
 	if (ImGui::BeginMainMenuBar())
@@ -2675,6 +2733,10 @@ static void DrawMenuBar(void)
 			#endif
 			
 			ImGui::EndMenu();
+		}
+		if (ImGui::MenuItem("Settings"))
+		{
+			gGuiSettings.showSettings = !gGuiSettings.showSettings;
 		}
 		ImGui::Text("%.02f fps", ImGui::GetIO().Framerate);
 		
@@ -2887,6 +2949,9 @@ extern "C" void GuiDraw(GLFWwindow *window, struct Scene *scene, struct GuiInter
 		DrawSidebar();
 	
 	gGuiSettings.DrawModals();
+	
+	if (gGuiSettings.showSettings)
+		DrawSettings();
 	
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 	if (gGuiSettings.showImGuiDemoWindow)

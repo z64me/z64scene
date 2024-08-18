@@ -147,6 +147,41 @@ struct Scene;
 struct RoomMeshSimple;
 struct ObjectEntry; // object entry referenced by room header
 
+enum ProgramStyleTheme
+{
+	STYLE_THEME_DARK,
+	STYLE_THEME_LIGHT,
+	STYLE_THEME_CLASSIC,
+	STYLE_THEME_COUNT,
+};
+
+#define INIPATH_MAX 4096
+struct ProgramIni
+{
+	struct
+	{
+		char mips64[INIPATH_MAX];
+		char emulator[INIPATH_MAX];
+	} path;
+	
+	sb_array(char *, recentFiles);
+	sb_array(char *, recentProjects);
+	sb_array(char *, recentRoms);
+	
+	struct
+	{
+		bool exitedUnexpectedly;
+		sb_array(char *, sceneRoomFilenames);
+	} previousSession;
+	
+	struct
+	{
+		int theme;
+	} style;
+};
+
+extern struct ProgramIni gIni;
+
 typedef struct ZeldaRGB {
 	uint8_t r, g, b;
 } ZeldaRGB;

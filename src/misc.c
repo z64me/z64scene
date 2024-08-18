@@ -23,6 +23,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+struct ProgramIni gIni = {0};
+
 static int gInstanceHandlerMm = false; // keeping as int b/c can == -1
 
 #define TRY_ALTERNATE_HEADERS(FUNC, PARAM, SEGMENT, FIRST) \
