@@ -2571,9 +2571,16 @@ static void DrawSidebar(void)
 	}
 }
 
-static void PickFile(const char *label, char *buf, int bufSize, const char *filter)
+static void PickFile(const char *label, char *buf, int bufSize, const char *filter, const char *hint = 0)
 {
 	ImGui::Text(label + 2);
+	
+	if (hint)
+	{
+		ImGui::SameLine();
+		HelpMarker(hint);
+	}
+	
 	ImGui::SameLine();
 	if (ImGui::Button("..."))
 	{
@@ -2585,7 +2592,7 @@ static void PickFile(const char *label, char *buf, int bufSize, const char *filt
 			strcpy(buf, fn);
 	}
 	ImGui::SameLine();
-	ImGui::InputText(label, gIni.path.mips64, sizeof(gIni.path.mips64));
+	ImGui::InputText(label, buf, bufSize);
 }
 
 static void SetStyleTheme(void)
@@ -2615,7 +2622,9 @@ static void DrawSettings(void)
 	
 	if (ImGui::TreeNode("Paths"))
 	{
-		PickFile("##mips64-gcc", gIni.path.mips64, sizeof(gIni.path.mips64), filterExe);
+		PickFile("##mips64-gcc", gIni.path.mips64, sizeof(gIni.path.mips64), filterExe,
+			"This is the full path to your installation of mips64-gcc"
+		);
 		ImGui::TreePop();
 	}
 	if (ImGui::TreeNode("Theme"))
