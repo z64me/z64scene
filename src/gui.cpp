@@ -2884,6 +2884,12 @@ extern "C" void GuiInit(GLFWwindow *window)
 	io.IniFilename = NULL;
 	io.LogFilename = NULL;
 	
+	// load settings
+	WindowLoadSettings();
+	
+	// apply settings
+	SetStyleTheme();
+	
 	//JsonTest();
 	//TomlTest();
 	//gGuiSettings.actorDatabase = TomlLoadActorDatabase("toml/game/oot/actors.toml");

@@ -23,7 +23,83 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-struct ProgramIni gIni = {0};
+// default settings
+struct ProgramIni gIni = {
+	.style = {
+		.theme = STYLE_THEME_LIGHT,
+	},
+};
+
+#define WHERE_SETTINGS ExePath("settings.tsv")
+
+#define INI_ARRAY_SEPARATOR "?"
+#define INI_PREFIX 5 // strlen("gIni.")
+#define INI_READ_INT(X) if (!strcmp((#X) + INI_PREFIX, each)) { X = atoi(next); }
+#define INI_READ_STRING(X) if (!strcmp((#X) + INI_PREFIX, each)) { strcpy(X, next); }
+#define INI_READ_SB_ARRAY_STRINGS(X) \
+	if (!strcmp((#X) + INI_PREFIX, each)) { \
+		char *work = next; \
+		while (true) { \
+			int len = strcspn(work, INI_ARRAY_SEPARATOR); \
+			bool isLast = len == strlen(work); \
+			if (isLast == false) \
+				work[len] = '\0'; \
+			sb_push(X, strdup(work)); \
+			if (isLast == false) \
+				work[len] = INI_ARRAY_SEPARATOR[0]; \
+			else \
+				break; \
+			work += len + 1; \
+		} \
+	}
+#define INI_WRITE_INT(X) fprintf(fp, "%s\t%d\n", (#X) + INI_PREFIX, X);
+#define INI_WRITE_STRING(X) if (X && strlen(X)) fprintf(fp, "%s\t%s\n", (#X) + INI_PREFIX, X);
+#define INI_WRITE_SB_ARRAY_STRINGS(X) if (X && sb_count(X)) { \
+	fprintf(fp, "%s\t", (#X) + INI_PREFIX); \
+	sb_foreach(X, { \
+		fprintf(fp, "%s", *each); \
+		if (each != &sb_last(X)) \
+			fprintf(fp, INI_ARRAY_SEPARATOR); \
+	}) \
+	fprintf(fp, "\n"); \
+}
+#define INI_SETTINGS(ACTION) { \
+	/* style */ \
+	INI_##ACTION##_INT(gIni.style.theme) \
+	\
+	/* paths */ \
+	INI_##ACTION##_STRING(gIni.path.mips64) \
+	INI_##ACTION##_STRING(gIni.path.emulator) \
+	\
+	/* recents */ \
+	INI_##ACTION##_SB_ARRAY_STRINGS(gIni.recent.files) \
+	INI_##ACTION##_SB_ARRAY_STRINGS(gIni.recent.projects) \
+	INI_##ACTION##_SB_ARRAY_STRINGS(gIni.recent.roms) \
+	\
+	/* previous session */ \
+	INI_##ACTION##_INT(gIni.previousSession.exitedUnexpectedly) \
+	INI_##ACTION##_SB_ARRAY_STRINGS(gIni.previousSession.sceneRoomFilenames) \
+	\
+	\
+}
+
+void WindowLoadSettings(void)
+{
+	// load settings from file
+	if (FileExists(WHERE_SETTINGS))
+	{
+		struct File *file = FileFromFilename(WHERE_SETTINGS);
+		STRTOK_LOOP((char*)file->data, "\r\n\t")
+			INI_SETTINGS(READ)
+		FileFree(file);
+	}
+}
+void WindowSaveSettings(void)
+{
+	FILE *fp = fopen(WHERE_SETTINGS, "w");
+	INI_SETTINGS(WRITE)
+	fclose(fp);
+}
 
 static int gInstanceHandlerMm = false; // keeping as int b/c can == -1
 

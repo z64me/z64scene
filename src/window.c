@@ -2346,6 +2346,9 @@ void WindowMainLoop(const char *sceneFn)
 	if (sceneFn)
 		scene = SceneFromFilenamePredictRooms(sceneFn);
 	
+	// update settings during shutdown
+	atexit(WindowSaveSettings);
+	
 	// glfw: initialize and configure
 	// ------------------------------
 	glfwInit();

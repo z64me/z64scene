@@ -86,6 +86,12 @@ struct CutsceneOot;
 #define CONCAT_(A, B) A##B
 #define CONCAT(A, B) CONCAT_(A, B)
 
+#define STRTOK_LOOP(STRING, DELIM) \
+	for (char *next, *each = strtok(STRING, DELIM) \
+		; each && (next = strtok(0, DELIM)) \
+		; each = next \
+	)
+
 #define ON_CHANGE(VARIABLE) \
 	static typeof(VARIABLE) CONCAT(onchange, __LINE__); \
 	if (CONCAT(onchange, __LINE__) != (VARIABLE) && ((CONCAT(onchange, __LINE__) = (VARIABLE)) == (VARIABLE)))
@@ -164,9 +170,12 @@ struct ProgramIni
 		char emulator[INIPATH_MAX];
 	} path;
 	
-	sb_array(char *, recentFiles);
-	sb_array(char *, recentProjects);
-	sb_array(char *, recentRoms);
+	struct
+	{
+		sb_array(char *, files);
+		sb_array(char *, projects);
+		sb_array(char *, roms);
+	} recent;
 	
 	struct
 	{
@@ -179,6 +188,8 @@ struct ProgramIni
 		int theme;
 	} style;
 };
+void WindowLoadSettings(void);
+void WindowSaveSettings(void);
 
 extern struct ProgramIni gIni;
 
