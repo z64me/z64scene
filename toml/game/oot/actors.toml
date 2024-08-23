@@ -1844,6 +1844,7 @@
 	Objects = [86]
 	RenderCode = """
 		Draw.SetScale(0.01)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 150 + 20, 0)
 		Draw.Skeleton(0, 4, 0.5)
 	"""
 
