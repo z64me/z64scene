@@ -1683,6 +1683,11 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag to make the platform rise more, hardcoded cutscene camera points to 420,-180 ,-1180"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x100) * 900 + 600, 0)
+		Draw.Mesh(0x060037B8)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Switch Flag"
