@@ -6002,6 +6002,11 @@
 	Index = 405
 	Category = "5"
 	Objects = [360]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 4, 1)
+		Draw.BuiltinSetupDL(25)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
