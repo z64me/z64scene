@@ -1376,6 +1376,10 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag\n      Spawns when a specific switch flag is set\nOut-of-bounds Plane (typ.)"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.10)
+		Draw.Mesh(0x06001350)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
