@@ -355,7 +355,10 @@
 	Category = "5"
 	Notes = "First 2 digits: Rocks fired per volley"
 	Objects = [7]
-
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 3, 1)
+	"""
 [[Actor]]
 	Name = "Webs"
 	Index = 15
