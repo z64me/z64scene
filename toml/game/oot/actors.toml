@@ -307,6 +307,15 @@
 	Category = "6"
 	Notes = "Hardcoded cutscene camera points to -19, -2 ,-1000"
 	Objects = [10]
+	RenderCode = """
+		Udata.textures = [ 0x17930, 0x19130 ] // Eye textures (Eyes Open, mouth closed)
+		Draw.SetScale(0.04)
+		var textures = Udata.textures
+		Draw.PopulateSegment(0x08, textures[0])
+		Draw.PopulateSegment(0x0A, textures[1])
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 150 + 20, 0)
+		Draw.Skeleton(0, 2, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
