@@ -1803,6 +1803,12 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag"
 	Objects = [77]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.SetGlobalRotation(0, Global.GameplayFrames * 0x80, 0)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x060038d0) // gGTGRotatingRingPlatformDL
+	"""
 
 [[Actor]]
 	Name = "Statue Eyes"
