@@ -1779,6 +1779,12 @@
 	Category = "5"
 	Notes = "0xFF = Nuts shot per volley"
 	Objects = [74]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x06002298)  // gDekuNutsFlowerDL
+		Draw.Skeleton(0, 5, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Nuts shot per volley"
