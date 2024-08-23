@@ -308,7 +308,7 @@
 	Notes = "Hardcoded cutscene camera points to -19, -2 ,-1000"
 	Objects = [10]
 	RenderCode = """
-		Udata.textures = [ 0x17930, 0x19130 ] // Eye textures (Eyes Open, mouth closed)
+		Udata.textures = [ 0x17930, 0x19130 ] // Eyes Open, mouth closed
 		Draw.SetScale(0.04)
 		var textures = Udata.textures
 		Draw.PopulateSegment(0x08, textures[0])
