@@ -4274,6 +4274,10 @@
 	Category = "6"
 	Notes = "+0x8000 = Play Puzzle Solved When Destroyed\n+0x3F = Switch Flag"
 	Objects = [355]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x060009E0)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
