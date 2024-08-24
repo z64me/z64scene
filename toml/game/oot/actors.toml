@@ -5498,6 +5498,11 @@
 	Category = "4"
 	Notes = "+0xFF = Path Id"
 	Objects = [325]
+	RenderCode = """
+		Draw.PopulateSegment(0x08, 0x06002130) // gGraveyardKidEyesOpenTex
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Path Id"
