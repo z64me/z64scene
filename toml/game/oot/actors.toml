@@ -2601,6 +2601,12 @@
 	Index = 157
 	Category = "1"
 	Objects = [162]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x060001B0) // gGravestoneStoneDL
+		Draw.Mesh(0x060002A8) // gGravestoneEarthDL
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
