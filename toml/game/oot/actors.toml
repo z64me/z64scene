@@ -1144,6 +1144,12 @@
 	Index = 52
 	Category = "5"
 	Objects = [33]
+	RenderCode = """
+		Udata.textures = [0x06000e08, 0x06001708, 0x06002008, 0x06002908, 0x06003208, 0x06003b08, 0x06004408, 0x06004d08]
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, Udata.textures[Global.GameplayFrames % 8])
+		Draw.Skeleton(0, 2, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -5037,6 +5043,7 @@
 		}
 		Draw.SetScale(Udata.scale)
 		Draw.SetLocalPosition(0, Udata.yOffset, 0)
+		Draw.BuiltinSetupDL(66)
 		Draw.Mesh(Udata.mesh)
 	"""
 	[[Actor.Property]]
