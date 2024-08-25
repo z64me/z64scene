@@ -3745,6 +3745,12 @@
 	Index = 258
 	Category = "1"
 	Objects = [249]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.BuiltinSetupDL(66)
+		Draw.SetGlobalRotation(0, 16380, Global.GameplayFrames * 0x80)
+		Draw.Mesh(0x06000100) // gKakarikoWindmillSailsDL
+	"""
 
 [[Actor]]
 	Name = "Kakariko Village Well Crossbeams"
@@ -4958,6 +4964,11 @@
 	Category = "4"
 	Notes = "+0x3F = Switch Flag"
 	Objects = [305]
+	RenderCode = """
+		Draw.SetScale(0.025)
+		Draw.PopulateSegment(0x08, 0x89A8) // gObjOwlEyeOpenTex
+		Draw.Skeleton(1, 4)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
