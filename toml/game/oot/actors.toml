@@ -4744,6 +4744,10 @@
 	Category = "4"
 	Notes = "Text ID 10B1 when sleeping"
 	Objects = [296]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
