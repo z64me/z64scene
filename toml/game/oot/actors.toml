@@ -4946,7 +4946,10 @@
 	Index = 330
 	Category = "4"
 	Objects = [306]
-
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 [[Actor]]
 	Name = "Bombchu Bowling Girl"
 	Index = 331
