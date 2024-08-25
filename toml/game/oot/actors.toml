@@ -2657,7 +2657,7 @@
 		Draw.SetScale(0.01)
 		Draw.PopulateSegment(0x08, 0xE3B8) // gRutoChildEyeOpenTex
 		Draw.PopulateSegment(0x09, 0xFA38) // gRutoChildMouthFrownTex
-		Draw.Skeleton(0, 13, 0.5)
+		Draw.Skeleton(0, 13, 0.5) // gRutoChildSittingAnim
 	"""
 	[[Actor.Property]]
 		Mask = 65535
