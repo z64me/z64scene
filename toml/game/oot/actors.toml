@@ -2653,6 +2653,12 @@
 	Index = 161
 	Category = "4"
 	Objects = [163]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0xE3B8) // gRutoChildEyeOpenTex
+		Draw.PopulateSegment(0x09, 0xFA38) // gRutoChildMouthFrownTex
+		Draw.Skeleton(0, 13, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -2882,7 +2888,7 @@
 	Objects = [172]
 	RenderCode = """
 		Draw.SetScale(0.01)
-		Draw.Skeleton(0, 1, 1)
+		Draw.Skeleton(0, 1, 0)
 	"""
 	[[Actor.Property]]
 		Mask = 4096
