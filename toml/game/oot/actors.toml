@@ -4712,7 +4712,13 @@
 	Index = 316
 	Category = "4"
 	Notes = "Text ID 503E as adult, gives you an egg"
-	Objects = [272]
+	Objects = [272, 197]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.UseAnimationsFromObjectSlot(1)
+		Draw.PopulateSegment(0x08, 0x08C8)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Medigoron"
