@@ -4290,6 +4290,10 @@
 	Category = "1"
 	Notes = "+0x1F00 = Path Id //1F00 = null\n+0x003F = Switch Flag\nZROT +0x0003 = Speed, Acceleration\n-0000 3.0, 0.3\n-0001 10.0, 0.5\n-0002 30.0, 0.5\n-0003 3.0, 0.3"
 	Objects = [286]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000650) // gMagicBeanSoftSoilDL
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
