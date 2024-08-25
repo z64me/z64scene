@@ -4940,6 +4940,10 @@
 	Index = 329
 	Category = "4"
 	Objects = [271]
+	RenderCode = """
+		Draw.SetScale(0.013)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Lake Hylia Doctor"
