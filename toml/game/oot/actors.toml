@@ -2880,6 +2880,10 @@
 	Category = "5"
 	Notes = "+0x1000 = Smaller size, height not affected by last two digits"
 	Objects = [172]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 1, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 4096
 		Name = "Smaller Size"
