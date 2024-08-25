@@ -4634,6 +4634,18 @@
 	Index = 309
 	Category = "6"
 	Objects = [292]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.BuiltinSetupDL(44)
+		Draw.Mesh(0x06000840)
+		Draw.Mesh(0x060008B0)
+		Draw.Mesh(0x06000BF0)
+		Draw.Mesh(0x06000C68)
+		Draw.Mesh(0x06000C88)
+		Draw.Mesh(0x06000CE0)
+		Draw.Mesh(0x06000D10)
+		Draw.Mesh(0x06000D50)
+	"""
 
 [[Actor]]
 	Name = "Dark Link's Illusion Room"
