@@ -4899,6 +4899,13 @@
 	Index = 326
 	Category = "4"
 	Objects = [188]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x2F48)
+		Draw.PopulateSegment(0x09, 0x2F48)
+		Draw.PopulateSegment(0x0A, 0x3348)
+		Draw.Skeleton(0, 20)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
