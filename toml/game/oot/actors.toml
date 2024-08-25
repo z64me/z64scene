@@ -1071,6 +1071,12 @@
 	Index = 45
 	Category = "5"
 	Objects = [18]
+	RenderCode = """
+		Draw.SetScale(1.0)
+		Draw.SetGlobalRotation(0, Global.CamDirY + 0x8000, 0)
+		Draw.BuiltinSetupDL(66)
+		Draw.Mesh(0x06001000)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
