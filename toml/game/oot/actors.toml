@@ -2218,6 +2218,11 @@
 	Category = "4"
 	Notes = "Text ID when he sleeps: 702A"
 	Objects = [136]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x7F80)
+		Draw.Skeleton(0, 1)
+	"""
 
 [[Actor]]
 	Name = "Dampe Grave Digging Game"
