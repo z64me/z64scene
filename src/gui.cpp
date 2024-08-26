@@ -131,6 +131,7 @@ extern "C" {
 #define TABNAME_ACTORS "Actors"
 #define TABNAME_DOORS "Doorways"
 #define TABNAME_SPAWNS "Spawns"
+#define TABNAME_PATHS "Pathways"
 
 #define DECL_POPUP(NAME) static bool isPopup##NAME##Queued = false;
 #define QUEUE_POPUP(NAME) isPopup##NAME##Queued = true;
@@ -302,7 +303,7 @@ public:
 	void FlushLines(void)
 	{
 		for (const Line &line : lines)
-			ImGui::GetForegroundDrawList()->AddLine(
+			ImGui::GetBackgroundDrawList()->AddLine(
 				ImVec2(line.x1, line.y1),
 				ImVec2(line.x2, line.y2),
 				line.color,
@@ -1454,9 +1455,227 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
-		"Pathways"
+		TABNAME_PATHS
 		, [](){
-			ImGui::TextWrapped("TODO: 'Pathways' tab");
+			
+			int numPaths = sb_count(gGui->sceneHeader->paths);
+			
+			ImGui::Text("%d pathways", numPaths);
+			
+			static struct ActorPath *selectedPath = 0;
+			
+			gGui->instanceList = &selectedPath->points;
+			
+			if (ImGui::Button("Add New Pathway"))
+			{
+				struct ActorPath *path = &sb_push(gGui->sceneHeader->paths, (struct ActorPath){});
+				
+				gGui->selectedInstance = &sb_push(path->points, ((struct Instance) {
+					.pos = gGui->newSpawnPos,
+					INSTANCE_DEFAULT_PATHPOINT
+				}));
+			}
+			
+			if (numPaths == 0)
+			{
+				ImGui::TextWrapped("No paths. Add a path to get started.");
+				return;
+			}
+			
+			ON_CHANGE(gGui->selectedInstance)
+			{
+				LogDebug("selected path point %p", gGui->selectedInstance);
+				selectedPath = 0;
+				sb_foreach_named(gGui->sceneHeader->paths, path, {
+					sb_foreach_named(path->points, point, {
+						if (point == gGui->selectedInstance)
+							selectedPath = path;
+					})
+				})
+				LogDebug("selecting path %p", selectedPath);
+			}
+			
+			char previewText[256] = "";
+			if (selectedPath)
+				snprintf(previewText, sizeof(previewText), "path %d", selectedPath - gGui->sceneHeader->paths);
+			if (ImGui::BeginCombo("##PathList##PathListCombo", previewText, 0))
+			{
+				for (int i = 0; i < numPaths; ++i)
+				{
+					const bool isSelected = (selectedPath - gGui->sceneHeader->paths) == i;
+					snprintf(previewText, sizeof(previewText), "path %d", i);
+					
+					if (ImGui::Selectable(previewText, isSelected))
+						selectedPath = &gGui->sceneHeader->paths[i];
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			
+			// if a new path has been selected, and a point within it
+			// does not already have focus, auto-select the first point
+			ON_CHANGE(selectedPath)
+			{
+				if (selectedPath
+					&& !(gGui->selectedInstance >= selectedPath->points
+						&& gGui->selectedInstance <= &sb_last(selectedPath->points)
+					)
+				)
+				{
+					gGui->selectedInstance = &selectedPath->points[0];
+				}
+			}
+			
+			if (selectedPath == 0)
+			{
+				ImGui::TextWrapped("No path is selected.");
+				return;
+			}
+			
+			ImGui::TextWrapped(
+				"Path Editing:\n"
+				" - Paths must always contain at least one waypoint.\n"
+				" - With the first or last waypoint selected, press the"
+				" 'V' key to add a new waypoint to the path. Move your"
+				" mouse to position it.\n"
+				" - Hold the Ctrl key while positioning a waypoint to snap"
+				" it to level geometry.\n"
+				" - To reposition an existing waypoint, left-click to select it,"
+				" then press the 'G' key to grab it.\n"
+				" - You can also add waypoints to the middle of a path"
+				" by right-clicking on the line connecting two waypoints.\n"
+				" - Press the 'Delete' key to delete a selected waypoint.\n"
+			);
+			
+			if (ImGui::BeginListBox("##PathPointList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				sb_foreach(selectedPath->points, {
+					const bool is_selected = (each == gGui->selectedInstance);
+					snprintf(previewText, sizeof(previewText), "point %d", eachIndex);
+					
+					if (ImGui::Selectable(previewText, is_selected))
+						gGui->selectedInstance = each;
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				})
+				ImGui::EndListBox();
+			}
+			if (sb_count(selectedPath->points) > 1)
+			{
+				struct Instance *points = selectedPath->points;
+				struct Instance *selected = gGui->selectedInstance;
+				int num = sb_count(points);
+				
+				if (ImGui::Button("Reverse Path Direction"))
+				{
+					// ensure the same point will remain selected
+					// after reversing the order of points
+					gGui->selectedInstance = &points[
+						(num - 1) // last point in list
+						- (selected - points) // current
+					];
+					
+					// reverse the points
+					sb_reverse(points);
+				}
+				ImGui::SameLine();
+				HelpMarker(
+					"Reverses the order of all points on the path.\n"
+					"(aka: flips the path backwards; opposite direction)"
+				);
+				
+				if (ImGui::Button("Set Start Point") && selected != points)
+				{
+					// first and last points are the same
+					if (selectedPath->isClosed)
+						sb_pop(points);
+					
+					// if last point is selected, simply reverse
+					if (selected == &sb_last(points))
+					{
+						sb_reverse(points);
+					}
+					else
+					{
+						sb_rotate(points, selected - points);
+					}
+					
+					// first and last points are the same
+					if (selectedPath->isClosed)
+					{
+						stb__sbn(points) += 1;
+						sb_last(points).pos = points->pos;
+					}
+					
+					gGui->selectedInstance = points;
+				}
+				ImGui::SameLine();
+				HelpMarker(
+					"Reorders path points such that the currently selected\n"
+					"point will be the first point on the path."
+				);
+				
+				if (sb_count(points) > 3)
+				{
+					ImGui::Checkbox("Is Closed", &selectedPath->isClosed);
+					ImGui::SameLine();
+					HelpMarker(
+						"Indicates a looping path, e.g. the first and\n"
+						"last points are welded together and move as one."
+					);
+					
+					if (selectedPath->isClosed)
+					{
+						// first point
+						if (selected == points)
+						{
+							sb_last(points).pos = selected->pos;
+						}
+						// last point
+						else if (selected == &sb_last(points))
+						{
+							points->pos = selected->pos;
+						}
+					}
+				}
+				else
+					selectedPath->isClosed = false;
+			}
+			
+			// copy-pasted from InstanceTab()
+			struct Instance *inst = gGui->selectedInstance;
+			ImGui::SeparatorText("Position");
+			int xpos = rintf(inst->pos.x);
+			int ypos = rintf(inst->pos.y);
+			int zpos = rintf(inst->pos.z);
+			int nudgeBy = (ImGui::GetIO().KeyShift) ? 20 : 1; // nudge by 20 if shift is held
+			int nudgeCtrl = nudgeBy; // ctrl has no effect
+			if (ImGui::InputInt("X##WaypointPos", &xpos, nudgeBy, nudgeCtrl)) inst->pos.x = xpos;
+			ImGui::SameLine(); HelpMarker("These buttons nudge farther\n""if you hold the Shift key.");
+			if (ImGui::InputInt("Y##WaypointPos", &ypos, nudgeBy, nudgeCtrl)) inst->pos.y = ypos;
+			if (ImGui::InputInt("Z##WaypointPos", &zpos, nudgeBy, nudgeCtrl)) inst->pos.z = zpos;
+			
+			if (ImGui::TreeNode("Danger Zone##Paths"))
+			{
+				ImGui::TextWrapped(
+					"Warning:\n""Deleting a path can cause the indices of "
+					"other paths to change, and because actors commonly "
+					"reference paths by index, you will likely have to "
+					"update those actors accordingly, so please be mindful "
+					"of this when deleting paths."
+				);
+				if (ImGui::Button("Delete Selected Path"))
+				{
+					sb_remove(gGui->sceneHeader->paths, selectedPath - gGui->sceneHeader->paths);
+					selectedPath = 0;
+				}
+				ImGui::TreePop();
+			}
 		}
 	},
 	new LinkedStringFunc{
@@ -2388,6 +2607,7 @@ static void DrawSidebar(void)
 					case INSTANCE_TAB_ACTOR: tabName = TABNAME_ACTORS; break;
 					case INSTANCE_TAB_DOOR: tabName = TABNAME_DOORS; break;
 					case INSTANCE_TAB_SPAWN: tabName = TABNAME_SPAWNS; break;
+					case INSTANCE_TAB_PATH: tabName = TABNAME_PATHS; break;
 					default: Die("unknown tab type");
 				}
 				
@@ -2476,6 +2696,15 @@ static void DrawSidebar(void)
 					QUEUE_POPUP(AddNewInstanceSearch);
 					gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
 				}
+				if (ImGui::Selectable("Create New Path Here"))
+				{
+					struct ActorPath *path = &sb_push(gGui->sceneHeader->paths, (struct ActorPath){});
+					
+					gGui->selectedInstance = &sb_push(path->points, ((struct Instance) {
+						.pos = gGui->newSpawnPos,
+						INSTANCE_DEFAULT_PATHPOINT
+					}));
+				}
 				if (ImGui::MenuItem("Paste Here", "Ctrl+V"))
 				{
 					WindowTryInstancePaste(true, false);
@@ -2508,6 +2737,23 @@ static void DrawSidebar(void)
 			if (ImGui::MenuItem("Duplicate", "Shift+D"))
 			{
 				WindowTryInstanceDuplicate();
+			}
+		}
+		// right-clicked on path line
+		else if (group == RENDERGROUP_PATHLINE)
+		{
+			if (ImGui::MenuItem("Subdivide Path Here"))
+			{
+				struct ActorPath *path = &gGui->sceneHeader->paths[gGui->rightClickedLinePathIndex];
+				sb_insert(path->points
+					, ((struct Instance) {
+						.pos = gGui->newSpawnPos,
+						INSTANCE_DEFAULT_PATHPOINT
+					})
+					, gGui->rightClickedLineIndex + 1
+				);
+				gGui->selectedInstance = &path->points[gGui->rightClickedLineIndex + 1];
+				gGui->instanceList = &path->points;
 			}
 		}
 		

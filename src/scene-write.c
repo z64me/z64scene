@@ -709,9 +709,9 @@ static uint32_t WorkAppendSceneHeader(struct Scene *scene, struct SceneHeader *h
 			typeof(each->points) points = each->points;
 			WorkblobPush(2);
 			sb_foreach(points, {
-				WorkblobPut16(each->x);
-				WorkblobPut16(each->y);
-				WorkblobPut16(each->z);
+				WorkblobPut16(rintf(each->pos.x));
+				WorkblobPut16(rintf(each->pos.y));
+				WorkblobPut16(rintf(each->pos.z));
 			});
 			WorkblobPut32(WorkblobPop());
 		});

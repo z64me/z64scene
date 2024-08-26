@@ -25,6 +25,7 @@ enum RenderGroup
 	RENDERGROUP_IGNORE = 0,
 	RENDERGROUP_ROOM = 0x01000000,
 	RENDERGROUP_INST = 0x02000000,
+	RENDERGROUP_PATHLINE = 0x04000000,
 	RENDERGROUP_MASK_ID = 0x00ffffff,
 	RENDERGROUP_MASK_GROUP = 0xff000000,
 };
@@ -66,6 +67,8 @@ struct GuiInterop
 	Vec3f newSpawnPos; // where a new inst/spawnpoint/etc will instantiate
 	bool rightClickedInViewport;
 	enum RenderGroup rightClickedRenderGroup;
+	int rightClickedLineIndex;
+	int rightClickedLinePathIndex;
 	int selectedRoomIndex;
 	int selectedHeaderIndex;
 	int selectedDayIndex;
