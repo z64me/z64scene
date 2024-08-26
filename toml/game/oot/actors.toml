@@ -951,6 +951,10 @@
 	Category = "5"
 	Notes = "+0xFF00 = Nullable Switch Flag Lizalfos miniboss spawns when entering room from door bound to this switch flag\nThe Lizalfos miniboss (Type 00 and 01) has special behavior to it.\nType 00 and 01 actors must be spawned together for the miniboss to be defeated.\nTo differentiate the two encounters (as both are in room 3), the switch flag is used. This flag matches the switch flag of the door used to enter the room"
 	Objects = [27]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(1, 0, 8)
+	"""
 	[[Actor.Property]]
 		Mask = 65280
 		Name = "Switch Flag (Nullable)"
