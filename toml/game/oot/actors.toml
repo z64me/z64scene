@@ -6790,6 +6790,12 @@
 	Index = 453
 	Category = "4"
 	Objects = [208]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x09, 0x2970) // mouth neutral texture
+		Draw.PopulateSegment(0x08, 0x2570) // eye open texture
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Cow"
