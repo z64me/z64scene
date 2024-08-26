@@ -1015,6 +1015,13 @@
 	Index = 41
 	Category = "4"
 	Objects = [29]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0xA048) // Eye Right
+		Draw.PopulateSegment(0x09, 0xA048) // Eye Left
+		Draw.PopulateSegment(0x0A, 0x7608) // Mouth
+		Draw.Skeleton(0, 11)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
