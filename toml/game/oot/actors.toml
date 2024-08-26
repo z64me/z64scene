@@ -2174,6 +2174,10 @@
 	Category = "1"
 	Notes = "+0xF000 = Radius // + 1 * 20\n+0xF000 = Trap Range //Distance = v * 40 units (Type 0 and 1)\n+0x0001 = Move North //Type 0. Relative to Model Space before applying rotation\n+0x0002 = Move South //Type 0. Relative to Model Space before applying rotation\n+0x0004 = Move West //Type 0. Relative to Model Space before applying rotation\n+0x0008 = Move East //Type 0. Relative to Model Space before applying rotation\n+0x0F00 = Attack Speed (Units) //4-Way Attack glitches if speed != 0xF"
 	Objects = [133]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06001400)
+	"""
 	[[Actor.Property]]
 		Mask = 61440
 		Name = "Radius (Type 1 and 2)"
