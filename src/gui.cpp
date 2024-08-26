@@ -1537,16 +1537,18 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 			
 			ImGui::TextWrapped(
 				"Path Editing:\n"
-				"NOTE: A lot of this is still TODO, am brainstorming.\n"
-				" - Paths must always contain at least one point.\n"
-				" - With the first or last point selected, press the"
-				" 'V' key to add a new point.\n"
-				" - You can also add points to the middle of a path"
-				" by right-clicking on the line connecting two points.\n"
-				" - Select a point and press the 'Delete' key to delete it.\n"
+				" - Paths must always contain at least one waypoint.\n"
+				" - With the first or last waypoint selected, press the"
+				" 'V' key to add a new waypoint to the path. Move your"
+				" mouse to position it.\n"
+				" - Hold the Ctrl key while positioning a waypoint to snap"
+				" it to level geometry.\n"
+				" - To reposition an existing waypoint, left-click to select it,"
+				" then press the 'G' key to grab it.\n"
+				" - You can also add waypoints to the middle of a path"
+				" by right-clicking on the line connecting two waypoints.\n"
+				" - Press the 'Delete' key to delete a selected waypoint.\n"
 			);
-			
-			ImGui::TextWrapped("TODO: - List points, can reorder and reverse");
 			
 			if (ImGui::BeginListBox("##PathPointList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
 			{
