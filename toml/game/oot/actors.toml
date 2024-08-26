@@ -3848,6 +3848,10 @@
 	Category = "1"
 	Notes = "+0xFF = Switch Flag? //Hyrule Castle Puzzle. Note this can auto-solve itself"
 	Objects = [240]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000180)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Switch Flag (?)"
