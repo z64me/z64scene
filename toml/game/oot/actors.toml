@@ -1124,6 +1124,10 @@
 	Index = 47
 	Category = "5"
 	Objects = [31]
+	RenderCode = """
+		Draw.SetScale(0.02)
+		Draw.Skeleton(0, 2)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
