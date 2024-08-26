@@ -303,7 +303,7 @@ public:
 	void FlushLines(void)
 	{
 		for (const Line &line : lines)
-			ImGui::GetForegroundDrawList()->AddLine(
+			ImGui::GetBackgroundDrawList()->AddLine(
 				ImVec2(line.x1, line.y1),
 				ImVec2(line.x2, line.y2),
 				line.color,
