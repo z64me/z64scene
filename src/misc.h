@@ -521,6 +521,7 @@ struct ActorPath
 	uint8_t additionalPathIndex; // mm only
 	uint16_t customValue; // mm only
 	sb_array(struct Instance, points);
+	bool isClosed;
 };
 
 struct SceneHeader

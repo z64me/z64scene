@@ -1916,6 +1916,15 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 						}));
 					}
 					
+					// first and last points are the same
+					path.isClosed = (numPoints > 3
+						&& !memcmp(&sb_last(path.points).pos
+							, &path.points->pos
+							, sizeof(Vec3f)
+						)
+					);
+						
+					
 					sb_push(result->paths, path);
 				}
 				//sb_udata_segaddr(result->paths) = w1;

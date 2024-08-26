@@ -1589,6 +1589,10 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				
 				if (ImGui::Button("Set Start Point") && selected != points)
 				{
+					// first and last points are the same
+					if (selectedPath->isClosed)
+						sb_pop(points);
+					
 					// if last point is selected, simply reverse
 					if (selected == &sb_last(points))
 					{
@@ -1599,6 +1603,13 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 						sb_rotate(points, selected - points);
 					}
 					
+					// first and last points are the same
+					if (selectedPath->isClosed)
+					{
+						stb__sbn(points) += 1;
+						sb_last(points).pos = points->pos;
+					}
+					
 					gGui->selectedInstance = points;
 				}
 				ImGui::SameLine();
@@ -1606,6 +1617,32 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					"Reorders path points such that the currently selected\n"
 					"point will be the first point on the path."
 				);
+				
+				if (sb_count(points) > 3)
+				{
+					ImGui::Checkbox("Is Closed", &selectedPath->isClosed);
+					ImGui::SameLine();
+					HelpMarker(
+						"Indicates a looping path, e.g. the first and\n"
+						"last points are welded together and move as one."
+					);
+					
+					if (selectedPath->isClosed)
+					{
+						// first point
+						if (selected == points)
+						{
+							sb_last(points).pos = selected->pos;
+						}
+						// last point
+						else if (selected == &sb_last(points))
+						{
+							points->pos = selected->pos;
+						}
+					}
+				}
+				else
+					selectedPath->isClosed = false;
 			}
 			
 			if (ImGui::TreeNode("Danger Zone##Paths"))
