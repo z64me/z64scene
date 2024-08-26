@@ -3113,6 +3113,10 @@
 	Category = "5"
 	Notes = "Slicing it in the back will make it jump to the y location of its room, which is typically below most floors"
 	Objects = [351]
+	RenderCode = """
+		Draw.SetScale(0.033)
+		Draw.Skeleton(0, 2, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
