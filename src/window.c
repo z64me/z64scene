@@ -313,6 +313,36 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				&& SHORTCUT_CHECKS
 			)
 				WindowTryInstancePaste(true, true);
+			// V
+			else if (!(mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			) {
+				// when path editing, 'V' key adds points
+				if (gGui->selectedInstance
+					&& gGui->selectedInstance->tab == INSTANCE_TAB_PATH
+				) {
+					struct Instance tmp = {
+						.pos = gGui->selectedInstance->pos,
+						INSTANCE_DEFAULT_PATHPOINT
+					};
+					
+					// first point selected in list w/ > 1 points: prepend
+					if (sb_count(*(gGui->instanceList)) > 1
+						&& gGui->selectedInstance == *(gGui->instanceList)
+					) {
+						sb_insert(*(gGui->instanceList), tmp, 0);
+						gGui->selectedInstance = *(gGui->instanceList);
+					}
+					// append
+					else {
+						sb_push(*(gGui->instanceList), tmp);
+						gGui->selectedInstance = &sb_last(*(gGui->instanceList));
+					}
+					
+					GuiPushModal("Inserted path point.");
+					GizmoSetupMove(gState.gizmo);
+				}
+			}
 			break;
 		
 		case GLFW_KEY_X:

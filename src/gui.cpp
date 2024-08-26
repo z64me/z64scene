@@ -1540,13 +1540,73 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				"NOTE: A lot of this is still TODO, am brainstorming.\n"
 				" - Paths must always contain at least one point.\n"
 				" - With the first or last point selected, press the"
-				" E key to add a new point.\n"
+				" 'V' key to add a new point.\n"
 				" - You can also add points to the middle of a path"
 				" by right-clicking on the line connecting two points.\n"
 				" - Select a point and press the 'Delete' key to delete it.\n"
 			);
 			
 			ImGui::TextWrapped("TODO: - List points, can reorder and reverse");
+			
+			if (ImGui::BeginListBox("##PathPointList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
+			{
+				sb_foreach(selectedPath->points, {
+					const bool is_selected = (each == gGui->selectedInstance);
+					snprintf(previewText, sizeof(previewText), "point %d", eachIndex);
+					
+					if (ImGui::Selectable(previewText, is_selected))
+						gGui->selectedInstance = each;
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				})
+				ImGui::EndListBox();
+			}
+			if (sb_count(selectedPath->points) > 1)
+			{
+				struct Instance *points = selectedPath->points;
+				struct Instance *selected = gGui->selectedInstance;
+				int num = sb_count(points);
+				
+				if (ImGui::Button("Reverse Path Direction"))
+				{
+					// ensure the same point will remain selected
+					// after reversing the order of points
+					gGui->selectedInstance = &points[
+						(num - 1) // last point in list
+						- (selected - points) // current
+					];
+					
+					// reverse the points
+					sb_reverse(points);
+				}
+				ImGui::SameLine();
+				HelpMarker(
+					"Reverses the order of all points on the path.\n"
+					"(aka: flips the path backwards; opposite direction)"
+				);
+				
+				if (ImGui::Button("Set Start Point") && selected != points)
+				{
+					// if last point is selected, simply reverse
+					if (selected == &sb_last(points))
+					{
+						sb_reverse(points);
+					}
+					else
+					{
+						sb_rotate(points, selected - points);
+					}
+					
+					gGui->selectedInstance = points;
+				}
+				ImGui::SameLine();
+				HelpMarker(
+					"Reorders path points such that the currently selected\n"
+					"point will be the first point on the path."
+				);
+			}
 			
 			if (ImGui::TreeNode("Danger Zone##Paths"))
 			{
