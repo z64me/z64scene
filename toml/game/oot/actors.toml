@@ -3485,6 +3485,11 @@
 	Index = 231
 	Category = "4"
 	Objects = [224]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x1B18)
+		Draw.Skeleton(0, 2)
+	"""
 
 [[Actor]]
 	Name = "Boss Ganondorf"
