@@ -1348,6 +1348,15 @@ bool WindowTryInstanceDelete(bool showModal)
 		
 		if (indexOf >= 0)
 		{
+			// don't allow deleting last point of path
+			if (gGui->selectedInstance->tab == INSTANCE_TAB_PATH
+				&& sb_count(*gGui->instanceList) == 1
+			)
+			{
+				GuiPushModal("Can't delete last point of path.");
+				return false;
+			}
+			
 			LogDebug("delete instance %d", indexOf);
 			sb_remove(*gGui->instanceList, indexOf);
 			
