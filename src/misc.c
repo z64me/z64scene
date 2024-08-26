@@ -1910,9 +1910,10 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 					
 					for (int k = 0; k < numPoints; ++k, elem += 6)
 					{
-						Vec3f tmp = { u16r(elem + 0), u16r(elem + 2), u16r(elem + 4) };
-						
-						sb_push(path.points, tmp);
+						sb_push(path.points, ((struct Instance) {
+							.pos = s16r3(elem),
+							INSTANCE_DEFAULT_PATHPOINT
+						}));
 					}
 					
 					sb_push(result->paths, path);

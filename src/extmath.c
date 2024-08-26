@@ -294,6 +294,57 @@ Vec3f Vec3f_FaceNormalToYawPitch64(Vec3f direction)
 	return angles;
 }
 
+Vec2f Vec2f_GetLineLineIntersection(Vec2f a1, Vec2f a2, Vec2f b1, Vec2f b2)
+{
+	// Calculate the direction vectors of the segments
+	Vec2f r = { a2.x - a1.x, a2.y - a1.y };
+	Vec2f s = { b2.x - b1.x, b2.y - b1.y };
+	Vec2f result = { NAN, NAN };
+	
+	// Calculate the denominator (r.x * s.y - r.y * s.x)
+	float denominator = r.x * s.y - r.y * s.x;
+	
+	// If the denominator is zero, the lines are parallel or collinear
+	if (denominator == 0.0f)
+		return result; // No intersection
+	
+	// Calculate the numerator for the two parameters
+	Vec2f a1b1 = { b1.x - a1.x, b1.y - a1.y };
+	float t = (a1b1.x * s.y - a1b1.y * s.x) / denominator;
+	float u = (a1b1.x * r.y - a1b1.y * r.x) / denominator;
+	
+	// Check if 0 <= t <= 1 and 0 <= u <= 1 for intersection within the segments
+	if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
+	{
+		// Calculate the intersection point
+		result.x = a1.x + t * r.x;
+		result.y = a1.y + t * r.y;
+		return result; // Segments intersect
+	}
+	
+	return result; // No intersection within the segments
+}
+
+Vec2f Vec2f_GetLineRectIntersection(Vec2f a, Vec2f b, Rect rect)
+{
+	Vec2f ul = { rect.x, rect.y };
+	Vec2f ur = { rect.x + rect.w, rect.y };
+	Vec2f ll = { rect.x, rect.y + rect.h };
+	Vec2f lr = { rect.x + rect.w, rect.y + rect.h };
+	Vec2f tmp;
+	
+	if (!isnan((tmp = Vec2f_GetLineLineIntersection(a, b, ul, ur)).x))
+		return tmp;
+	if (!isnan((tmp = Vec2f_GetLineLineIntersection(a, b, ul, ll)).x))
+		return tmp;
+	if (!isnan((tmp = Vec2f_GetLineLineIntersection(a, b, ur, lr)).x))
+		return tmp;
+	if (!isnan((tmp = Vec2f_GetLineLineIntersection(a, b, ll, lr)).x))
+		return tmp;
+	
+	return (Vec2f) { NAN, NAN };
+}
+
 /*
 f32 Math_DelSmoothStepToF(f32* pValue, f32 target, f32 fraction, f32 step, f32 minStep) {
 	step *= gDeltaTime;
@@ -1138,6 +1189,21 @@ Vec4s Vec4s_Median(Vec4s a, Vec4s b) {
 		vec.axis[i] = (a.axis[i] + b.axis[i]) * 0.5f;
 	
 	return vec;
+}
+
+Vec3f Vec3f_LERP(Vec3f a, Vec3f b, float amount)
+{
+	Vec3f vec;
+	
+	for (int i = 0; i < 3; i++)
+		vec.axis[i] = a.axis[i] + (b.axis[i] - a.axis[i]) * amount;
+	
+	return vec;
+}
+
+Vec2f Vec2f_GetLineSlope(Vec2f a, Vec2f b)
+{
+	return Vec2f_New(b.x - a.x, b.y - a.y);
 }
 
 Vec2f Vec2f_Normalize(Vec2f a) {

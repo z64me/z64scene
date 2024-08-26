@@ -131,6 +131,7 @@ extern "C" {
 #define TABNAME_ACTORS "Actors"
 #define TABNAME_DOORS "Doorways"
 #define TABNAME_SPAWNS "Spawns"
+#define TABNAME_PATHS "Pathways"
 
 #define DECL_POPUP(NAME) static bool isPopup##NAME##Queued = false;
 #define QUEUE_POPUP(NAME) isPopup##NAME##Queued = true;
@@ -1454,9 +1455,115 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 		}
 	},
 	new LinkedStringFunc{
-		"Pathways"
+		TABNAME_PATHS
 		, [](){
-			ImGui::TextWrapped("TODO: 'Pathways' tab");
+			
+			int numPaths = sb_count(gGui->sceneHeader->paths);
+			
+			ImGui::Text("%d pathways", numPaths);
+			
+			static struct ActorPath *selectedPath = 0;
+			
+			gGui->instanceList = &selectedPath->points;
+			
+			if (ImGui::Button("Add New Pathway"))
+			{
+				struct ActorPath *path = &sb_push(gGui->sceneHeader->paths, (struct ActorPath){});
+				
+				gGui->selectedInstance = &sb_push(path->points, ((struct Instance) {
+					.pos = gGui->newSpawnPos,
+					INSTANCE_DEFAULT_PATHPOINT
+				}));
+			}
+			
+			if (numPaths == 0)
+			{
+				ImGui::TextWrapped("No paths. Add a path to get started.");
+				return;
+			}
+			
+			ON_CHANGE(gGui->selectedInstance)
+			{
+				LogDebug("selected path point %p", gGui->selectedInstance);
+				selectedPath = 0;
+				sb_foreach_named(gGui->sceneHeader->paths, path, {
+					sb_foreach_named(path->points, point, {
+						if (point == gGui->selectedInstance)
+							selectedPath = path;
+					})
+				})
+				LogDebug("selecting path %p", selectedPath);
+			}
+			
+			char previewText[256] = "";
+			if (selectedPath)
+				snprintf(previewText, sizeof(previewText), "path %d", selectedPath - gGui->sceneHeader->paths);
+			if (ImGui::BeginCombo("##PathList##PathListCombo", previewText, 0))
+			{
+				for (int i = 0; i < numPaths; ++i)
+				{
+					const bool isSelected = (selectedPath - gGui->sceneHeader->paths) == i;
+					snprintf(previewText, sizeof(previewText), "path %d", i);
+					
+					if (ImGui::Selectable(previewText, isSelected))
+						selectedPath = &gGui->sceneHeader->paths[i];
+
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			
+			// if a new path has been selected, and a point within it
+			// does not already have focus, auto-select the first point
+			ON_CHANGE(selectedPath)
+			{
+				if (selectedPath
+					&& !(gGui->selectedInstance >= selectedPath->points
+						&& gGui->selectedInstance <= &sb_last(selectedPath->points)
+					)
+				)
+				{
+					gGui->selectedInstance = &selectedPath->points[0];
+				}
+			}
+			
+			if (selectedPath == 0)
+			{
+				ImGui::TextWrapped("No path is selected.");
+				return;
+			}
+			
+			ImGui::TextWrapped(
+				"Path Editing:\n"
+				"NOTE: A lot of this is still TODO, am brainstorming.\n"
+				" - Paths must always contain at least one point.\n"
+				" - With the first or last point selected, press the"
+				" E key to add a new point.\n"
+				" - You can also add points to the middle of a path"
+				" by right-clicking on the line connecting two points.\n"
+				" - Select a point and press the 'Delete' key to delete it.\n"
+			);
+			
+			ImGui::TextWrapped("TODO: - List points, can reorder and reverse");
+			
+			if (ImGui::TreeNode("Danger Zone##Paths"))
+			{
+				ImGui::TextWrapped(
+					"Warning:\n""Deleting a path can cause the indices of "
+					"other paths to change, and because actors commonly "
+					"reference paths by index, you will likely have to "
+					"update those actors accordingly, so please be mindful "
+					"of this when deleting paths."
+				);
+				if (ImGui::Button("Delete Selected Path"))
+				{
+					sb_remove(gGui->sceneHeader->paths, selectedPath - gGui->sceneHeader->paths);
+					selectedPath = 0;
+				}
+				ImGui::TreePop();
+			}
 		}
 	},
 	new LinkedStringFunc{
@@ -2388,6 +2495,7 @@ static void DrawSidebar(void)
 					case INSTANCE_TAB_ACTOR: tabName = TABNAME_ACTORS; break;
 					case INSTANCE_TAB_DOOR: tabName = TABNAME_DOORS; break;
 					case INSTANCE_TAB_SPAWN: tabName = TABNAME_SPAWNS; break;
+					case INSTANCE_TAB_PATH: tabName = TABNAME_PATHS; break;
 					default: Die("unknown tab type");
 				}
 				
@@ -2476,6 +2584,15 @@ static void DrawSidebar(void)
 					QUEUE_POPUP(AddNewInstanceSearch);
 					gAddNewInstanceSearchTab = INSTANCE_TAB_DOOR;
 				}
+				if (ImGui::Selectable("Create New Path Here"))
+				{
+					struct ActorPath *path = &sb_push(gGui->sceneHeader->paths, (struct ActorPath){});
+					
+					gGui->selectedInstance = &sb_push(path->points, ((struct Instance) {
+						.pos = gGui->newSpawnPos,
+						INSTANCE_DEFAULT_PATHPOINT
+					}));
+				}
 				if (ImGui::MenuItem("Paste Here", "Ctrl+V"))
 				{
 					WindowTryInstancePaste(true, false);
@@ -2508,6 +2625,23 @@ static void DrawSidebar(void)
 			if (ImGui::MenuItem("Duplicate", "Shift+D"))
 			{
 				WindowTryInstanceDuplicate();
+			}
+		}
+		// right-clicked on path line
+		else if (group == RENDERGROUP_PATHLINE)
+		{
+			if (ImGui::MenuItem("Subdivide Path Here"))
+			{
+				struct ActorPath *path = &gGui->sceneHeader->paths[gGui->rightClickedLinePathIndex];
+				sb_insert(path->points
+					, ((struct Instance) {
+						.pos = gGui->newSpawnPos,
+						INSTANCE_DEFAULT_PATHPOINT
+					})
+					, gGui->rightClickedLineIndex + 1
+				);
+				gGui->selectedInstance = &path->points[gGui->rightClickedLineIndex + 1];
+				gGui->instanceList = &path->points;
 			}
 		}
 		
