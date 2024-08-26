@@ -1647,6 +1647,19 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					selectedPath->isClosed = false;
 			}
 			
+			// copy-pasted from InstanceTab()
+			struct Instance *inst = gGui->selectedInstance;
+			ImGui::SeparatorText("Position");
+			int xpos = rintf(inst->pos.x);
+			int ypos = rintf(inst->pos.y);
+			int zpos = rintf(inst->pos.z);
+			int nudgeBy = (ImGui::GetIO().KeyShift) ? 20 : 1; // nudge by 20 if shift is held
+			int nudgeCtrl = nudgeBy; // ctrl has no effect
+			if (ImGui::InputInt("X##WaypointPos", &xpos, nudgeBy, nudgeCtrl)) inst->pos.x = xpos;
+			ImGui::SameLine(); HelpMarker("These buttons nudge farther\n""if you hold the Shift key.");
+			if (ImGui::InputInt("Y##WaypointPos", &ypos, nudgeBy, nudgeCtrl)) inst->pos.y = ypos;
+			if (ImGui::InputInt("Z##WaypointPos", &zpos, nudgeBy, nudgeCtrl)) inst->pos.z = zpos;
+			
 			if (ImGui::TreeNode("Danger Zone##Paths"))
 			{
 				ImGui::TextWrapped(
