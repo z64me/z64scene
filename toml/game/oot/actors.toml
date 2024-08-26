@@ -5802,6 +5802,11 @@
 	Index = 380
 	Category = "4"
 	Objects = [341]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x0970)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Push Block (Has Savepoint)"
