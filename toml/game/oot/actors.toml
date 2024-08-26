@@ -2211,6 +2211,10 @@
 	Index = 130
 	Category = "6"
 	Objects = [134]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Mesh(0x06000000)
+	"""
 
 [[Actor]]
 	Name = "Talon"
