@@ -1923,7 +1923,6 @@ static void private_SceneParseAddHeader(struct Scene *scene, uint32_t addr)
 							, sizeof(Vec3f)
 						)
 					);
-						
 					
 					sb_push(result->paths, path);
 				}

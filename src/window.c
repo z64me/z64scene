@@ -2516,7 +2516,7 @@ void WindowMainLoop(const char *sceneFn)
 	
 	// glfw window creation
 	// --------------------
-	window = glfwCreateWindow(WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT, "z64viewer", NULL, NULL);
+	window = glfwCreateWindow(WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT, "z64scene", NULL, NULL);
 	if (window == NULL)
 	{
 		Die("Failed to create GLFW window");
