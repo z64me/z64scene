@@ -5796,6 +5796,10 @@
 	Index = 379
 	Category = "4"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Treasure Chest Shop Man"
@@ -6870,6 +6874,10 @@
 	Index = 457
 	Category = "6"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Bonooru the Scarecrow"
@@ -6877,6 +6885,10 @@
 	Category = "4"
 	Notes = "//Green Navi spot\n???? Switch Flag"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Song of Time Effect"
