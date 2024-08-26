@@ -1242,6 +1242,25 @@ bool WindowDrawLine3D(Vec3f a3D, Vec3f b3D)
 			isHovered = true;
 		}
 		
+		// draw arrow
+		if (true)
+		{
+			Vec2f slope = Vec2f_Normalize(Vec2f_GetLineSlope(start2D, end2D));
+			Vec2f invert = { -slope.y, slope.x };
+			int spread = 15;
+			int length = 15;
+			float thickness = 10;
+			Vec2f base = Vec2f_Add(end2D, Vec2f_MulVal(slope, -length));
+			Vec2f wings[] = {
+				Vec2f_Add(base, Vec2f_MulVal(invert, spread)),
+				Vec2f_Add(base, Vec2f_MulVal(invert, -spread))
+			};
+			for (int i = 0; i < ARRAY_COUNT(wings); ++i)
+				GuiPushLine(UNFOLD_VEC2(wings[i]), UNFOLD_VEC2(end2D), 0x00000080, thickness + 2); // outline
+			for (int i = 0; i < ARRAY_COUNT(wings); ++i)
+				GuiPushLine(UNFOLD_VEC2(wings[i]), UNFOLD_VEC2(end2D), innerColor, thickness);
+		}
+		
 		GuiPushLine(UNFOLD_VEC2(start2D), UNFOLD_VEC2(end2D), 0x00000080, 7.0f); // outline
 		GuiPushLine(UNFOLD_VEC2(start2D), UNFOLD_VEC2(end2D), innerColor, 5.0f);
 	}
