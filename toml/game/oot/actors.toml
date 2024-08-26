@@ -1753,6 +1753,10 @@
 	Index = 92
 	Category = "1"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x060048A8)
+	"""
 
 [[Actor]]
 	Name = "Blue Warp"
