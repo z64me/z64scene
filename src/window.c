@@ -2984,8 +2984,16 @@ void WindowMainLoop(const char *sceneFn)
 			gInput.mouse.isControllingCamera = false;
 
 		if (isRaycasting)
+		{
 			worldRayData.isSelectingInstance = true,
 			worldRayData.renderGroup = RENDERGROUP_INST;
+			
+			// fixes long-standing bug where Ctrl-snapping instance
+			// onto other instance would cause both to be selected
+			// and behave unpredictably
+			if (!GizmoIsIdle(gState.gizmo))
+				worldRayData.isSelectingInstance = false;
+		}
 		
 		// keep
 		if (!gKeepData)
