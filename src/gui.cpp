@@ -1514,6 +1514,20 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::Checkbox("Hide unselected paths", &gGui->hideUnselectedPaths);
+			ImGui::SameLine();
+			HelpMarker(
+				"Enabling this checkbox will hide all paths in the\n"
+				"viewport except for the one selected in the box above.\n"
+				"Very helpful in scenes that contain many paths."
+			);
+			/*
+			if (selectedPath)
+			{
+				ImGui::SameLine();
+				ImGui::Checkbox("Hide", &selectedPath->isHidden);
+			}
+			*/
 			
 			// if a new path has been selected, and a point within it
 			// does not already have focus, auto-select the first point
@@ -1550,6 +1564,17 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				" - Press the 'Delete' key to delete a selected waypoint.\n"
 			);
 			
+			ImGui::Text(" ");
+			ImGui::Text("Path Properties:");
+			ImGui::SameLine();
+			HelpMarker(
+				"These are only used in MM, not OoT. How they\n"
+				"are used is not well-documented at this time."
+			);
+			PickDecimalValue("additionalPathIndex##PathEditor", selectedPath->additionalPathIndex);
+			PickDecimalValue("customValue##PathEditor", selectedPath->customValue);
+			
+			ImGui::SeparatorText("Path Points");
 			if (ImGui::BeginListBox("##PathPointList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
 			{
 				sb_foreach(selectedPath->points, {

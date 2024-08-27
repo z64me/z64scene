@@ -3027,6 +3027,10 @@ void WindowMainLoop(const char *sceneFn)
 		n64_draw_dlist(gfxCyan);
 		if (gGui->sceneHeader)
 			sb_foreach(gGui->sceneHeader->paths, {
+				//if (each->isHidden) continue;
+				if (gGui->hideUnselectedPaths
+					&& &each->points != gGui->instanceList
+				) continue;
 				DrawInstanceList(&each->points);
 				// render lines only for selected path
 				if (&each->points == gGui->instanceList) {

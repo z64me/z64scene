@@ -74,6 +74,7 @@ struct GuiInterop
 	int selectedDayIndex;
 	uint16_t halfDayBits;
 	bool isMM;
+	bool hideUnselectedPaths;
 	
 	bool clipboardHasInstance;
 	struct Instance clipboardInstance;
