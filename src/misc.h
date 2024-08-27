@@ -522,6 +522,7 @@ struct ActorPath
 	uint16_t customValue; // mm only
 	sb_array(struct Instance, points);
 	bool isClosed;
+	//bool isHidden;
 };
 
 struct SceneHeader

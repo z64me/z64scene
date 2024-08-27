@@ -1514,6 +1514,20 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				}
 				ImGui::EndCombo();
 			}
+			ImGui::Checkbox("Hide unselected paths", &gGui->hideUnselectedPaths);
+			ImGui::SameLine();
+			HelpMarker(
+				"Enabling this checkbox will hide all paths in the\n"
+				"viewport except for the one selected in the box above.\n"
+				"Very helpful in scenes that contain many paths."
+			);
+			/*
+			if (selectedPath)
+			{
+				ImGui::SameLine();
+				ImGui::Checkbox("Hide", &selectedPath->isHidden);
+			}
+			*/
 			
 			// if a new path has been selected, and a point within it
 			// does not already have focus, auto-select the first point
