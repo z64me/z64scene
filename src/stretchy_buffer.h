@@ -214,6 +214,9 @@
 #define sb_clear  stb_sb_clear
 #define sb_trim   stb_sb_trim
 #define sb_new    stb_sb_new
+#define sb_reverse stb_sb_reverse
+#define sb_reverse_section stb_sb_reverse_section
+#define sb_rotate stb_sb_rotate
 #define sb_swap   stb_sb_swap
 #define sb_swap_safe stb_sb_swap_safe
 #define sb_contains stb_sb_contains
@@ -288,6 +291,39 @@
 	for (int i = index; i < stb__sbn(a) - 1; ++i) \
 		(a)[i] = (a)[i + 1]; \
 	stb__sbn(a)--; \
+}
+
+#define stb_sb_reverse_section(X, START, END) if (stb_sb_count(X) > 1) { \
+	int start = START; \
+	int end = END; \
+	while (start < end) { \
+		typeof(*(X)) tmp = X[start]; \
+		X[start] = X[end]; \
+		X[end] = tmp; \
+		++start; \
+		--end; \
+	} \
+}
+
+#define stb_sb_reverse(X) stb_sb_reverse_section(X, 0, stb_sb_count(X) - 1)
+/*
+#define stb_sb_reverse(X) if (sb_count(X) > 1) { \
+	int num = sb_count(X); \
+	for (int i = 0; i < num / 2; ++i) { \
+		typeof(*(X)) tmp = X[i]; \
+		X[i] = X[(num - 1) - i]; \
+		X[(num - 1) - i] = tmp; \
+	} \
+}
+*/
+
+// moves array left so that index 'D' is moved to beginning
+#define stb_sb_rotate(X, D) if (sb_count(X) > 1) { \
+	int size = sb_count(X); \
+	int nudgeIndex = (D) % size; \
+	sb_reverse_section(X, 0, nudgeIndex - 1); \
+	sb_reverse_section(X, nudgeIndex, size - 1); \
+	sb_reverse(X); \
 }
 
 #define stb__sbraw(a) ((int *) (void *) (a) - SB_HEADER_COUNT)

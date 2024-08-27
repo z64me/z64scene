@@ -296,6 +296,8 @@ void BoundBox_Adjust3F(BoundBox* bbox, Vec3f point);
 void BoundBox_Adjust2F(BoundBox* bbox, Vec2f point);
 
 bool Vec2f_PointInShape(Vec2f p, Vec2f* poly, u32 numPoly);
+Vec2f Vec2f_GetLineLineIntersection(Vec2f a1, Vec2f a2, Vec2f b1, Vec2f b2);
+Vec2f Vec2f_GetLineRectIntersection(Vec2f a1, Vec2f a2, Rect rect);
 
 Vec3f Vec3f_Cross(Vec3f a, Vec3f b);
 Vec3s Vec3s_Cross(Vec3s a, Vec3s b);
@@ -395,6 +397,10 @@ Vec4f Vec4f_Median(Vec4f a, Vec4f b);
 Vec2s Vec2s_Median(Vec2s a, Vec2s b);
 Vec3s Vec3s_Median(Vec3s a, Vec3s b);
 Vec4s Vec4s_Median(Vec4s a, Vec4s b);
+
+Vec3f Vec3f_LERP(Vec3f a, Vec3f b, float amount);
+
+Vec2f Vec2f_GetLineSlope(Vec2f a, Vec2f b);
 
 Vec2f Vec2f_Normalize(Vec2f a);
 Vec3f Vec3f_Normalize(Vec3f a);

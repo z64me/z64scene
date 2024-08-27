@@ -81,6 +81,14 @@ struct CutsceneOot;
 }
 #define INSTANCE_PREV_INIT INSTANCE_PREV_INIT_UUID(InstanceNewUuid())
 
+#define INSTANCE_DEFAULT_PATHPOINT \
+	.tab = INSTANCE_TAB_PATH, \
+	.mm = { \
+		.halfDayBits = 0xffff, \
+	}, \
+	.prev = INSTANCE_PREV_INIT, \
+
+
 #define for_in(index, count) for (int index = 0; index < count; ++index)
 
 #define CONCAT_(A, B) A##B
@@ -413,6 +421,7 @@ enum InstanceTab
 	INSTANCE_TAB_ACTOR = 0,
 	INSTANCE_TAB_DOOR,
 	INSTANCE_TAB_SPAWN,
+	INSTANCE_TAB_PATH,
 	INSTANCE_TAB_COUNT,
 };
 
@@ -511,7 +520,8 @@ struct ActorPath
 	//uint8_t numPoints; // unused b/c sb_array() has sb_count()
 	uint8_t additionalPathIndex; // mm only
 	uint16_t customValue; // mm only
-	sb_array(Vec3f, points);
+	sb_array(struct Instance, points);
+	bool isClosed;
 };
 
 struct SceneHeader

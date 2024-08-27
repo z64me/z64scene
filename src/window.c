@@ -313,6 +313,36 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 				&& SHORTCUT_CHECKS
 			)
 				WindowTryInstancePaste(true, true);
+			// V
+			else if (!(mods & GLFW_MOD_CONTROL)
+				&& SHORTCUT_CHECKS
+			) {
+				// when path editing, 'V' key adds points
+				if (gGui->selectedInstance
+					&& gGui->selectedInstance->tab == INSTANCE_TAB_PATH
+				) {
+					struct Instance tmp = {
+						.pos = gGui->selectedInstance->pos,
+						INSTANCE_DEFAULT_PATHPOINT
+					};
+					
+					// first point selected in list w/ > 1 points: prepend
+					if (sb_count(*(gGui->instanceList)) > 1
+						&& gGui->selectedInstance == *(gGui->instanceList)
+					) {
+						sb_insert(*(gGui->instanceList), tmp, 0);
+						gGui->selectedInstance = *(gGui->instanceList);
+					}
+					// append
+					else {
+						sb_push(*(gGui->instanceList), tmp);
+						gGui->selectedInstance = &sb_last(*(gGui->instanceList));
+					}
+					
+					GuiPushModal("Inserted path point.");
+					GizmoSetupMove(gState.gizmo);
+				}
+			}
 			break;
 		
 		case GLFW_KEY_X:
@@ -1123,6 +1153,121 @@ Vec2f WindowGetLocalScreenPos(Vec3f point)
 	);
 }
 
+Vec4f WindowGetLocalScreenPos4(Vec3f point)
+{
+	f32 w = gState.winWidth * 0.5f;
+	f32 h = gState.winHeight * 0.5f;
+	Vec4f pos;
+	
+	Matrix_MultVec3fToVec4f_Ext(&point, &pos, &gState.projViewMtx);
+	
+	return Vec4f_New(
+		w + (pos.x / pos.w) * w,
+		h - (pos.y / pos.w) * h,
+		pos.z,
+		pos.w
+	);
+}
+
+Vec2f WindowTryCursorVsLine2D(Vec2f start2D, Vec2f end2D)
+{
+	Vec2f slope = Vec2f_Normalize(Vec2f_GetLineSlope(start2D, end2D));
+	Vec2f invert = { -slope.y, slope.x };
+	int dist = 10;
+	Vec2f mouseStart = {
+		gInput.mouse.pos.x + invert.x * dist,
+		gInput.mouse.pos.y + invert.y * dist
+	};
+	Vec2f mouseEnd = {
+		gInput.mouse.pos.x - invert.x * dist,
+		gInput.mouse.pos.y - invert.y * dist
+	};
+	
+	//GuiPushLine(UNFOLD_VEC2(mouseStart), UNFOLD_VEC2(mouseEnd), -1, 1.0f);
+	
+	return Vec2f_GetLineLineIntersection(
+		start2D,
+		end2D,
+		mouseStart,
+		mouseEnd
+	);
+}
+
+bool WindowDrawLine3D(Vec3f a3D, Vec3f b3D)
+{
+	Vec3f start3D = a3D; // start/end points in 3D space
+	Vec3f end3D = b3D;
+	Vec4f start = WindowGetLocalScreenPos4(a3D); // start/end points in 2D space
+	Vec4f end = WindowGetLocalScreenPos4(b3D);
+	bool isHovered = false;
+	
+	// one or both points not in front of camera
+	if (start.w <= 0 || end.w <= 0)
+	{
+		float step = 1.0 / Vec3f_DistXYZ(a3D, b3D);
+		Vec3f prev = a3D;
+		step *= 10; // 3d worldspace units (1 = precise, 10 = fast)
+		bool unknownEnd = end.w <= 0;
+		for (float amount = 0; amount <= 1; amount += step)
+		{
+			Vec3f next = Vec3f_LERP(a3D, b3D, amount);
+			Vec4f newEnd;
+			Vec4f newStart;
+			// first valid start-point
+			if (start.w <= 0 && (newStart = WindowGetLocalScreenPos4(prev)).w > 0)
+				start = newStart, start3D = prev;
+			// last valid end-point
+			if (unknownEnd && (newEnd = WindowGetLocalScreenPos4(next)).w > 0)
+				end = newEnd, end3D = next;
+			prev = next;
+		}
+	}
+	
+	// both points are in front of the camera
+	if (start.w > 0 && end.w > 0)
+	{
+		Vec2f start2D = { UNFOLD_VEC2(start) };
+		Vec2f end2D = { UNFOLD_VEC2(end) };
+		uint32_t innerColor = 0xffffffff;
+		Vec2f result;
+		
+		// right-click while hovering on a path to subdivide it
+		if (GizmoIsIdle(gState.gizmo) && !isnan((result = WindowTryCursorVsLine2D(start2D, end2D)).x))
+		{
+			innerColor = 0x00ff00ff;
+			worldRayData.renderGroupClicked = RENDERGROUP_PATHLINE;
+			float dist = Vec2f_DistXZ(start2D, result) / Vec2f_DistXZ(start2D, end2D);
+			dist = clamp(dist, 0.10, 0.90); // don't spawn too close to endpoints
+			worldRayData.pos = Vec3f_LERP(start3D, end3D, dist);
+			isHovered = true;
+		}
+		
+		// draw arrow
+		if (true)
+		{
+			Vec2f slope = Vec2f_Normalize(Vec2f_GetLineSlope(start2D, end2D));
+			Vec2f invert = { -slope.y, slope.x };
+			int spread = 15;
+			int length = 15;
+			float thickness = 10;
+			Vec2f base = Vec2f_Add(end2D, Vec2f_MulVal(slope, -length));
+			Vec2f wings[] = {
+				Vec2f_Add(base, Vec2f_MulVal(invert, spread)),
+				Vec2f_Add(base, Vec2f_MulVal(invert, -spread))
+			};
+			for (int i = 0; i < ARRAY_COUNT(wings); ++i)
+				GuiPushLine(UNFOLD_VEC2(wings[i]), UNFOLD_VEC2(end2D), 0x00000080, thickness + 2); // outline
+			for (int i = 0; i < ARRAY_COUNT(wings); ++i)
+				GuiPushLine(UNFOLD_VEC2(wings[i]), UNFOLD_VEC2(end2D), innerColor, thickness);
+		}
+		
+		GuiPushLine(UNFOLD_VEC2(start2D), UNFOLD_VEC2(end2D), 0x00000080, 7.0f); // outline
+		GuiPushLine(UNFOLD_VEC2(start2D), UNFOLD_VEC2(end2D), innerColor, 5.0f);
+	}
+	
+	return isHovered;
+}
+
 Vec4f WindowGetLocalScreenVec(Vec3f point)
 {
 	Vec4f pos;
@@ -1203,12 +1348,29 @@ bool WindowTryInstanceDelete(bool showModal)
 		
 		if (indexOf >= 0)
 		{
+			// don't allow deleting last point of path
+			if (gGui->selectedInstance->tab == INSTANCE_TAB_PATH
+				&& sb_count(*gGui->instanceList) == 1
+			)
+			{
+				GuiPushModal("Can't delete last point of path.");
+				return false;
+			}
+			
 			LogDebug("delete instance %d", indexOf);
 			sb_remove(*gGui->instanceList, indexOf);
 			
 			GizmoSetupIdle(gState.gizmo);
 			GizmoRemoveChildren(gState.gizmo);
-			gGui->selectedInstance = 0;
+			
+			// prevent path from being deselected when deleting waypoints
+			if (gGui->selectedInstance->tab == INSTANCE_TAB_PATH)
+			{
+				if (gGui->selectedInstance != *gGui->instanceList)
+					gGui->selectedInstance -= 1;
+			}
+			else
+				gGui->selectedInstance = 0;
 			
 			if (showModal)
 				GuiPushModal("Deleted instance");
@@ -2362,7 +2524,7 @@ void WindowMainLoop(const char *sceneFn)
 	
 	// glfw window creation
 	// --------------------
-	window = glfwCreateWindow(WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT, "z64viewer", NULL, NULL);
+	window = glfwCreateWindow(WINDOW_INITIAL_WIDTH, WINDOW_INITIAL_HEIGHT, "z64scene", NULL, NULL);
 	if (window == NULL)
 	{
 		Die("Failed to create GLFW window");
@@ -2830,8 +2992,16 @@ void WindowMainLoop(const char *sceneFn)
 			gInput.mouse.isControllingCamera = false;
 
 		if (isRaycasting)
+		{
 			worldRayData.isSelectingInstance = true,
 			worldRayData.renderGroup = RENDERGROUP_INST;
+			
+			// fixes long-standing bug where Ctrl-snapping instance
+			// onto other instance would cause both to be selected
+			// and behave unpredictably
+			if (!GizmoIsIdle(gState.gizmo))
+				worldRayData.isSelectingInstance = false;
+		}
 		
 		// keep
 		if (!gKeepData)
@@ -2846,12 +3016,54 @@ void WindowMainLoop(const char *sceneFn)
 		n64_draw_dlist(matBlank);
 		static GbiGfx gfxGreen[] = { gsDPSetPrimColor(0, 0, 0, 255, 0, 255), gsSPEndDisplayList() };
 		static GbiGfx gfxRed[] = { gsDPSetPrimColor(0, 0, 255, 0, 0, 255), gsSPEndDisplayList() };
+		static GbiGfx gfxCyan[] = { gsDPSetPrimColor(0, 0, 0, 255, 255, 255), gsSPEndDisplayList() };
 		n64_draw_dlist(gfxEnableXray);
 		DrawInstanceList(gGui->actorList);
 		n64_draw_dlist(gfxGreen);
 		DrawInstanceList(gGui->spawnList);
 		n64_draw_dlist(gfxRed);
 		DrawInstanceList(gGui->doorList);
+		// paths
+		n64_draw_dlist(gfxCyan);
+		if (gGui->sceneHeader)
+			sb_foreach(gGui->sceneHeader->paths, {
+				DrawInstanceList(&each->points);
+				// render lines only for selected path
+				if (&each->points == gGui->instanceList) {
+					for (int i = 0; i < sb_count(each->points) - 1; ++i) {
+						Vec3f point = each->points[i].pos;
+						Vec3f next = each->points[i + 1].pos;
+						if (WindowDrawLine3D(point, next)) {
+							gGui->rightClickedLineIndex = i;
+							gGui->rightClickedLinePathIndex = eachIndex;
+							if (gInput.mouse.clicked.right) // hack to keep selection active
+								gGui->selectedInstance = &each->points[i];
+						}
+					}
+					// draw clickable marker at each point
+					if (GizmoIsIdle(gState.gizmo))
+						sb_foreach_named(each->points, point, {
+							Vec4f point2D = WindowGetLocalScreenPos4(point->pos);
+							if (point2D.w > 0) {
+								uint32_t innerColor = 0xffffffff;
+								float cursorDist = Vec2f_DistXZ(
+									(Vec2f) { UNFOLD_VEC2(point2D) },
+									(Vec2f) { UNFOLD_VEC2(gInput.mouse.pos) }
+								);
+								// markers are clickable
+								if (cursorDist < 10) {
+									innerColor = 0x00ff00ff;
+									if (gInput.mouse.clicked.left
+										|| gInput.mouse.clicked.right
+									)
+										gGui->selectedInstance = point;
+								}
+								GuiPushPointX(point2D.x, point2D.y, 0x00000080, 6, 6); // outline
+								GuiPushPointX(point2D.x, point2D.y, innerColor, 2, 5);
+							}
+						})
+				}
+			})
 		n64_draw_dlist(gfxDisableXray);
 		
 		n64_set_tri_callback(0, 0);
