@@ -1362,7 +1362,15 @@ bool WindowTryInstanceDelete(bool showModal)
 			
 			GizmoSetupIdle(gState.gizmo);
 			GizmoRemoveChildren(gState.gizmo);
-			gGui->selectedInstance = 0;
+			
+			// prevent path from being deselected when deleting waypoints
+			if (gGui->selectedInstance->tab == INSTANCE_TAB_PATH)
+			{
+				if (gGui->selectedInstance != *gGui->instanceList)
+					gGui->selectedInstance -= 1;
+			}
+			else
+				gGui->selectedInstance = 0;
 			
 			if (showModal)
 				GuiPushModal("Deleted instance");
