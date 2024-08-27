@@ -1550,6 +1550,17 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 				" - Press the 'Delete' key to delete a selected waypoint.\n"
 			);
 			
+			ImGui::Text(" ");
+			ImGui::Text("Path Properties:");
+			ImGui::SameLine();
+			HelpMarker(
+				"These are only used in MM, not OoT. How they\n"
+				"are used is not well-documented at this time."
+			);
+			PickDecimalValue("additionalPathIndex##PathEditor", selectedPath->additionalPathIndex);
+			PickDecimalValue("customValue##PathEditor", selectedPath->customValue);
+			
+			ImGui::SeparatorText("Path Points");
 			if (ImGui::BeginListBox("##PathPointList", ImVec2(-FLT_MIN, 5 * ImGui::GetTextLineHeightWithSpacing())))
 			{
 				sb_foreach(selectedPath->points, {
