@@ -5766,6 +5766,10 @@
 	Category = "4"
 	Notes = "+0x3F00 = Switch Flag"
 	Objects = [342]
+	RenderCode = """
+		Draw.SetScale(1.0)
+		Draw.Mesh(0x06001080)
+	"""
 	[[Actor.Property]]
 		Mask = 16128
 		Name = "Switch Flag"
