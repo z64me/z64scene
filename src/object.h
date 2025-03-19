@@ -10,6 +10,14 @@
 struct Object;
 struct ObjectLimbOverride;
 
+struct ObjectMesh
+{
+	// TODO could embed editable names eventually?
+	//char *name;
+	
+	uint32_t segAddr;
+};
+
 struct ObjectAnimation
 {
 	const struct Object *object;
@@ -29,6 +37,7 @@ struct ObjectSkeleton
 	/* 0x0004 */ uint8_t limbCount;
 	/* 0x0008 */ uint8_t limbMatrixCount; // unused
 	
+	// TODO eventually use ObjectMesh?
 	uint32_t segAddr;
 };
 
@@ -39,6 +48,7 @@ struct Object
 	
 	sb_array(struct ObjectSkeleton, skeletons);
 	sb_array(struct ObjectAnimation, animations);
+	sb_array(struct ObjectMesh, meshes);
 };
 
 struct ObjectLimbOverride
