@@ -15,6 +15,7 @@
 #ifdef __cplusplus
 extern "C" {
 #include "texanim.h"
+#include "object.h"
 #define CPP_FUNC_PREFIX extern "C"
 #else
 #define CPP_FUNC_PREFIX
@@ -82,6 +83,9 @@ struct GuiInterop
 	int subkeepChildren; // how many children the current subkeep object has
 	
 	double deltaTimeSec;
+	bool isZobjViewer;
+	struct Object *zobj;
+	int zobjCurrentDl;
 };
 
 #ifdef __cplusplus

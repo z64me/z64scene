@@ -23,6 +23,7 @@
 #include "rendercode.h"
 #include "z64convert.h"
 #include "fast64.h"
+#include "incbin.h"
 #include <n64.h>
 #include <n64types.h>
 
@@ -396,7 +397,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 			if ((mods & GLFW_MOD_CONTROL)
 				&& SHORTCUT_CHECKS
 			)
-				WindowOpenFile();
+				WindowOpenFile(0);
 			break;
 		
 		case GLFW_KEY_N:
@@ -427,9 +428,9 @@ static void drop_callback(GLFWwindow* window, int count, const char *files[])
 		*c = tolower(*c);
 	
 	if (!strcmp(extensionLower, "zscene"))
-		WindowLoadScene(filename);
+		WindowOpenFile(filename);
 	else if (!strcmp(extensionLower, "zobj"))
-		WindowLoadObject(filename);
+		WindowOpenFile(filename);
 	else if (!strcmp(extensionLower, "zanim"))
 		WindowLoadAnimation(filename);
 	else if (strstr("z64|zzrpl|rtl|toml", extensionLower))
@@ -910,16 +911,40 @@ void DoLights(ZeldaLight *light)
 
 static struct Scene **gSceneP;
 
-struct Scene *WindowOpenFile(void)
+// binary config file with minimal lighting setup
+INCBIN(LevelLightingProfiles, "embed/levelLightingProfiles.bin");
+
+struct Scene *WindowOpenFile(const char *fn)
 {
-	const char *fn;
-	
 	assert(gSceneP);
 	
-	fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "zscene\0*.zscene\0", NULL, NULL);
+	if (!fn)
+		fn = noc_file_dialog_open(NOC_FILE_DIALOG_OPEN, "zscene\0*.zscene\0zobj\0*.zobj\0", NULL, NULL);
 	
 	if (!fn)
 		return *gSceneP;
+	
+	// zobj loading routine
+	const char *ext = strrchr(fn, '.');
+	gGui->isZobjViewer = 0;
+	gGui->env.envPreviewEach = 0;
+	gGui->env.envPreviewMode = 0;
+	if (ext && !strcasecmp(ext, ".zobj"))
+	{
+		// builtin lighting profile for zobj viewing
+		static struct File todo;
+		if (!todo.size)
+			todo = (struct File) {
+				.data = (void*)gLevelLightingProfilesData,
+				.size = gLevelLightingProfilesSize,
+				.dataEnd = ((uint8_t*)gLevelLightingProfilesData) + gLevelLightingProfilesSize,
+			};
+		
+		gGui->isZobjViewer = true;
+		gGui->zobjCurrentDl = 0;
+		gGui->zobj = ObjectFromFilename(fn, 0x06); // TODO automatic segment maybe
+		return WindowLoadSceneExt(0, &todo, 0, 0x1C0); // TODO automatic size
+	}
 	
 	struct Scene *scene = WindowLoadScene(fn);
 	
@@ -2826,6 +2851,24 @@ void WindowMainLoop(const char *sceneFn)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06021F78);
 			else if (test->size == 0x1E250)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06016480);
+		}
+		
+		if (gGui->isZobjViewer && sb_count(gGui->zobj->meshes))
+		{
+			float scale = 0.1;
+			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
+			//Matrix_RotateY_s(rot.y, MTXMODE_APPLY);
+			//Matrix_RotateX_s(rot.x, MTXMODE_APPLY);
+			//Matrix_RotateZ_s(rot.z, MTXMODE_APPLY);
+			Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+			//SkelAnime_Update(&gSkelAnimeTest, gInput.delta_time_sec * (20.0));
+			//SkelAnime_Draw(&gSkelAnimeTest, SKELANIME_TYPE_FLEX, 0);
+			
+			struct Object *obj = gGui->zobj;
+			n64_segment_set(obj->segment, obj->file->data);
+			gSPSegment(POLY_OPA_DISP++, obj->segment, obj->file->data);
+			gSPDisplayList(POLY_OPA_DISP++, obj->meshes[gGui->zobjCurrentDl].segAddr);
 		}
 		
 		if (gSkelAnimeTest.skeleton && gSkelAnimeTest.animation)

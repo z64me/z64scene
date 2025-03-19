@@ -63,7 +63,8 @@
 			"stdlib.h": "c",
 			"extmath.h": "c",
 			"list": "cpp",
-			"file.h": "c"
+			"file.h": "c",
+			"window.h": "c"
 		}
 	}
 }

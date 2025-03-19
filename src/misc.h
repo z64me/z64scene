@@ -608,7 +608,7 @@ uint32_t InstanceNewUuid(void);
 struct Instance InstanceMakeWritable(struct Instance inst);
 struct Instance InstanceMakeReadable(struct Instance inst);
 
-struct Scene *WindowOpenFile(void);
+struct Scene *WindowOpenFile(const char *fn);
 #define WindowLoadSceneFromRom(FILE, START, END) WindowLoadSceneExt(0, FILE, START, END)
 #define WindowLoadScene(FN) WindowLoadSceneExt(FN, 0, 0, 0)
 struct Scene *WindowLoadSceneExt(const char *fn, struct File *romFile, uint32_t romStart, uint32_t romEnd);

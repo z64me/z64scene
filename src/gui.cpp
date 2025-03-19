@@ -2615,7 +2615,34 @@ static void DrawSidebar(void)
 		ImGui::SetNextWindowBgAlpha(0.95f/*0.35f*/); // translucent background
 	}
 	
-	if (ImGui::Begin("Sidebar", 0, window_flags))
+	// simplified sidebar when viewing zobj's, minimum viable product
+	if (gGui->isZobjViewer && ImGui::Begin("Sidebar", 0, window_flags))
+	{
+		struct Object *obj = gGui->zobj;
+		char previewText[256];
+		int numMeshes = sb_count(obj->meshes);
+		
+		snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[gGui->zobjCurrentDl].segAddr);
+		if (ImGui::BeginCombo("Display List##ZobjDlist##ZobjDlistCombo", previewText, 0))
+		{
+			
+			for (int i = 0; i < numMeshes; ++i)
+			{
+				const bool isSelected = gGui->zobjCurrentDl == i;
+				snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[i]);
+				
+				if (ImGui::Selectable(previewText, isSelected))
+					gGui->zobjCurrentDl = i;
+				
+				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+				if (isSelected)
+					ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+		IMGUI_COMBO_HOVER(gGui->zobjCurrentDl, numMeshes);
+	}
+	else if (ImGui::Begin("Sidebar", 0, window_flags))
 	{
 		static int which = 0;
 		
@@ -2929,7 +2956,7 @@ static void DrawMenuBar(void)
 			{
 				LogDebug("wow!");
 				
-				Scene *newScene = WindowOpenFile();
+				Scene *newScene = WindowOpenFile(0);
 				
 				if (newScene && newScene != gScene)
 				{
