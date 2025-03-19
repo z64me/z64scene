@@ -38,6 +38,13 @@ enum GuiEnvPreviewMode
 	GUI_ENV_PREVIEW_COUNT
 };
 
+enum ZobjViewMode
+{
+	ZOBJ_VIEW_MODE_NONE = 0,
+	ZOBJ_VIEW_MODE_MESH,
+	ZOBJ_VIEW_MODE_SKELETON,
+};
+
 struct GuiInterop
 {
 	struct {
@@ -86,6 +93,9 @@ struct GuiInterop
 	bool isZobjViewer;
 	struct Object *zobj;
 	int zobjCurrentDl;
+	int zobjCurrentSkel;
+	int zobjCurrentAnim;
+	enum ZobjViewMode zobjViewMode;
 };
 
 #ifdef __cplusplus

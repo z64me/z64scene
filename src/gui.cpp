@@ -2579,6 +2579,104 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 	},
 };
 
+static const LinkedStringFunc *gSidebarTabsZobj[] = {
+	new LinkedStringFunc{
+		"Meshes"
+		, [](){
+			struct Object *obj = gGui->zobj;
+			char previewText[256];
+			int numMeshes = sb_count(obj->meshes);
+			gGui->zobjViewMode = ZOBJ_VIEW_MODE_MESH;
+			
+			if (!numMeshes)
+			{
+				ImGui::Text("No meshes detected");
+				return;
+			}
+			
+			snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[gGui->zobjCurrentDl].segAddr);
+			if (ImGui::BeginCombo("Display List##ZobjDlist##ZobjDlistCombo", previewText, 0))
+			{
+				for (int i = 0; i < numMeshes; ++i)
+				{
+					const bool isSelected = gGui->zobjCurrentDl == i;
+					snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[i].segAddr);
+					
+					if (ImGui::Selectable(previewText, isSelected))
+						gGui->zobjCurrentDl = i;
+					
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			IMGUI_COMBO_HOVER(gGui->zobjCurrentDl, numMeshes);
+		}
+	},
+	new LinkedStringFunc{
+		"Skeletons"
+		, [](){
+			struct Object *obj = gGui->zobj;
+			char previewText[256];
+			int numSkels = sb_count(obj->skeletons);
+			int numAnims = sb_count(obj->animations);
+			gGui->zobjViewMode = ZOBJ_VIEW_MODE_SKELETON;
+			
+			if (!numSkels)
+			{
+				ImGui::Text("No skeletons detected");
+				return;
+			}
+			
+			snprintf(previewText, sizeof(previewText), "%08x", obj->skeletons[gGui->zobjCurrentSkel].segAddr);
+			if (ImGui::BeginCombo("Skeleton##ZobjSkelViewCombo", previewText, 0))
+			{
+				for (int i = 0; i < numSkels; ++i)
+				{
+					const bool isSelected = gGui->zobjCurrentSkel == i;
+					snprintf(previewText, sizeof(previewText), "%08x", obj->skeletons[i].segAddr);
+					
+					if (ImGui::Selectable(previewText, isSelected))
+						gGui->zobjCurrentSkel = i;
+					
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			IMGUI_COMBO_HOVER(gGui->zobjCurrentSkel, numSkels);
+			
+			if (!numAnims)
+			{
+				ImGui::Text("No animations detected");
+				return;
+			}
+			
+			snprintf(previewText, sizeof(previewText), "%08x", obj->animations[gGui->zobjCurrentAnim].segAddr);
+			if (ImGui::BeginCombo("Animation##ZobjSkelViewCombo", previewText, 0))
+			{
+				for (int i = 0; i < numAnims; ++i)
+				{
+					const bool isSelected = gGui->zobjCurrentAnim == i;
+					snprintf(previewText, sizeof(previewText), "%08x", obj->animations[i].segAddr);
+					
+					if (ImGui::Selectable(previewText, isSelected))
+						gGui->zobjCurrentAnim = i;
+					
+					// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+					if (isSelected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			IMGUI_COMBO_HOVER(gGui->zobjCurrentAnim, numAnims);
+		}
+	},
+	gSidebarTabs[10], // textures
+};
+
 static void DrawSidebar(void)
 {
 	ImGuiIO& io = ImGui::GetIO();
@@ -2618,29 +2716,23 @@ static void DrawSidebar(void)
 	// simplified sidebar when viewing zobj's, minimum viable product
 	if (gGui->isZobjViewer && ImGui::Begin("Sidebar", 0, window_flags))
 	{
-		struct Object *obj = gGui->zobj;
-		char previewText[256];
-		int numMeshes = sb_count(obj->meshes);
-		
-		snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[gGui->zobjCurrentDl].segAddr);
-		if (ImGui::BeginCombo("Display List##ZobjDlist##ZobjDlistCombo", previewText, 0))
-		{
-			
-			for (int i = 0; i < numMeshes; ++i)
-			{
-				const bool isSelected = gGui->zobjCurrentDl == i;
-				snprintf(previewText, sizeof(previewText), "%08x", obj->meshes[i]);
-				
-				if (ImGui::Selectable(previewText, isSelected))
-					gGui->zobjCurrentDl = i;
-				
-				// Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
-				if (isSelected)
-					ImGui::SetItemDefaultFocus();
+		static int which = 0;
+		int numTabs = sizeof(gSidebarTabsZobj) / sizeof(*gSidebarTabsZobj);
+		MultiLineTabBarGeneric(
+			"SidebarTabsZobj"
+			, reinterpret_cast<const void**>(gSidebarTabsZobj)
+			, numTabs
+			, 6
+			, &which
+			, [](const void **arr, const int index) -> const char* {
+				const LinkedStringFunc **ready = reinterpret_cast<const LinkedStringFunc**>(arr);
+				return ready[index]->name;
 			}
-			ImGui::EndCombo();
-		}
-		IMGUI_COMBO_HOVER(gGui->zobjCurrentDl, numMeshes);
+		);
+		//ImGui::TextWrapped(gSidebarTabsZobj[which]->name); // test
+		
+		// draw the selected sidebar
+		gSidebarTabsZobj[which]->func();
 	}
 	else if (ImGui::Begin("Sidebar", 0, window_flags))
 	{
@@ -3048,7 +3140,7 @@ static void DrawMenuBar(void)
 		ImGui::Text("%.02f fps", ImGui::GetIO().Framerate);
 		
 		// menu bar items, aligned right-to-left
-		if (gScene)
+		if (!gGui->isZobjViewer && gScene)
 		{
 			int pad = 10;
 			int right = ImGui::GetWindowWidth();

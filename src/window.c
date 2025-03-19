@@ -911,6 +911,25 @@ void DoLights(ZeldaLight *light)
 
 static struct Scene **gSceneP;
 
+static void SetupTextureViewerForObject(struct Object *obj)
+{
+	// get texture blobs
+	struct DataBlob *blobs = 0;
+	struct File *file = obj->file;
+	int segment = 0x06; // TODO this is hardcoded for the time being
+	
+	// get segments from skeletal dlists and meshes
+	DataBlobSegmentSetup(segment, file->data, file->dataEnd, 0);
+	sb_foreach(obj->skeletons, { blobs = MiscSkeletonDataBlobs(file, blobs, each->segAddr); });
+	sb_foreach(obj->meshes, { DataBlobSegmentsPopulateFromMeshNew(each->segAddr, 0); });
+	blobs = DataBlobSegmentGetHead(segment);
+	
+	// get texture blob array from data blobs
+	sb_array(struct TextureBlob, texBlobs) = 0;
+	TextureBlobSbArrayFromDataBlobs(file, blobs, &texBlobs);
+	(*gSceneP)->textureBlobs = texBlobs;
+}
+
 // binary config file with minimal lighting setup
 INCBIN(LevelLightingProfiles, "embed/levelLightingProfiles.bin");
 
@@ -927,6 +946,7 @@ struct Scene *WindowOpenFile(const char *fn)
 	// zobj loading routine
 	const char *ext = strrchr(fn, '.');
 	gGui->isZobjViewer = 0;
+	gGui->zobjViewMode = ZOBJ_VIEW_MODE_NONE;
 	gGui->env.envPreviewEach = 0;
 	gGui->env.envPreviewMode = 0;
 	if (ext && !strcasecmp(ext, ".zobj"))
@@ -943,7 +963,9 @@ struct Scene *WindowOpenFile(const char *fn)
 		gGui->isZobjViewer = true;
 		gGui->zobjCurrentDl = 0;
 		gGui->zobj = ObjectFromFilename(fn, 0x06); // TODO automatic segment maybe
-		return WindowLoadSceneExt(0, &todo, 0, 0x1C0); // TODO automatic size
+		struct Scene *scene = WindowLoadSceneExt(0, &todo, 0, 0x1C0); // TODO automatic size
+		SetupTextureViewerForObject(gGui->zobj);
+		return scene;
 	}
 	
 	struct Scene *scene = WindowLoadScene(fn);
@@ -1031,12 +1053,7 @@ struct Object *WindowLoadObject(const char *fn)
 		if (anim) SkelAnime_Update(&gSkelAnimeTest, 0);
 		//SkelAnime_Free(&gSkelAnimeTest);
 		
-		// get texture blobs
-		// very WIP, just want to view texture blobs for now
-		struct DataBlob *blobs = MiscSkeletonDataBlobs(obj->file, 0, obj->skeletons[0].segAddr);
-		sb_array(struct TextureBlob, texBlobs) = 0;
-		TextureBlobSbArrayFromDataBlobs(obj->file, blobs, &texBlobs);
-		(*gSceneP)->textureBlobs = texBlobs;
+		SetupTextureViewerForObject(obj);
 	}
 	
 	return obj;
@@ -2853,7 +2870,7 @@ void WindowMainLoop(const char *sceneFn)
 				gSPDisplayList(POLY_OPA_DISP++, 0x06016480);
 		}
 		
-		if (gGui->isZobjViewer && sb_count(gGui->zobj->meshes))
+		if (gGui->zobjViewMode == ZOBJ_VIEW_MODE_MESH && sb_count(gGui->zobj->meshes))
 		{
 			float scale = 0.1;
 			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
@@ -2870,8 +2887,23 @@ void WindowMainLoop(const char *sceneFn)
 			gSPSegment(POLY_OPA_DISP++, obj->segment, obj->file->data);
 			gSPDisplayList(POLY_OPA_DISP++, obj->meshes[gGui->zobjCurrentDl].segAddr);
 		}
+		else if (gGui->zobjViewMode == ZOBJ_VIEW_MODE_SKELETON && sb_count(gGui->zobj->skeletons))
+		{
+			float scale = 0.1;
+			Matrix_Translate(0, 0, 0, MTXMODE_NEW);
+			Matrix_Scale(scale, scale, scale, MTXMODE_APPLY);
+			gSPMatrix(POLY_OPA_DISP++, Matrix_NewMtxN64(), G_MTX_MODELVIEW | G_MTX_LOAD);
+			
+			struct Object *obj = gGui->zobj;
+			struct ObjectAnimation *anim = 0;
+			if (sb_count(obj->animations)) anim = &obj->animations[gGui->zobjCurrentAnim];
+			SkelAnime_Init(&gSkelAnimeTest, obj, &obj->skeletons[gGui->zobjCurrentSkel], anim);
+			if (anim) SkelAnime_Update(&gSkelAnimeTest, gInput.delta_time_sec * (20.0)); // anims made for 20fps
+			SkelAnime_Draw(&gSkelAnimeTest, SKELANIME_TYPE_FLEX, 0);
+		}
 		
-		if (gSkelAnimeTest.skeleton && gSkelAnimeTest.animation)
+		// old viewer
+		if (false && gSkelAnimeTest.skeleton && gSkelAnimeTest.animation)
 		{
 			float scale = 0.02;
 			Matrix_Translate(-100, 0, 0, MTXMODE_NEW);
