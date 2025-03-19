@@ -307,6 +307,15 @@
 	Category = "6"
 	Notes = "Hardcoded cutscene camera points to -19, -2 ,-1000"
 	Objects = [10]
+	RenderCode = """
+		Udata.textures = [ 0x17930, 0x19130 ] // Eyes Open, mouth closed
+		Draw.SetScale(0.04)
+		var textures = Udata.textures
+		Draw.PopulateSegment(0x08, textures[0])
+		Draw.PopulateSegment(0x0A, textures[1])
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 150 + 20, 0)
+		Draw.Skeleton(0, 2, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -346,7 +355,10 @@
 	Category = "5"
 	Notes = "First 2 digits: Rocks fired per volley"
 	Objects = [7]
-
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 3, 1)
+	"""
 [[Actor]]
 	Name = "Webs"
 	Index = 15
@@ -405,6 +417,10 @@
 	Index = 18
 	Category = "5"
 	Objects = [12]
+	RenderCode = """
+		Draw.SetScale(0.01875)
+		Draw.Skeleton(0, 6, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -793,6 +809,10 @@
 	Index = 25
 	Category = "6"
 	Objects = [19]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -931,6 +951,10 @@
 	Category = "5"
 	Notes = "+0xFF00 = Nullable Switch Flag Lizalfos miniboss spawns when entering room from door bound to this switch flag\nThe Lizalfos miniboss (Type 00 and 01) has special behavior to it.\nType 00 and 01 actors must be spawned together for the miniboss to be defeated.\nTo differentiate the two encounters (as both are in room 3), the switch flag is used. This flag matches the switch flag of the door used to enter the room"
 	Objects = [27]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(1, 0, 8)
+	"""
 	[[Actor.Property]]
 		Mask = 65280
 		Name = "Switch Flag (Nullable)"
@@ -991,6 +1015,13 @@
 	Index = 41
 	Category = "4"
 	Objects = [29]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0xA048) // Eye Right
+		Draw.PopulateSegment(0x09, 0xA048) // Eye Left
+		Draw.PopulateSegment(0x0A, 0x7608) // Mouth
+		Draw.Skeleton(0, 11)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -1051,6 +1082,12 @@
 	Index = 45
 	Category = "5"
 	Objects = [18]
+	RenderCode = """
+		Draw.SetScale(1.0)
+		Draw.SetGlobalRotation(0, Global.CamDirY + 0x8000, 0)
+		Draw.BuiltinSetupDL(66)
+		Draw.Mesh(0x06001000)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -1087,6 +1124,10 @@
 	Index = 47
 	Category = "5"
 	Objects = [31]
+	RenderCode = """
+		Draw.SetScale(0.02)
+		Draw.Skeleton(0, 2)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -1124,6 +1165,13 @@
 	Index = 52
 	Category = "5"
 	Objects = [33]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, [0x06000e08, 0x06001708, 0x06002008, 0x06002908, 0x06003208, 0x06003b08, 0x06004408, 0x06004d08][(Global.GameplayFrames % 8).floor])
+		Draw.SetGlobalRotation(0, Global.CamDirY + 0x8000, 0)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 150 + 20, 0)
+		Draw.Skeleton(0, 2, 0.25)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -1356,6 +1404,10 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag\n      Spawns when a specific switch flag is set\nOut-of-bounds Plane (typ.)"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06001350)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -1659,6 +1711,11 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag to make the platform rise more, hardcoded cutscene camera points to 420,-180 ,-1180"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x100) * 900 + 600, 0)
+		Draw.Mesh(0x060037B8)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Switch Flag"
@@ -1670,6 +1727,10 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag"
 	Objects = [394]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000040)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -1707,6 +1768,10 @@
 	Index = 92
 	Category = "1"
 	Objects = [43]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x060048A8)
+	"""
 
 [[Actor]]
 	Name = "Blue Warp"
@@ -1779,6 +1844,12 @@
 	Category = "5"
 	Notes = "0xFF = Nuts shot per volley"
 	Objects = [74]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x06002298)  // gDekuNutsFlowerDL
+		Draw.Skeleton(0, 5, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Nuts shot per volley"
@@ -1797,6 +1868,12 @@
 	Category = "1"
 	Notes = "+0x3F = Switch Flag"
 	Objects = [77]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.SetGlobalRotation(0, Global.GameplayFrames * 0x80, 0)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x060038d0) // gGTGRotatingRingPlatformDL
+	"""
 
 [[Actor]]
 	Name = "Statue Eyes"
@@ -1810,6 +1887,11 @@
 	Index = 99
 	Category = "5"
 	Objects = [86]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.SetLocalPosition(0, Math.SinS(Global.GameplayFrames * 0x60C) * 150 + 20, 0)
+		Draw.Skeleton(0, 4, 0.5)
+	"""
 
 [[Actor]]
 	Name = "Dragon Head Statue"
@@ -2103,6 +2185,10 @@
 	Category = "1"
 	Notes = "+0xF000 = Radius // + 1 * 20\n+0xF000 = Trap Range //Distance = v * 40 units (Type 0 and 1)\n+0x0001 = Move North //Type 0. Relative to Model Space before applying rotation\n+0x0002 = Move South //Type 0. Relative to Model Space before applying rotation\n+0x0004 = Move West //Type 0. Relative to Model Space before applying rotation\n+0x0008 = Move East //Type 0. Relative to Model Space before applying rotation\n+0x0F00 = Attack Speed (Units) //4-Way Attack glitches if speed != 0xF"
 	Objects = [133]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06001400)
+	"""
 	[[Actor.Property]]
 		Mask = 61440
 		Name = "Radius (Type 1 and 2)"
@@ -2148,6 +2234,10 @@
 	Index = 130
 	Category = "6"
 	Objects = [134]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Mesh(0x06000000)
+	"""
 
 [[Actor]]
 	Name = "Talon"
@@ -2155,6 +2245,11 @@
 	Category = "4"
 	Notes = "Text ID when he sleeps: 702A"
 	Objects = [136]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x7F80)
+		Draw.Skeleton(0, 1)
+	"""
 
 [[Actor]]
 	Name = "Dampe Grave Digging Game"
@@ -2193,6 +2288,10 @@
 	Category = "5"
 	Notes = "XX00: 05 in dodongo's cavern, 08 in ganon's castle entrance"
 	Objects = [139]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0, -0)
+	"""
 	[[Actor.Property]]
 		Mask = 65280
 		Name = "Unknown (use 07)"
@@ -2551,6 +2650,12 @@
 	Index = 157
 	Category = "1"
 	Objects = [162]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.BuiltinSetupDL(25)
+		Draw.Mesh(0x060001B0) // gGravestoneStoneDL
+		Draw.Mesh(0x060002A8) // gGravestoneEarthDL
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -2584,6 +2689,12 @@
 	Index = 161
 	Category = "4"
 	Objects = [163]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0xE3B8) // gRutoChildEyeOpenTex
+		Draw.PopulateSegment(0x09, 0xFA38) // gRutoChildMouthFrownTex
+		Draw.Skeleton(0, 13, 0.5) // gRutoChildSittingAnim
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -2811,6 +2922,10 @@
 	Category = "5"
 	Notes = "+0x1000 = Smaller size, height not affected by last two digits"
 	Objects = [172]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 1, 0)
+	"""
 	[[Actor.Property]]
 		Mask = 4096
 		Name = "Smaller Size"
@@ -3002,6 +3117,10 @@
 	Index = 197
 	Category = "5"
 	Objects = [181]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 3, 0)
+	"""
 
 [[Actor]]
 	Name = "Big Octorok"
@@ -3009,6 +3128,10 @@
 	Category = "5"
 	Notes = "Slicing it in the back will make it jump to the y location of its room, which is typically below most floors"
 	Objects = [351]
+	RenderCode = """
+		Draw.SetScale(0.033)
+		Draw.Skeleton(0, 2, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -3223,6 +3346,12 @@
 	Index = 217
 	Category = "4"
 	Objects = [208]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x09, 0x2970) // mouth neutral texture
+		Draw.PopulateSegment(0x08, 0x2570) // eye open texture
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Bombchu"
@@ -3373,6 +3502,11 @@
 	Index = 231
 	Category = "4"
 	Objects = [224]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x1B18)
+		Draw.Skeleton(0, 2)
+	"""
 
 [[Actor]]
 	Name = "Boss Ganondorf"
@@ -3666,6 +3800,12 @@
 	Index = 258
 	Category = "1"
 	Objects = [249]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.BuiltinSetupDL(66)
+		Draw.SetGlobalRotation(0, 16380, Global.GameplayFrames * 0x80)
+		Draw.Mesh(0x06000100) // gKakarikoWindmillSailsDL
+	"""
 
 [[Actor]]
 	Name = "Kakariko Village Well Crossbeams"
@@ -3719,6 +3859,10 @@
 	Category = "1"
 	Notes = "+0xFF = Switch Flag? //Hyrule Castle Puzzle. Note this can auto-solve itself"
 	Objects = [240]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000180)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Switch Flag (?)"
@@ -4205,6 +4349,10 @@
 	Category = "1"
 	Notes = "+0x1F00 = Path Id //1F00 = null\n+0x003F = Switch Flag\nZROT +0x0003 = Speed, Acceleration\n-0000 3.0, 0.3\n-0001 10.0, 0.5\n-0002 30.0, 0.5\n-0003 3.0, 0.3"
 	Objects = [286]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x06000650) // gMagicBeanSoftSoilDL
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -4224,6 +4372,10 @@
 	Category = "6"
 	Notes = "+0x8000 = Play Puzzle Solved When Destroyed\n+0x3F = Switch Flag"
 	Objects = [355]
+	RenderCode = """
+		Draw.SetScale(0.1)
+		Draw.Mesh(0x060009E0)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -4545,6 +4697,18 @@
 	Index = 309
 	Category = "6"
 	Objects = [292]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.BuiltinSetupDL(44)
+		Draw.Mesh(0x06000840)
+		Draw.Mesh(0x060008B0)
+		Draw.Mesh(0x06000BF0)
+		Draw.Mesh(0x06000C68)
+		Draw.Mesh(0x06000C88)
+		Draw.Mesh(0x06000CE0)
+		Draw.Mesh(0x06000D10)
+		Draw.Mesh(0x06000D50)
+	"""
 
 [[Actor]]
 	Name = "Dark Link's Illusion Room"
@@ -4623,7 +4787,13 @@
 	Index = 316
 	Category = "4"
 	Notes = "Text ID 503E as adult, gives you an egg"
-	Objects = [272]
+	Objects = [272, 197]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.UseAnimationsFromObjectSlot(1)
+		Draw.PopulateSegment(0x08, 0x08C8)
+		Draw.Skeleton(0, 3)
+	"""
 
 [[Actor]]
 	Name = "Medigoron"
@@ -4641,6 +4811,10 @@
 	Index = 318
 	Category = "4"
 	Objects = [295]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -4655,6 +4829,10 @@
 	Category = "4"
 	Notes = "Text ID 10B1 when sleeping"
 	Objects = [296]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -4810,6 +4988,13 @@
 	Index = 326
 	Category = "4"
 	Objects = [188]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x2F48)
+		Draw.PopulateSegment(0x09, 0x2F48)
+		Draw.PopulateSegment(0x0A, 0x3348)
+		Draw.Skeleton(0, 20)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -4851,18 +5036,30 @@
 	Index = 329
 	Category = "4"
 	Objects = [271]
+	RenderCode = """
+		Draw.SetScale(0.013)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Lake Hylia Doctor"
 	Index = 330
 	Category = "4"
 	Objects = [306]
-
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 [[Actor]]
 	Name = "Bombchu Bowling Girl"
 	Index = 331
 	Category = "4"
 	Objects = [352]
+	RenderCode = """
+		Draw.SetScale(0.013)
+		Draw.PopulateSegment(0x08, 0x4110)
+		Draw.Skeleton(0, 2)
+	"""
 
 [[Actor]]
 	Name = "Bombchu Bowling Pit"
@@ -4875,6 +5072,11 @@
 	Category = "4"
 	Notes = "+0x3F = Switch Flag"
 	Objects = [305]
+	RenderCode = """
+		Draw.SetScale(0.025)
+		Draw.PopulateSegment(0x08, 0x89A8) // gObjOwlEyeOpenTex
+		Draw.Skeleton(1, 4)
+	"""
 	[[Actor.Property]]
 		Mask = 63
 		Name = "Switch Flag"
@@ -4977,6 +5179,7 @@
 		}
 		Draw.SetScale(Udata.scale)
 		Draw.SetLocalPosition(0, Udata.yOffset, 0)
+		Draw.BuiltinSetupDL(66)
 		Draw.Mesh(Udata.mesh)
 	"""
 	[[Actor.Property]]
@@ -5438,6 +5641,11 @@
 	Category = "4"
 	Notes = "+0xFF = Path Id"
 	Objects = [325]
+	RenderCode = """
+		Draw.PopulateSegment(0x08, 0x06002130) // gGraveyardKidEyesOpenTex
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0, 1)
+	"""
 	[[Actor.Property]]
 		Mask = 255
 		Name = "Path Id"
@@ -5558,6 +5766,10 @@
 	Category = "4"
 	Notes = "+0x3F00 = Switch Flag"
 	Objects = [342]
+	RenderCode = """
+		Draw.SetScale(1.0)
+		Draw.Mesh(0x06001080)
+	"""
 	[[Actor.Property]]
 		Mask = 16128
 		Name = "Switch Flag"
@@ -5593,18 +5805,32 @@
 	Index = 378
 	Category = "9"
 	Objects = [339]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x1E188)
+		Draw.Skeleton(0, 7)
+	"""
 
 [[Actor]]
 	Name = "Scarecrow"
 	Index = 379
 	Category = "4"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Treasure Chest Shop Man"
 	Index = 380
 	Category = "4"
 	Objects = [341]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x08, 0x0970)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Push Block (Has Savepoint)"
@@ -5957,6 +6183,11 @@
 	Index = 405
 	Category = "5"
 	Objects = [360]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 4, 1)
+		Draw.BuiltinSetupDL(25)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -6598,12 +6829,22 @@
 	Index = 453
 	Category = "4"
 	Objects = [208]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.PopulateSegment(0x09, 0x3570) // mouth sad texture
+		Draw.PopulateSegment(0x08, 0x2570) // eye open texture
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Cow"
 	Index = 454
 	Category = "4"
 	Objects = [395]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0, 0.5)
+	"""
 	[[Actor.Property]]
 		Mask = 65535
 		Name = "Presets"
@@ -6653,6 +6894,10 @@
 	Index = 457
 	Category = "6"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Bonooru the Scarecrow"
@@ -6660,6 +6905,10 @@
 	Category = "4"
 	Notes = "//Green Navi spot\n???? Switch Flag"
 	Objects = [340]
+	RenderCode = """
+		Draw.SetScale(0.01)
+		Draw.Skeleton(0, 0)
+	"""
 
 [[Actor]]
 	Name = "Song of Time Effect"
