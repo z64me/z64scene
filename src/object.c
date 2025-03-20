@@ -25,6 +25,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	const struct File *file = obj->file;
 	const uint8_t *start = obj->file->data;
 	const uint8_t *end = obj->file->dataEnd;
+	const uint8_t *endAligned8 = start + (obj->file->size & 0xfffffff8); // 8 byte aligned
 	const uint32_t u24 = 0x00ffffff; // for masking lower 24 bits
 	
 	// find skeletons
@@ -279,7 +280,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	}
 	
 	// rudimentary display list search
-	for (const uint8_t *walk = end - 8; walk >= start; walk -= 8)
+	for (const uint8_t *walk = endAligned8 - 8; walk >= start; walk -= 8)
 	{
 		uint32_t hi = u32r(walk);
 		uint32_t lo = u32r(walk + 4);
