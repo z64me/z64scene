@@ -36,6 +36,7 @@ struct ObjectSkeleton
 	/* 0x0000 */ uint32_t limbAddrsSegAddr;
 	/* 0x0004 */ uint8_t limbCount;
 	/* 0x0008 */ uint8_t limbMatrixCount; // unused
+	bool isLod;
 	
 	// TODO eventually use ObjectMesh?
 	uint32_t segAddr;

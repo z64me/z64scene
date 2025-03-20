@@ -102,7 +102,7 @@ void SkelAnime_Update(SkelAnime* this, double deltaTimeFrames)
 	
 	float curFrame = this->curFrame;
 	
-	n64_segment_set(obj->segment, obj->file->data);
+	n64_segment_set(obj->segment, anim->object->file->data);
 	
 	this->endFrame = anim->numFrames - 1;
 	
