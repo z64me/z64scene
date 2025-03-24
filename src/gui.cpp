@@ -2734,6 +2734,10 @@ static void DrawSidebar(void)
 		// draw the selected sidebar
 		gSidebarTabsZobj[which]->func();
 	}
+	else if (!gGuiSettings.project && !gScene && ImGui::Begin("Sidebar", 0, window_flags))
+	{
+		ImGui::Text("No file has been loaded.");
+	}
 	else if (ImGui::Begin("Sidebar", 0, window_flags))
 	{
 		static int which = 0;
