@@ -428,6 +428,20 @@ uint32_t f32tou32(float v)
 	return *((uint32_t*)&v);
 }
 
+int ArrayGetIndexofMaxInt(int *array, int arrayLength)
+{
+	int maxIndex = 0;
+	
+	if (!array || arrayLength <= 0)
+		return -1;
+	
+	for (int i = 1; i < arrayLength; ++i)
+		if (array[i] > array[maxIndex])
+			maxIndex = i;
+	
+	return maxIndex;
+}
+
 #ifdef _WIN32
 #include <windows.h>
 #include <direct.h>

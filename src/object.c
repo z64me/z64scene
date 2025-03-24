@@ -541,8 +541,68 @@ struct Object *ObjectFromFilename(const char *filename, int segment)
 	
 	result->file = FileFromFilename(filename);
 	
-	// default
-	if (segment <= 0) segment = 0x06;
+	// automatic segment detection
+	if (segment <= 0)
+	{
+		int counts[N64_SEGMENT_MAX];
+		struct File *file = result->file;
+		uint8_t *end = file->dataEnd;
+		
+		memset(counts, 0, sizeof(counts));
+		for (uint8_t *walk = file->data; walk <= end - 16; walk += 8)
+		{
+			const uint8_t thisCmd = walk[0];
+			const uint8_t nextCmd = walk[8];
+			
+			// vertex load followed by triangle draw
+			if (thisCmd == G_VTX && (nextCmd == G_TRI1 || nextCmd == G_TRI2))
+			{
+				// try validating
+				const int vbuf = 64;
+				const uint8_t thisSeg = walk[4];
+				uint32_t hi = u32r(walk);
+				uint32_t lo = u32r(walk + 4);
+				uint16_t numv = (hi >> 12) & 0xfff;
+				uint16_t vbidx = ((hi & 0xfff) >> 1) - numv;
+				bool containsVertices = (
+					numv <= vbuf
+					&& vbidx <= vbuf - numv // sanity check whether write would overflow
+					&& (result->segment = thisSeg) < N64_SEGMENT_MAX
+					&& SegmentAddressIsValid(result, lo, 8) // technically only need align=4
+				);
+				bool containsGeometry = (
+					walk += 8
+					&& (hi = u32r(walk))
+					&& (lo = u32r(walk + 4))
+					&& walk[4] == 0
+					&& !(hi & 0x010101) // abc = even numbers
+					&& !(lo & 0x010101) // def = even numbers
+					&& walk[1] / 2 < vbuf
+					&& walk[2] / 2 < vbuf
+					&& walk[3] / 2 < vbuf
+					&& (
+						(nextCmd == G_TRI1 && !lo) // 05aabbcc 00000000
+						|| (nextCmd == G_TRI2 // 06aabbcc 00ddeeff
+							&& walk[5] / 2 < vbuf
+							&& walk[6] / 2 < vbuf
+							&& walk[7] / 2 < vbuf
+						)
+					)
+				);
+				
+				// increment the counter
+				if (containsVertices && containsGeometry)
+					counts[thisSeg] += 1;
+			}
+		}
+		
+		// whichever segment is most common will be the one
+		segment = ArrayGetIndexofMaxInt(counts, N64_ARRAY_COUNT(counts));
+		
+		// fall back to default if no matches
+		if (segment < 0 || !counts[segment])
+			segment = 0x06;
+	}
 	
 	result->segment = segment;
 	

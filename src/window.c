@@ -916,7 +916,9 @@ static void SetupTextureViewerForObject(struct Object *obj)
 	// get texture blobs
 	struct DataBlob *blobs = 0;
 	struct File *file = obj->file;
-	int segment = 0x06; // TODO this is hardcoded for the time being
+	int segment = obj->segment;
+	
+	// TODO support external texture segments
 	
 	// get segments from skeletal dlists and meshes
 	DataBlobSegmentSetup(segment, file->data, file->dataEnd, 0);
@@ -962,7 +964,7 @@ struct Scene *WindowOpenFile(const char *fn)
 		
 		gGui->isZobjViewer = true;
 		gGui->zobjCurrentDl = 0;
-		gGui->zobj = ObjectFromFilename(fn, 0x06); // TODO automatic segment maybe
+		gGui->zobj = ObjectFromFilename(fn, 0);
 		struct Scene *scene = WindowLoadSceneExt(0, &todo, 0, 0x1C0); // TODO automatic size
 		SetupTextureViewerForObject(gGui->zobj);
 		return scene;
