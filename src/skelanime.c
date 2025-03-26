@@ -51,6 +51,7 @@ static void SkelAnime_GetFrameData(const struct ObjectAnimation *anim, int frame
 	
 	for (int i = 0; i < limbCount; ++i, ++frameTable, ++jointIndices)
 	{
+		// TODO bounds checking, use zeros if OOB
 		Vec3s swapInd = { u16r3(jointIndices) };
 		
 		frameTable->x = u16r(swapInd.x >= limit ? &dynamicData[swapInd.x] : &staticData[swapInd.x]);

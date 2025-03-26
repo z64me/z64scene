@@ -964,6 +964,8 @@ struct Scene *WindowOpenFile(const char *fn)
 		
 		gGui->isZobjViewer = true;
 		gGui->zobjCurrentDl = 0;
+		gGui->zobjCurrentSkel = 0;
+		gGui->zobjCurrentAnim = 0;
 		gGui->zobj = ObjectFromFilename(fn, 0);
 		struct Scene *scene = WindowLoadSceneExt(0, &todo, 0, 0x1C0); // TODO automatic size
 		SetupTextureViewerForObject(gGui->zobj);
