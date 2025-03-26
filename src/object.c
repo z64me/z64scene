@@ -299,6 +299,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 			const int vbuf = 64; // only need 32 for f3dex2, but do 64 to support expanded microcodes
 			bool containsGeometry = false;
 			bool containsVertices = false;
+			bool containsBranchToOtherDlist = false;
 			
 			// walk backwards and sanity check opcodes until you find the start
 			for (walk -= 8; walk >= start; walk -= 8)
@@ -507,6 +508,8 @@ static void ObjectParseAfterLoad(struct Object *obj)
 							isValid = false;
 						else
 							isValid = true;
+						if (SegmentAddressIsValid(obj, lo, 8))
+							containsBranchToOtherDlist = true;
 						break;
 				}
 				
@@ -517,7 +520,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 						walk += 8;
 					
 					// let's only note dlists that can be rendered in 3d
-					if (containsVertices && containsGeometry)
+					if ((containsVertices && containsGeometry) || containsBranchToOtherDlist)
 					{
 						sb_push(obj->meshes, (struct ObjectMesh) {
 							.segAddr = (obj->segment << 24) | (walk - start)
