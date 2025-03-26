@@ -38,7 +38,10 @@ void SkelAnime_Free(SkelAnime* this)
 
 static void SkelAnime_GetFrameData(const struct ObjectAnimation *anim, int frame, int limbCount, Vec3s* frameTable)
 {
+	const uint8_t *oob = anim->object->file->dataEnd;
+	const int16_t *oob16 = (int16_t*)(oob - sizeof(*oob16));
 	const Vec3s *jointIndices = SEGMENTED_TO_VIRTUAL(anim->rotIndexSegAddr);
+	const Vec3s *jointIndicesOob = (Vec3s*)(oob - sizeof(*jointIndicesOob));
 	const int16_t *frameData = SEGMENTED_TO_VIRTUAL(anim->rotValSegAddr);
 	const int16_t *staticData = &frameData[0];
 	const int16_t *dynamicData = &frameData[frame];
@@ -51,12 +54,22 @@ static void SkelAnime_GetFrameData(const struct ObjectAnimation *anim, int frame
 	
 	for (int i = 0; i < limbCount; ++i, ++frameTable, ++jointIndices)
 	{
-		// TODO bounds checking, use zeros if OOB
-		Vec3s swapInd = { u16r3(jointIndices) };
+		// bounds checking
+		if (jointIndices >= jointIndicesOob)
+			return;
 		
-		frameTable->x = u16r(swapInd.x >= limit ? &dynamicData[swapInd.x] : &staticData[swapInd.x]);
-		frameTable->y = u16r(swapInd.y >= limit ? &dynamicData[swapInd.y] : &staticData[swapInd.y]);
-		frameTable->z = u16r(swapInd.z >= limit ? &dynamicData[swapInd.z] : &staticData[swapInd.z]);
+		Vec3s swapInd = { u16r3(jointIndices) };
+		const int16_t *x = swapInd.x >= limit ? &dynamicData[swapInd.x] : &staticData[swapInd.x];
+		const int16_t *y = swapInd.y >= limit ? &dynamicData[swapInd.y] : &staticData[swapInd.y];
+		const int16_t *z = swapInd.z >= limit ? &dynamicData[swapInd.z] : &staticData[swapInd.z];
+		
+		// bounds checking
+		if (x > oob16 || y > oob16 || z > oob16)
+			return;
+		
+		frameTable->x = u16r(x);
+		frameTable->y = u16r(y);
+		frameTable->z = u16r(z);
 	}
 }
 
