@@ -40,6 +40,7 @@ ifeq ($(BUILD_TYPE),debug)
 	CXXFLAGS_COMMON += -Og -g
 else ifeq ($(BUILD_TYPE),release)
 	CFLAGS += -DNDEBUG -Os -Wno-unused-variable -Wno-strict-aliasing
+	CXXFLAGS_COMMON += -DNDEBUG
 	LDFLAGS += -s
 endif
 
