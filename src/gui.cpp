@@ -2618,6 +2618,7 @@ static const LinkedStringFunc *gSidebarTabsZobj[] = {
 		"Skeletons"
 		, [](){
 			struct Object *obj = gGui->zobj;
+			const char *bindPose = "Bind Pose";
 			char previewText[256];
 			int numSkels = sb_count(obj->skeletons);
 			int numAnims = sb_count(obj->animations);
@@ -2654,13 +2655,18 @@ static const LinkedStringFunc *gSidebarTabsZobj[] = {
 				return;
 			}
 			
-			snprintf(previewText, sizeof(previewText), "%08x", obj->animations[gGui->zobjCurrentAnim].segAddr);
+			struct ObjectAnimation *anim = &obj->animations[gGui->zobjCurrentAnim];
+			if (anim->object) snprintf(previewText, sizeof(previewText), "%08x", anim->segAddr);
+			else strcpy(previewText, bindPose);
 			if (ImGui::BeginCombo("Animation##ZobjSkelViewCombo", previewText, 0))
 			{
 				for (int i = 0; i < numAnims; ++i)
 				{
 					const bool isSelected = gGui->zobjCurrentAnim == i;
-					snprintf(previewText, sizeof(previewText), "%08x", obj->animations[i].segAddr);
+					anim = &obj->animations[i];
+					
+					if (anim->object) snprintf(previewText, sizeof(previewText), "%08x", anim->segAddr);
+					else strcpy(previewText, bindPose);
 					
 					if (ImGui::Selectable(previewText, isSelected))
 						gGui->zobjCurrentAnim = i;

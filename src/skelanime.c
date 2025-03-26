@@ -109,6 +109,13 @@ void SkelAnime_Update(SkelAnime* this, double deltaTimeFrames)
 	const struct ObjectAnimation *anim = this->animation;
 	const struct Object *obj = anim->object;
 	
+	// bind pose
+	if (!obj)
+	{
+		memset(this->morphTable, 0, sizeof(*(this->morphTable)) * this->limbCount);
+		return;
+	}
+	
 	// frozen on frame 0 in an animation playing in reverse = ensure signbit is set
 	// (frame '0' is the first frame, and frame '-0' is the last frame)
 	if (!this->curFrame && signbit(this->playSpeed) && !signbit(this->curFrame))

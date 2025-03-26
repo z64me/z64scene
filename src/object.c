@@ -227,7 +227,7 @@ static void ObjectParseAfterLoad(struct Object *obj)
 	
 	// pre-baked pose for viewing player models
 	if (
-		sb_count(obj->skeletons) == 1
+		sb_count(obj->skeletons) > 0
 		&& sb_count(obj->animations) == 0
 		&& obj->skeletons->limbCount == 21
 		&& obj->skeletons->isLod
@@ -278,6 +278,10 @@ static void ObjectParseAfterLoad(struct Object *obj)
 			.rotIndexSegAddr = 0x06000084,
 		}));
 	}
+	
+	// bind pose
+	if (sb_count(obj->skeletons))
+		sb_push(obj->animations, ((struct ObjectAnimation){}));
 	
 	// rudimentary display list search
 	for (const uint8_t *walk = endAligned8 - 8; walk >= start; walk -= 8)
