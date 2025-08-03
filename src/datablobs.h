@@ -145,5 +145,6 @@ void DataBlobPrintAll(struct DataBlob *blobs);
 const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);
 void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob);
 void DataBlobApplyOriginalSegmentAddresses(struct DataBlob *blob);
+uint8_t *DataBlobToTruecolor(struct DataBlob *blob, int *width, int *height, uint8_t *optionalDst);
 
 #endif

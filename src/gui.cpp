@@ -377,64 +377,14 @@ static void HelpMarker(const char *desc)
 }
 
 // copied from 'textures' tab, may consolidate that to use this function later
-static int DataBlobToTexture(struct DataBlob *blob, GLuint *glResult)
+static int DataBlobToGlTexture(struct DataBlob *blob, GLuint *glResult)
 {
-	static uint8_t *imageData = 0;
-	struct DataBlob *palBlob = blob->data.texture.pal;
-	int imageWidth = blob->data.texture.w;
-	int imageHeight = blob->data.texture.h;
-	int imageFmt = blob->data.texture.fmt;
-	int imageSiz = blob->data.texture.siz;
-	uint32_t segAddr = blob->originalSegmentAddress;
-	uint32_t palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
-	int sizeBytesClamped = blob->data.texture.sizeBytesClamped;
+	int imageWidth;
+	int imageHeight;
+	uint8_t *imageData = DataBlobToTruecolor(blob, &imageWidth, &imageHeight, NULL);
 	
-	// n64 tmem = 4kib, *4 for 32-bit color conversion
-	// and *2 b/c 4bit textures expand to *2*4x the bytes
 	if (!imageData)
-		imageData = (uint8_t*)calloc(4, 512 * 512); // for prerenders
-		//imageData = (uint8_t*)malloc(4096 * 4 * 2);
-	
-	//bool isBadTexture = false;
-	if (sizeBytesClamped > 4096
-		|| (((uint8_t*)blob->refData) + sizeBytesClamped) > blob->refDataFileEnd
-		// bounds checking for palette, if applicable:
-		|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
-	)
-	{
-		LogDebug("warning: width height %d x %d", imageWidth, imageHeight);
-		LogDebug("refData    = %p", blob->refData);
-		LogDebug("refDataEnd = %p", blob->refDataFileEnd);
-		LogDebug("sizeBytes  = %x", blob->sizeBytes);
-		//isBadTexture = true;
-		return -1;//goto L_textureError;
-	}
-	
-	if (blob->data.texture.isJfif)
-	{
-		int x, y, c;
-		void *test = stbi_load_from_memory(
-			(const stbi_uc*)blob->refData
-			, blob->sizeBytes
-			, &x, &y, &c, 4
-		);
-		//LogDebug("test = %p %d x %d x %d", test, x, y, c);
-		memcpy(imageData, test, x * y * 4);
-		stbi_image_free(test);
-	}
-	else
-	{
-		n64texconv_to_rgba8888(
-			imageData
-			, (unsigned char*)blob->refData // TODO const correctness
-			, (unsigned char*)(palBlob ? palBlob->refData : 0)
-			, (n64texconv_fmt)imageFmt
-			, (n64texconv_bpp)imageSiz
-			, imageWidth
-			, imageHeight
-			, blob->data.texture.lineSize
-		);
-	}
+		return -1;
 	
 	// Create a OpenGL texture identifier
 	glGenTextures(1, glResult);
@@ -1944,70 +1894,20 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 					
 					struct DataBlob *blob = textureBlob->data;
 					struct DataBlob *palBlob = blob->data.texture.pal;
+					
 					imageWidth = blob->data.texture.w;
 					imageHeight = blob->data.texture.h;
 					imageFmt = blob->data.texture.fmt;
 					imageSiz = blob->data.texture.siz;
 					segAddr = blob->originalSegmentAddress;
 					palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
-					int sizeBytesClamped = blob->data.texture.sizeBytesClamped;
 					
 					isBadTexture = false;
-					if (sizeBytesClamped > 4096
-						|| (((uint8_t*)blob->refData) + sizeBytesClamped) > blob->refDataFileEnd
-						// bounds checking for palette, if applicable:
-						|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > palBlob->refDataFileEnd)
-					)
+					if (DataBlobToGlTexture(blob, &imageTexture) != 0)
 					{
-						LogDebug("warning: width height %d x %d", imageWidth, imageHeight);
-						LogDebug("refData    = %p", blob->refData);
-						LogDebug("refDataEnd = %p", blob->refDataFileEnd);
-						LogDebug("sizeBytes  = %x", blob->sizeBytes);
 						isBadTexture = true;
 						goto L_textureError;
 					}
-					
-					if (blob->data.texture.isJfif)
-					{
-						int x, y, c;
-						void *test = stbi_load_from_memory(
-							(const stbi_uc*)blob->refData
-							, blob->sizeBytes
-							, &x, &y, &c, 4
-						);
-						//LogDebug("test = %p %d x %d x %d", test, x, y, c);
-						memcpy(imageData, test, x * y * 4);
-						stbi_image_free(test);
-					}
-					else
-					{
-						n64texconv_to_rgba8888(
-							imageData
-							, (unsigned char*)blob->refData // TODO const correctness
-							, (unsigned char*)(palBlob ? palBlob->refData : 0)
-							, (n64texconv_fmt)imageFmt
-							, (n64texconv_bpp)imageSiz
-							, imageWidth
-							, imageHeight
-							, blob->data.texture.lineSize
-						);
-					}
-					
-					// Create a OpenGL texture identifier
-					glGenTextures(1, &imageTexture);
-					glBindTexture(GL_TEXTURE_2D, imageTexture);
-					
-					// Setup filtering parameters for display
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // This is required on WebGL for non power-of-two textures
-					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
-					
-					// Upload pixels into texture
-				#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
-					glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
-				#endif
-					glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imageWidth, imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, imageData);
 				}
 			}
 		
@@ -2489,7 +2389,7 @@ static const LinkedStringFunc *gSidebarTabs[] = {
 							LogDebug("alloc texture");
 							GLuint glResult = 0;
 							
-							if (DataBlobToTexture(blob, &glResult) == 0)
+							if (DataBlobToGlTexture(blob, &glResult) == 0)
 								blob->data.texture.glTexture = glResult;
 						}
 						

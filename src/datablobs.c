@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include <stb_image.h>
+#include <n64texconv.h>
+
 #include "logging.h"
 #include "datablobs.h"
 #include "stretchy_buffer.h"
@@ -144,6 +147,72 @@ void DataBlobListRemoveBlankEntries(struct DataBlob **listHead)
 		
 		prev = blob;
 	}
+}
+
+uint8_t *DataBlobToTruecolor(struct DataBlob *blob, int *width, int *height, uint8_t *optionalDst)
+{
+	static uint8_t *imageData = 0;
+	struct DataBlob *palBlob = blob->data.texture.pal;
+	int imageWidth = blob->data.texture.w;
+	int imageHeight = blob->data.texture.h;
+	int imageFmt = blob->data.texture.fmt;
+	int imageSiz = blob->data.texture.siz;
+	//uint32_t segAddr = blob->originalSegmentAddress;
+	//uint32_t palAddr = palBlob ? palBlob->originalSegmentAddress : 0;
+	int sizeBytesClamped = blob->data.texture.sizeBytesClamped;
+	uint8_t *dst;
+	
+	if (width) *width = imageWidth;
+	if (height) *height = imageHeight;
+	
+	// n64 tmem = 4kib, *4 for 32-bit color conversion
+	// and *2 b/c 4bit textures expand to *2*4x the bytes
+	if (!imageData)
+		imageData = (uint8_t*)calloc(4, 512 * 512); // for prerenders
+		//imageData = (uint8_t*)malloc(4096 * 4 * 2);
+	
+	dst = optionalDst ? optionalDst : imageData;
+	
+	if (sizeBytesClamped > 4096
+		|| (((uint8_t*)blob->refData) + sizeBytesClamped) > (uint8_t*)blob->refDataFileEnd
+		// bounds checking for palette, if applicable:
+		|| (palBlob && (((uint8_t*)palBlob->refData) + palBlob->sizeBytes) > (uint8_t*)palBlob->refDataFileEnd)
+	)
+	{
+		LogDebug("warning: width height %d x %d", imageWidth, imageHeight);
+		LogDebug("refData    = %p", blob->refData);
+		LogDebug("refDataEnd = %p", blob->refDataFileEnd);
+		LogDebug("sizeBytes  = %x", blob->sizeBytes);
+		return 0;
+	}
+	
+	if (blob->data.texture.isJfif)
+	{
+		int x, y, c;
+		void *test = stbi_load_from_memory(
+			(const stbi_uc*)blob->refData
+			, blob->sizeBytes
+			, &x, &y, &c, 4
+		);
+		//LogDebug("test = %p %d x %d x %d", test, x, y, c);
+		memcpy(dst, test, x * y * 4);
+		stbi_image_free(test);
+	}
+	else
+	{
+		n64texconv_to_rgba8888(
+			dst
+			, (unsigned char*)blob->refData // TODO const correctness
+			, (unsigned char*)(palBlob ? palBlob->refData : 0)
+			, (enum n64texconv_fmt)imageFmt
+			, (enum n64texconv_bpp)imageSiz
+			, imageWidth
+			, imageHeight
+			, blob->data.texture.lineSize
+		);
+	}
+	
+	return dst;
 }
 
 struct DataBlob *DataBlobListFindBlobWithOriginalSegmentAddress(
