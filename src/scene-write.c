@@ -984,10 +984,12 @@ void SceneToFilename(struct Scene *scene, const char *filename)
 	
 	// make sure everything is zero
 	for (blob = scene->blobs; blob; blob = blob->next)
-		blob->updatedSegmentAddress = 0;
+		if (blob->sizeBytes)
+			blob->updatedSegmentAddress = 0;
 	sb_foreach(scene->rooms, {
 		for (blob = each->blobs; blob; blob = blob->next)
-			blob->updatedSegmentAddress = 0;
+			if (blob->sizeBytes)
+				blob->updatedSegmentAddress = 0;
 	});
 	
 	// prepare fresh work buffer

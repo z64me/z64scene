@@ -7,6 +7,7 @@
 #ifndef DATABLOBS_H_INCLUDED
 #define DATABLOBS_H_INCLUDED
 
+#include <stdio.h>
 #include <stdint.h>
 #include "stretchy_buffer.h"
 
@@ -87,6 +88,9 @@ struct DataBlob
 			uintptr_t glTexture;
 			uint8_t flipbookSegment;
 		} texture;
+		struct {
+			int id;
+		} pal;
 	} data;
 };
 
@@ -146,5 +150,6 @@ const void *DataBlobSegmentAddressToRealAddress(uint32_t segAddr);
 void DataBlobApplyUpdatedSegmentAddresses(struct DataBlob *blob);
 void DataBlobApplyOriginalSegmentAddresses(struct DataBlob *blob);
 uint8_t *DataBlobToTruecolor(struct DataBlob *blob, int *width, int *height, uint8_t *optionalDst);
+void DataBlobListMakeTextureBank(struct DataBlob *listHead, FILE *file, FILE *recipe, char *texpath);
 
 #endif

@@ -215,6 +215,75 @@ uint8_t *DataBlobToTruecolor(struct DataBlob *blob, int *width, int *height, uin
 	return dst;
 }
 
+// generates output intended for use as z64texture input
+// TODO some quality-of-life stuff like optimizing duplicate textures, grouping textures by palette, etc
+void DataBlobListMakeTextureBank(struct DataBlob *listHead, FILE *file, FILE *recipe, char *texpath)
+{
+	static int palsWritten = 0;
+	
+	// reinitialization call
+	if (listHead == 0)
+	{
+		palsWritten = 0;
+		return;
+	}
+	
+	char *name = texpath + strlen(texpath); // points to 'w' in 'textures/w'
+	
+	// write palettes first
+	for (struct DataBlob *blob = listHead; blob; blob = blob->next)
+	{
+		if (blob->type == DATA_BLOB_TYPE_PALETTE)
+		{
+			int size = blob->sizeBytes; // palettes have to use sizeBytes
+			//fprintf(recipe, "write palette 0x%x bytes\n", size);
+			unsigned int offset = ftell(file);
+			fprintf(recipe, "%d,pal-%d,rgba16,auto,0x%x\n", size / 2, palsWritten, offset);
+			blob->updatedSegmentAddress = offset | 0x06000000;
+			blob->originalSegmentAddress = blob->updatedSegmentAddress;
+			fwrite(blob->refData, 1, size, file);
+			blob->sizeBytes = 0;
+			
+			blob->data.pal.id = palsWritten;
+			palsWritten += 1;
+		}
+	}
+	
+	// followed by textures
+	for (struct DataBlob *blob = listHead; blob; blob = blob->next)
+	{
+		if (blob->type == DATA_BLOB_TYPE_TEXTURE)
+		{
+			const char *fmt[] = { "rgba", "yuv", "ci", "ia", "i" };
+			const char *bpp[] = { "4", "8", "16", "32" };
+			struct DataBlob *pal = blob->data.texture.pal;
+			int size = blob->data.texture.sizeBytesClamped; // or use blob->sizeBytes
+			int w = blob->data.texture.w;
+			int h = blob->data.texture.h;
+			unsigned int offset = ftell(file);
+			char fmtStr[32];
+			
+			sprintf(fmtStr, "%s%s", fmt[blob->data.texture.fmt], bpp[blob->data.texture.siz]);
+			sprintf(name, "%08x.png", offset | 0x06000000);
+			
+			if (pal)
+				fprintf(recipe, "%dx%d,%s-%d,%s,0x%x\n",
+					w, h, fmtStr, pal->data.pal.id, name, offset
+				);
+			else
+				fprintf(recipe, "%dx%d,%s,%s,0x%x\n",
+					w, h, fmtStr, name, offset
+				);
+			blob->updatedSegmentAddress = offset | 0x06000000;
+			blob->originalSegmentAddress = blob->updatedSegmentAddress;
+			fwrite(blob->refData, 1, size, file);
+			blob->sizeBytes = 0;
+		}
+	}
+	
+	*name = '\0'; // revert filename to dirname
+}
+
 struct DataBlob *DataBlobListFindBlobWithOriginalSegmentAddress(
 	struct DataBlob *listHead
 	, uint32_t originalSegmentAddress
